@@ -305,3 +305,223 @@ padding:12px;
 background:#000;
 z-index:10;
 }
+
+/* ===================== */
+/* MOBILE RESPONSIVE */
+/* ===================== */
+
+@media (max-width: 768px) {
+    /* MAIN AREA - Mobile */
+    .main {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+    }
+
+    /* HEADER - Mobile */
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .logo {
+        width: 70px;
+        height: 70px;
+    }
+
+    h1 {
+        font-size: 28px;
+        margin: 0;
+        text-shadow:
+            0 0 6px rgba(255,255,255,0.7),
+            0 0 12px rgba(255,255,255,0.5),
+            0 0 25px rgba(255,255,255,0.3);
+    }
+
+    .subtitle {
+        margin: 4px 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    /* INPUT ROW - Mobile */
+    .inputRow {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        width: 100%;
+        padding: 0 8px;
+        box-sizing: border-box;
+    }
+
+    textarea {
+        width: calc(100% - 70px);
+        max-width: 100%;
+        min-height: 50px;
+        max-height: 180px;
+        padding: 12px;
+        font-size: 16px;
+        line-height: 1.4;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background: #111;
+        color: white;
+        outline: none;
+        resize: none;
+        overflow-y: auto;
+        transition: width .35s ease, font-size .35s ease, height .2s ease;
+    }
+
+    textarea.active {
+        width: calc(100% - 70px);
+    }
+
+    .sendBtn {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background: #111;
+        color: #fff;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform .2s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .sendBtn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* CREDIT - Mobile */
+    .credit {
+        position: fixed;
+        bottom: 8px;
+        right: 10px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        opacity: 0.6;
+    }
+
+    .credit img {
+        width: 25px;
+        height: 25px;
+    }
+
+    /* CHAT MODE - Mobile */
+    body.chat-mode .main {
+        height: auto;
+        justify-content: flex-start;
+        align-items: center;
+        padding-top: 60px;
+    }
+
+    body.chat-mode .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        justify-content: center;
+        background: #000;
+        z-index: 10;
+        margin: 0;
+        gap: 6px;
+    }
+
+    body.chat-mode .logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    body.chat-mode h1 {
+        font-size: 16px;
+    }
+
+    body.chat-mode .subtitle {
+        display: none;
+    }
+
+    body.chat-mode .chatContainer {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 60px 10px 100px;
+    }
+
+    /* Messages - Mobile */
+    .userMsg, .botMsg, .agentMsg, .systemMsg {
+        padding: 10px 12px;
+        margin: 6px 0;
+        border-radius: 8px;
+        max-width: 85%;
+        position: relative;
+        padding-top: 24px;
+        word-wrap: break-word;
+        font-size: 14px;
+    }
+
+    .senderLabel {
+        position: absolute;
+        top: 4px;
+        left: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        opacity: 0.8;
+    }
+
+    .userMsg {
+        align-self: flex-end;
+        margin-right: 5px;
+    }
+
+    .botMsg, .agentMsg {
+        align-self: flex-start;
+        margin-left: 5px;
+    }
+
+    .systemMsg {
+        align-self: center;
+        width: 90%;
+        max-width: 90%;
+    }
+
+    body.chat-mode .inputRow {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        background: #000;
+        z-index: 10;
+        gap: 8px;
+    }
+
+    body.chat-mode textarea {
+        width: calc(100% - 60px);
+        max-width: calc(100% - 60px);
+        min-height: 45px;
+        max-height: 140px;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    body.chat-mode .sendBtn {
+        width: 45px;
+        height: 45px;
+    }
+}
