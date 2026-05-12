@@ -209,17 +209,17 @@ padding:90px 10px 120px;
 
 /* Agent-specific styling */
 .agentMsg.agent-generator {
-    color: #00d000;
+    color: #ffffff;
     font-weight: bold;
 }
 
 .agentMsg.agent-negator {
-    color: #ff4444;
+    color: #ffffff;
     font-style: italic;
 }
 
 .agentMsg.agent-risk-analyzer {
-    color: #4488ff;
+    color: #ffffff;
 }
 
 .agentMsg.agent-constraint-enforcer {
@@ -227,11 +227,11 @@ padding:90px 10px 120px;
 }
 
 .agentMsg.agent-refiner {
-    color: #ffdd00;
+    color: #ffffff;
 }
 
 .agentMsg.agent-moderator {
-    color: #dd88ff;
+    color: #ffffff;
     font-weight: bold;
 }
 

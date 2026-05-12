@@ -147,7 +147,8 @@ function setupWebSocket() {
         return;
     }
 
-    socket = new WebSocket("ws://127.0.0.1:8000/ws");
+    // socket = new WebSocket("ws://127.0.0.1:8000/ws");
+    socket = new WebSocket("wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws");
 
     socket.onopen = () => {
         console.log("WebSocket connection established.");
