@@ -6,9 +6,11 @@ const loginPage = document.getElementById("loginPage");
 const mainApp = document.querySelector(".main");
 const logoutBtn = document.getElementById("logoutBtn");
 const userNameEl = document.getElementById("userName");
+const continueGuestBtn = document.getElementById("continueGuest");
 
 let authToken = null;
 let currentUser = null;
+let isGuest = false;
 
 // Check if user is already logged in (from URL params or localStorage)
 function initializeAuth() {
@@ -39,6 +41,7 @@ function initializeAuth() {
         }
     }
     
+    // Show main app if authenticated, otherwise show login page
     if (authToken && currentUser) {
         showMainApp();
     } else {
@@ -56,6 +59,8 @@ function showMainApp() {
     mainApp.classList.remove("hidden");
     if (currentUser) {
         userNameEl.textContent = currentUser.name || "User";
+    } else if (isGuest) {
+        userNameEl.textContent = "Guest User";
     }
 }
 
@@ -92,6 +97,7 @@ function handleCredentialResponse(response) {
 function logout() {
     authToken = null;
     currentUser = null;
+    isGuest = false;
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
     showLoginPage();
@@ -243,6 +249,16 @@ function addMessage(sender, text) {
     window.scrollTo(0, document.body.scrollHeight);
 }
 
+// Guest user functionality
+function continueAsGuest() {
+    isGuest = true;
+    showMainApp();
+    activateChatUI();
+    addMessage("System", "You are using the app in guest mode. Limited to 10 messages per prompt. Sign in for unlimited access.");
+}
+
+continueGuestBtn.addEventListener("click", continueAsGuest);
+
 let socket;
 let socketReady = false;
 let pendingPrompt = null;
@@ -253,14 +269,13 @@ function setupWebSocket() {
         return;
     }
 
-    if (!authToken) {
-        console.error("No auth token available");
-        addMessage("System", "Authentication required. Please log in again.");
-        return;
+    // Build WebSocket URL with token if authenticated
+    let wsUrl = "wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws";
+    if (authToken) {
+        wsUrl += "?token=" + authToken;
     }
 
-    // socket = new WebSocket("ws://127.0.0.1:8000/ws?token=" + authToken);
-    socket = new WebSocket("wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws?token=" + authToken);
+    socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
         console.log("WebSocket connection established.");
@@ -330,11 +345,6 @@ async function sendPrompt() {
     const prompt = box.value.trim();
 
     if (!prompt) {
-        return;
-    }
-
-    if (!authToken) {
-        addMessage("System", "Please log in first.");
         return;
     }
 
