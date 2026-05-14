@@ -247,6 +247,9 @@ function queueBoxLayout(box) {
 function activateChatUI(){
 if(chatStarted) return
 chatStarted=true
+// Show main app and hide login page
+loginPage.classList.add("hidden")
+mainApp.classList.remove("hidden")
 document.body.classList.add("chat-mode")
 chatContainer.classList.remove("hidden")
 }
