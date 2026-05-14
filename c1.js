@@ -130,98 +130,119 @@ logoutBtn.addEventListener("click", logout);
 // CHAT APPLICATION
 // ============================================
 
-const box=document.getElementById("promptBox")
-const sendBtn=document.getElementById("sendBtn")
-const chatContainer=document.getElementById("chatContainer")
+// Get both textareas and buttons (one on login page, one on main app)
+const loginPageBox = document.querySelector(".loginPage textarea#promptBox");
+const mainAppBox = document.querySelector(".main textarea#promptBox");
+const loginPageBtn = document.querySelector(".loginPage button#sendBtn");
+const mainAppBtn = document.querySelector(".main button#sendBtn");
+const chatContainer = document.getElementById("chatContainer");
 
-const baseWidth=420
-const maxWidth=900
-const baseFont=26
-const minFont=16
-const maxHeight=250
-const widthStep=40
-const textPadding=40
-const averageGlyphWidth=0.58
-const heavyTextThreshold=20000
-
-let resizeFrame=0
-let chatStarted=false
-
-function resetBoxSize(){
-box.style.width=baseWidth+"px"
-box.style.fontSize=baseFont+"px"
-box.style.height="60px"
+// Use a getter to always get the visible textarea
+function getActiveBox() {
+    return loginPageBox.offsetParent !== null ? loginPageBox : mainAppBox;
 }
 
-function getLongestLineLength(text,maxScanLength){
-let maxLine=0
-let currentLine=0
-const scanLimit=Math.min(text.length,maxScanLength)
-
-for(let i=0;i<scanLimit;i++){
-if(text[i]==="\n"){
-if(currentLine>maxLine){
-maxLine=currentLine
-}
-currentLine=0
-continue
-}
-currentLine++
+function getActiveSendBtn() {
+    return loginPageBox.offsetParent !== null ? loginPageBtn : mainAppBtn;
 }
 
-if(currentLine>maxLine){
-maxLine=currentLine
+const baseWidth = 420;
+const maxWidth = 900;
+const baseFont = 26;
+const minFont = 16;
+const maxHeight = 250;
+const widthStep = 40;
+const textPadding = 40;
+const averageGlyphWidth = 0.58;
+const heavyTextThreshold = 20000;
+
+let resizeFrame = 0;
+let chatStarted = false;
+
+function resetBoxSize(box) {
+    box.style.width = baseWidth + "px";
+    box.style.fontSize = baseFont + "px";
+    box.style.height = "60px";
 }
 
-return maxLine
+function getLongestLineLength(text, maxScanLength) {
+    let maxLine = 0;
+    let currentLine = 0;
+    const scanLimit = Math.min(text.length, maxScanLength);
+
+    for (let i = 0; i < scanLimit; i++) {
+        if (text[i] === "\n") {
+            if (currentLine > maxLine) {
+                maxLine = currentLine;
+            }
+            currentLine = 0;
+            continue;
+        }
+        currentLine++;
+    }
+
+    if (currentLine > maxLine) {
+        maxLine = currentLine;
+    }
+
+    return maxLine;
 }
 
-function applyBoxLayout(){
-const value=box.value
+function applyBoxLayout(box) {
+    const value = box.value;
 
-if(value.length>0){
-box.classList.add("active")
-}
-else{
-box.classList.remove("active")
-resetBoxSize()
-return
-}
+    if (value.length > 0) {
+        box.classList.add("active");
+    } else {
+        box.classList.remove("active");
+        resetBoxSize(box);
+        return;
+    }
 
-box.style.height="auto"
-box.style.height=Math.min(box.scrollHeight,maxHeight)+"px"
+    box.style.height = "auto";
+    box.style.height = Math.min(box.scrollHeight, maxHeight) + "px";
 
-if(value.length>=heavyTextThreshold){
-box.style.width=maxWidth+"px"
-box.style.fontSize=minFont+"px"
-return
-}
+    if (value.length >= heavyTextThreshold) {
+        box.style.width = maxWidth + "px";
+        box.style.fontSize = minFont + "px";
+        return;
+    }
 
-const longestLine=getLongestLineLength(value,heavyTextThreshold)
-const estimatedTextWidth=(longestLine*baseFont*averageGlyphWidth)+textPadding
-const targetWidth=Math.min(maxWidth,Math.max(baseWidth,Math.ceil(estimatedTextWidth)))
-const widthGrowth=Math.ceil((targetWidth-baseWidth)/widthStep)
-const newWidth=Math.min(maxWidth,baseWidth+(Math.max(0,widthGrowth)*widthStep))
-const newFont=Math.max(minFont,baseFont-Math.max(0,widthGrowth))
+    const longestLine = getLongestLineLength(value, heavyTextThreshold);
+    const estimatedTextWidth = (longestLine * baseFont * averageGlyphWidth) + textPadding;
+    const targetWidth = Math.min(maxWidth, Math.max(baseWidth, Math.ceil(estimatedTextWidth)));
+    const widthGrowth = Math.ceil((targetWidth - baseWidth) / widthStep);
+    const newWidth = Math.min(maxWidth, baseWidth + (Math.max(0, widthGrowth) * widthStep));
+    const newFont = Math.max(minFont, baseFont - Math.max(0, widthGrowth));
 
-box.style.width=newWidth+"px"
-box.style.fontSize=newFont+"px"
-}
-
-function queueBoxLayout(){
-if(resizeFrame!==0){
-return
+    box.style.width = newWidth + "px";
+    box.style.fontSize = newFont + "px";
 }
 
-resizeFrame=requestAnimationFrame(()=>{
-resizeFrame=0
-applyBoxLayout()
-})
+function queueBoxLayout(box) {
+    if (resizeFrame !== 0) {
+        return;
+    }
+
+    resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        applyBoxLayout(box);
+    });
 }
 
-box.addEventListener("input",()=>{
-queueBoxLayout()
-})
+// Setup event listeners for both textareas
+[loginPageBox, mainAppBox].forEach(box => {
+    box.addEventListener("input", () => {
+        queueBoxLayout(box);
+    });
+
+    box.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendPrompt();
+        }
+    });
+});
 
 function activateChatUI(){
 if(chatStarted) return
@@ -352,6 +373,7 @@ function setupWebSocket() {
 }
 
 async function sendPrompt() {
+    const box = getActiveBox();
     const prompt = box.value.trim();
 
     if (!prompt) {
@@ -361,14 +383,15 @@ async function sendPrompt() {
     // If user is not authenticated, set them as guest
     if (!authToken) {
         isGuest = true;
-        addMessage("System", "You are using the app in guest mode. Limited to 10 messages per prompt. Sign in for unlimited access.");
+        activateChatUI();
+        addMessage("System", "Guest Mode: Limited to 10 messages. Sign in for unlimited access.");
     }
 
     activateChatUI();
     addMessage("user", prompt);
     box.value = "";
     box.classList.remove("active");
-    resetBoxSize();
+    resetBoxSize(box);
 
     if (!socketReady) {
         pendingPrompt = prompt;
@@ -378,14 +401,10 @@ async function sendPrompt() {
     }
 }
 
-sendBtn.addEventListener("click",sendPrompt)
-
-box.addEventListener("keydown",(event)=>{
-if(event.key==="Enter" && !event.shiftKey){
-event.preventDefault()
-sendPrompt()
-}
-})
+// Setup button event listener for both buttons
+[loginPageBtn, mainAppBtn].forEach(btn => {
+    btn.addEventListener("click", sendPrompt);
+});
 
 // Initialize authentication on page load
 window.addEventListener("load", initializeAuth);
