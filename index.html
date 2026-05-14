@@ -5,18 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cosine 1.4</title>
 <link rel="stylesheet" href="c1.css">
+<!-- Google Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
 
-<div class="main">
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="loginPage">
+<div class="loginContainer">
+<div class="header">
+<img src="v1-01.png" class="logo">
+<div class="titleBlock">
+<h1>Cosine 1.4</h1>
+<p class="subtitle">Make decisions more powerful.</p>
+</div>
+</div>
+
+<div class="loginContent">
+<h2>Sign in to continue</h2>
+<div id="g_id_onload"
+     data-client_id="PASTE_YOUR_CLIENT_ID_HERE"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+</div>
+</div>
+</div>
+
+<!-- MAIN APP -->
+<div class="main hidden">
 
 <div class="header">
 <img src="v1-01.png" class="logo">
 
 <div class="titleBlock">
 <h1>Cosine 1.4</h1>
-<p class="subtitle">Make decisions more powerfull.</p>
+<p class="subtitle">Make decisions more powerful.</p>
+</div>
+
+<div class="userInfo">
+<span id="userName">User</span>
+<button id="logoutBtn" class="logoutBtn">Logout</button>
 </div>
 </div>
 

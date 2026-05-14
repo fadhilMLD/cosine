@@ -1,3 +1,109 @@
+// ============================================
+// AUTHENTICATION SETUP
+// ============================================
+
+const loginPage = document.getElementById("loginPage");
+const mainApp = document.querySelector(".main");
+const logoutBtn = document.getElementById("logoutBtn");
+const userNameEl = document.getElementById("userName");
+
+let authToken = null;
+let currentUser = null;
+
+// Check if user is already logged in (from URL params or localStorage)
+function initializeAuth() {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get("token");
+    const userFromUrl = params.get("user");
+    
+    authToken = tokenFromUrl || localStorage.getItem("authToken");
+    
+    if (tokenFromUrl) {
+        localStorage.setItem("authToken", tokenFromUrl);
+        try {
+            currentUser = JSON.parse(userFromUrl);
+            localStorage.setItem("currentUser", userFromUrl);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+            console.error("Failed to parse user data", e);
+        }
+    } else {
+        const savedUser = localStorage.getItem("currentUser");
+        if (savedUser) {
+            try {
+                currentUser = JSON.parse(savedUser);
+            } catch (e) {
+                console.error("Failed to parse saved user", e);
+            }
+        }
+    }
+    
+    if (authToken && currentUser) {
+        showMainApp();
+    } else {
+        showLoginPage();
+    }
+}
+
+function showLoginPage() {
+    loginPage.classList.remove("hidden");
+    mainApp.classList.add("hidden");
+}
+
+function showMainApp() {
+    loginPage.classList.add("hidden");
+    mainApp.classList.remove("hidden");
+    if (currentUser) {
+        userNameEl.textContent = currentUser.name || "User";
+    }
+}
+
+function handleCredentialResponse(response) {
+    // The ID token is in response.credential
+    const token = response.credential;
+    
+    // Send token to backend for verification and JWT creation
+    fetch("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/auth/google", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ token })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.access_token) {
+            authToken = data.access_token;
+            currentUser = data.user;
+            localStorage.setItem("authToken", authToken);
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            showMainApp();
+        } else {
+            alert("Authentication failed. Please try again.");
+        }
+    })
+    .catch(err => {
+        console.error("Auth error:", err);
+        alert("Authentication failed. Please try again.");
+    });
+}
+
+function logout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("currentUser");
+    showLoginPage();
+    location.reload();
+}
+
+logoutBtn.addEventListener("click", logout);
+
+// ============================================
+// CHAT APPLICATION
+// ============================================
+
 const box=document.getElementById("promptBox")
 const sendBtn=document.getElementById("sendBtn")
 const chatContainer=document.getElementById("chatContainer")
@@ -147,8 +253,14 @@ function setupWebSocket() {
         return;
     }
 
-    // socket = new WebSocket("ws://127.0.0.1:8000/ws");
-    socket = new WebSocket("wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws");
+    if (!authToken) {
+        console.error("No auth token available");
+        addMessage("System", "Authentication required. Please log in again.");
+        return;
+    }
+
+    // socket = new WebSocket("ws://127.0.0.1:8000/ws?token=" + authToken);
+    socket = new WebSocket("wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws?token=" + authToken);
 
     socket.onopen = () => {
         console.log("WebSocket connection established.");
@@ -221,6 +333,11 @@ async function sendPrompt() {
         return;
     }
 
+    if (!authToken) {
+        addMessage("System", "Please log in first.");
+        return;
+    }
+
     activateChatUI();
     addMessage("user", prompt);
     box.value = "";
@@ -243,3 +360,6 @@ event.preventDefault()
 sendPrompt()
 }
 })
+
+// Initialize authentication on page load
+window.addEventListener("load", initializeAuth);
