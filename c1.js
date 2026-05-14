@@ -67,6 +67,13 @@ function handleCredentialResponse(response) {
     // The ID token is in response.credential
     const token = response.credential;
     
+    // Validate token exists
+    if (!token) {
+        console.error("No credential received from Google");
+        alert("Failed to get credentials from Google. Please try again.");
+        return;
+    }
+    
     // Send token to backend for verification and JWT creation
     fetch("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/auth/google", {
         method: "POST",
@@ -75,7 +82,14 @@ function handleCredentialResponse(response) {
         },
         body: JSON.stringify({ token })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+            return res.text().then(text => {
+                throw new Error(`HTTP ${res.status}: ${text}`);
+            });
+        }
+        return res.json();
+    })
     .then(data => {
         if (data.access_token) {
             authToken = data.access_token;
@@ -84,12 +98,13 @@ function handleCredentialResponse(response) {
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
             showMainApp();
         } else {
+            console.error("No access token in response:", data);
             alert("Authentication failed. Please try again.");
         }
     })
     .catch(err => {
         console.error("Auth error:", err);
-        alert("Authentication failed. Please try again.");
+        alert("Authentication error: " + err.message);
     });
 }
 
