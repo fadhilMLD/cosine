@@ -8,6 +8,13 @@ min-height:100vh;
 
 /* LOGIN PAGE */
 
+.googleSignInContainer {
+position: fixed;
+top: 20px;
+right: 20px;
+z-index: 1000;
+}
+
 .loginPage {
 display: flex;
 justify-content: center;
@@ -30,6 +37,8 @@ display: flex;
 flex-direction: column;
 align-items: center;
 gap: 20px;
+width: 100%;
+max-width: 600px;
 }
 
 .loginContent h2 {
@@ -133,6 +142,8 @@ opacity:.9;
 display:flex;
 align-items:flex-end;
 gap:12px;
+justify-content: center;
+width: 100%;
 }
 
 textarea{

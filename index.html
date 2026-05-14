@@ -13,6 +13,16 @@
 
 <!-- LOGIN PAGE -->
 <div id="loginPage" class="loginPage">
+
+<!-- Google Sign-In Button (Top Right) -->
+<div class="googleSignInContainer">
+<div id="g_id_onload"
+     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+</div>
+
 <div class="loginContainer">
 <div class="header">
 <img src="v1-01.png" class="logo">
@@ -23,18 +33,13 @@
 </div>
 
 <div class="loginContent">
-<h2>Sign in to continue</h2>
-<div id="g_id_onload"
-     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse">
-</div>
-<div class="g_id_signin" data-type="standard"></div>
-
-<div style="margin-top: 30px; text-align: center; opacity: 0.7;">
-  <p>or</p>
-  <button id="continueGuest" style="padding: 10px 20px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-size: 14px;">
-    Continue as Guest (Limited: 10 messages)
-  </button>
+<div class="inputRow">
+<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
+<button id="sendBtn" class="sendBtn" type="button">
+<svg viewBox="0 0 24 24">
+<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
+</svg>
+</button>
 </div>
 </div>
 </div>
@@ -58,15 +63,6 @@
 </div>
 
 <div id="chatContainer" class="chatContainer hidden"></div>
-
-<div class="inputRow">
-<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
-<button id="sendBtn" class="sendBtn" type="button">
-<svg viewBox="0 0 24 24">
-<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
-</svg>
-</button>
-</div>
 
 </div>
 

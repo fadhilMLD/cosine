@@ -6,7 +6,6 @@ const loginPage = document.getElementById("loginPage");
 const mainApp = document.querySelector(".main");
 const logoutBtn = document.getElementById("logoutBtn");
 const userNameEl = document.getElementById("userName");
-const continueGuestBtn = document.getElementById("continueGuest");
 
 let authToken = null;
 let currentUser = null;
@@ -249,16 +248,6 @@ function addMessage(sender, text) {
     window.scrollTo(0, document.body.scrollHeight);
 }
 
-// Guest user functionality
-function continueAsGuest() {
-    isGuest = true;
-    showMainApp();
-    activateChatUI();
-    addMessage("System", "You are using the app in guest mode. Limited to 10 messages per prompt. Sign in for unlimited access.");
-}
-
-continueGuestBtn.addEventListener("click", continueAsGuest);
-
 let socket;
 let socketReady = false;
 let pendingPrompt = null;
@@ -346,6 +335,12 @@ async function sendPrompt() {
 
     if (!prompt) {
         return;
+    }
+
+    // If user is not authenticated, set them as guest
+    if (!authToken) {
+        isGuest = true;
+        addMessage("System", "You are using the app in guest mode. Limited to 10 messages per prompt. Sign in for unlimited access.");
     }
 
     activateChatUI();
