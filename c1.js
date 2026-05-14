@@ -74,6 +74,9 @@ function handleCredentialResponse(response) {
         return;
     }
     
+    console.log("Google token received, sending to server...");
+    console.log("Token length:", token.length);
+    
     // Send token to backend for verification and JWT creation
     fetch("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/auth/google", {
         method: "POST",
@@ -83,14 +86,17 @@ function handleCredentialResponse(response) {
         body: JSON.stringify({ token })
     })
     .then(res => {
+        console.log("Response status:", res.status);
         if (!res.ok) {
             return res.text().then(text => {
+                console.error("Error response:", text);
                 throw new Error(`HTTP ${res.status}: ${text}`);
             });
         }
         return res.json();
     })
     .then(data => {
+        console.log("Auth response data:", data);
         if (data.access_token) {
             authToken = data.access_token;
             currentUser = data.user;
@@ -99,7 +105,7 @@ function handleCredentialResponse(response) {
             showMainApp();
         } else {
             console.error("No access token in response:", data);
-            alert("Authentication failed. Please try again.");
+            alert("Authentication failed: No token in response");
         }
     })
     .catch(err => {
