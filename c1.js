@@ -410,4 +410,178 @@ async function sendPrompt() {
 });
 
 // Initialize authentication on page load
-window.addEventListener("load", initializeAuth);
+// ============================================
+// HISTORY PAGE
+// ============================================
+
+const debatePage = document.getElementById("debatePage");
+const historyPage = document.getElementById("historyPage");
+const debateDetailPage = document.getElementById("debateDetailPage");
+const historyList = document.getElementById("historyList");
+const debateDetail = document.getElementById("debateDetail");
+
+function showDebatePage(e) {
+    if (e) e.preventDefault();
+    
+    // Hide all pages
+    debatePage.classList.add("active");
+    historyPage.classList.remove("active");
+    debateDetailPage.classList.remove("active");
+    
+    // Show chat if in chat mode
+    if (chatStarted) {
+        chatContainer.classList.remove("hidden");
+    }
+}
+
+function showHistoryPage(e) {
+    if (e) e.preventDefault();
+    
+    // Hide all pages
+    debatePage.classList.remove("active");
+    historyPage.classList.add("active");
+    debateDetailPage.classList.remove("active");
+    chatContainer.classList.add("hidden");
+    
+    // Load and display history
+    loadDebateHistory();
+}
+
+function loadDebateHistory() {
+    if (!authToken) {
+        historyList.innerHTML = '<div class="noHistoryMsg">Please log in to view your history</div>';
+        return;
+    }
+
+    const url = new URL("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/debates/history");
+    url.searchParams.set("token", authToken);
+
+    fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayDebateHistory(data.debates || []);
+    })
+    .catch(error => {
+        console.error("Error loading debate history:", error);
+        historyList.innerHTML = '<div class="noHistoryMsg">Error loading history. Please try again.</div>';
+    });
+}
+
+function displayDebateHistory(debates) {
+    if (!debates || debates.length === 0) {
+        historyList.innerHTML = '<div class="noHistoryMsg">No debates yet. Start one to see it here!</div>';
+        return;
+    }
+
+    historyList.innerHTML = "";
+    
+    debates.forEach(debate => {
+        const debateId = debate._id;
+        const topic = debate.topic;
+        const messageCount = debate.message_count || 0;
+        const created = new Date(debate.created_at);
+        const dateStr = created.toLocaleDateString() + " " + created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const item = document.createElement("div");
+        item.className = "historyItem";
+        item.innerHTML = `
+            <h3>${topic.substring(0, 30)}${topic.length > 30 ? '...' : ''}</h3>
+            <p class="topic">Topic: ${topic}</p>
+            <p>Messages: ${messageCount}</p>
+            <p>Date: ${dateStr}</p>
+        `;
+        
+        item.addEventListener("click", () => {
+            showDebateDetail(debateId, topic);
+        });
+        
+        historyList.appendChild(item);
+    });
+}
+
+function showDebateDetail(debateSessionId, topic) {
+    debatePage.classList.remove("active");
+    historyPage.classList.remove("active");
+    debateDetailPage.classList.add("active");
+    chatContainer.classList.add("hidden");
+    
+    loadDebateMessages(debateSessionId, topic);
+}
+
+function loadDebateMessages(debateSessionId, topic) {
+    if (!authToken) {
+        debateDetail.innerHTML = '<div class="noHistoryMsg">Please log in to view debate details</div>';
+        return;
+    }
+
+    const url = new URL(`https://paralyzingly-unspoken-dwayne.ngrok-free.dev/debates/${debateSessionId}/messages`);
+    url.searchParams.set("token", authToken);
+
+    fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayDebateMessages(data.messages || [], topic);
+    })
+    .catch(error => {
+        console.error("Error loading debate messages:", error);
+        debateDetail.innerHTML = '<div class="noHistoryMsg">Error loading debate. Please try again.</div>';
+    });
+}
+
+function displayDebateMessages(messages, topic) {
+    debateDetail.innerHTML = `<h2>${topic}</h2>`;
+    
+    if (!messages || messages.length === 0) {
+        debateDetail.innerHTML += '<div class="noHistoryMsg">No messages in this debate</div>';
+        return;
+    }
+
+    messages.forEach(msg => {
+        const timestamp = new Date(msg.timestamp);
+        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const msgEl = document.createElement("div");
+        msgEl.className = "debateMessage";
+        msgEl.innerHTML = `
+            <div class="speaker">${msg.speaker}</div>
+            <div class="content">${escapeHtml(msg.message)}</div>
+            <div class="timestamp">${timeStr}</div>
+        `;
+        
+        debateDetail.appendChild(msgEl);
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize the debate page as active on load
+window.addEventListener("load", function() {
+    initializeAuth();
+    
+    // Set up default page
+    debatePage.classList.add("active");
+});

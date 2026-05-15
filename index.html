@@ -62,8 +62,8 @@
 <nav class="navbar">
 <div class="navContainer">
 <div class="navLinks">
-<a href="/" class="navLink">Debate</a>
-<a href="/history" class="navLink">History</a>
+<a href="/" class="navLink" onclick="showDebatePage(event)">Debate</a>
+<a href="/history" class="navLink" onclick="showHistoryPage(event)">History</a>
 </div>
 <div class="userInfo">
 <span id="userName">User</span>
@@ -72,6 +72,8 @@
 </div>
 </nav>
 
+<!-- DEBATE PAGE -->
+<div id="debatePage" class="debatePage">
 <div class="header">
 <img src="v1-01.png" class="logo">
 
@@ -90,6 +92,23 @@
 <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
 </svg>
 </button>
+</div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="historyPage" class="historyPage hidden">
+<div class="historyContainer">
+<h2>Your Debate History</h2>
+<div id="historyList" class="historyList"></div>
+</div>
+</div>
+
+<!-- DEBATE DETAIL VIEW -->
+<div id="debateDetailPage" class="debateDetailPage hidden">
+<div class="debateDetailContainer">
+<button class="backBtn" onclick="showHistoryPage(event)">← Back to History</button>
+<div id="debateDetail" class="debateDetail"></div>
+</div>
 </div>
 
 </div>
