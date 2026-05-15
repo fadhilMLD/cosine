@@ -78,7 +78,7 @@ function handleCredentialResponse(response) {
     console.log("Token length:", token.length);
     
     // Send token to backend for verification and JWT creation
-    fetch("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/auth/google", {
+    fetch(getApiUrl("/auth/google"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -304,7 +304,7 @@ function setupWebSocket() {
     }
 
     // Build WebSocket URL with token if authenticated
-    let wsUrl = "wss://paralyzingly-unspoken-dwayne.ngrok-free.dev/ws";
+    let wsUrl = getWsUrl("/ws");
     if (authToken) {
         wsUrl += "?token=" + authToken;
     }
@@ -477,7 +477,7 @@ function loadDebateHistory() {
         return;
     }
 
-    const url = new URL("https://paralyzingly-unspoken-dwayne.ngrok-free.dev/debates/history");
+    const url = new URL(getApiUrl("/debates/history"));
     url.searchParams.set("token", authToken);
 
     fetch(url, {
@@ -548,7 +548,7 @@ function loadDebateMessages(debateSessionId, topic) {
         return;
     }
 
-    const url = new URL(`https://paralyzingly-unspoken-dwayne.ngrok-free.dev/debates/${debateSessionId}/messages`);
+    const url = new URL(getApiUrl(`/debates/${debateSessionId}/messages`));
     url.searchParams.set("token", authToken);
 
     fetch(url, {
