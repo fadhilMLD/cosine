@@ -6,6 +6,17 @@ color:white;
 min-height:100vh;
 }
 
+/* TEXT SELECTION */
+::selection {
+    background: linear-gradient(90deg, #FFD700, #00FFFF, #FF1493);
+    color: #ff6d6d;
+}
+
+::-moz-selection {
+    background: linear-gradient(90deg, #FFD700, #00FFFF, #FF1493);
+    color: #ff8a8a;
+}
+
 /* NAVIGATION BAR */
 
 .navbar {
