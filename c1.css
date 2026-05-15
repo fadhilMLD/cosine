@@ -25,7 +25,8 @@ min-height:100vh;
     height: 60px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    position: relative;
 }
 
 .navBrand {
@@ -36,7 +37,9 @@ min-height:100vh;
     display: flex;
     align-items: center;
     gap: 40px;
-    justify-content: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .navLink {
@@ -60,6 +63,29 @@ min-height:100vh;
 /* Hide sign-in prompt when user is logged in */
 .main #signInPrompt {
     display: none;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+}
+
+.logoutBtn {
+    padding: 8px 16px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.logoutBtn:hover {
+    background: #444;
+    border-color: #666;
 }
 
 /* LOGIN PAGE */
@@ -188,28 +214,7 @@ padding: 0 20px;
 box-sizing: border-box;
 }
 
-.userInfo {
-display: flex;
-align-items: center;
-gap: 15px;
-font-size: 14px;
-}
-
-.logoutBtn {
-padding: 8px 16px;
-background: #333;
-color: white;
-border: 1px solid #555;
-border-radius: 6px;
-cursor: pointer;
-font-size: 14px;
-transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.logoutBtn:hover {
-background: #444;
-border-color: #666;
-}
+/* HEADER STYLES */
 
 .titleBlock{
 display:flex;
@@ -539,7 +544,7 @@ z-index:10;
     .navContainer {
         height: 50px;
         padding: 0 15px;
-        justify-content: center;
+        justify-content: space-between;
     }
 
     .navBrand {
@@ -548,6 +553,8 @@ z-index:10;
 
     .navLinks {
         gap: 20px;
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .navLink {
@@ -556,6 +563,16 @@ z-index:10;
 
     .navPrompt {
         display: none;
+    }
+
+    .userInfo {
+        font-size: 12px;
+        gap: 10px;
+    }
+
+    .logoutBtn {
+        padding: 6px 12px;
+        font-size: 12px;
     }
 
     @media (max-width: 480px) {
@@ -569,6 +586,15 @@ z-index:10;
 
         .navbar {
             height: 50px;
+        }
+
+        .userInfo {
+            font-size: 11px;
+        }
+
+        .logoutBtn {
+            padding: 5px 10px;
+            font-size: 11px;
         }
     }
 
