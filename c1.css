@@ -6,6 +6,62 @@ color:white;
 min-height:100vh;
 }
 
+/* NAVIGATION BAR */
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 10, 10, 0.95);
+    z-index: 999;
+    backdrop-filter: blur(10px);
+}
+
+.navContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navBrand {
+    display: none;
+}
+
+.navLinks {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    justify-content: center;
+}
+
+.navLink {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.navLink:hover {
+    color: #fff;
+}
+
+.navPrompt {
+    display: none;
+}
+
+/* Hide sign-in prompt when user is logged in */
+.main #signInPrompt {
+    display: none;
+}
+
 /* LOGIN PAGE */
 
 .googleSignInContainer {
@@ -52,6 +108,8 @@ height: 100vh;
 background: #000;
 position: relative;
 overflow: hidden;
+padding-top: 60px;
+box-sizing: border-box;
 }
 
 .loginPage .userInfo {
@@ -101,13 +159,19 @@ display:flex;
 flex-direction:column;
 justify-content:center;    /* center BEFORE chat */
 align-items:center;
+padding-top: 60px;
+box-sizing: border-box;
 }
 
 body.chat-mode .main{
 height:auto;
 justify-content:flex-start;
 align-items:center;
-padding-top:80px;
+padding-top:60px;
+}
+
+body.chat-mode .header {
+    display: none;
 }
 
 /* HEADER */
@@ -128,10 +192,7 @@ box-sizing: border-box;
 display: flex;
 align-items: center;
 gap: 15px;
-position: fixed;
-top: 20px;
-right: 20px;
-z-index: 1000;
+font-size: 14px;
 }
 
 .logoutBtn {
@@ -474,6 +535,43 @@ z-index:10;
 /* ===================== */
 
 @media (max-width: 768px) {
+    /* NAVBAR - Mobile */
+    .navContainer {
+        height: 50px;
+        padding: 0 15px;
+        justify-content: center;
+    }
+
+    .navBrand {
+        display: none;
+    }
+
+    .navLinks {
+        gap: 20px;
+    }
+
+    .navLink {
+        font-size: 12px;
+    }
+
+    .navPrompt {
+        display: none;
+    }
+
+    @media (max-width: 480px) {
+        .navLinks {
+            gap: 15px;
+        }
+
+        .navLink {
+            font-size: 11px;
+        }
+
+        .navbar {
+            height: 50px;
+        }
+    }
+
     /* LOGIN PAGE - Mobile */
     .loginPage {
         overflow-y: auto;

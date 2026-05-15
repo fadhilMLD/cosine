@@ -12,6 +12,16 @@
 
 <body>
 
+<!-- NAVIGATION BAR -->
+<nav class="navbar">
+<div class="navContainer">
+<div class="navLinks">
+<a href="/" class="navLink">Debate</a>
+<a href="/history" class="navLink" id="historyLink">History</a>
+</div>
+</div>
+</nav>
+
 <!-- LOGIN PAGE -->
 <div id="loginPage" class="loginPage">
 
@@ -49,17 +59,25 @@
 <!-- MAIN APP -->
 <div class="main hidden">
 
+<nav class="navbar">
+<div class="navContainer">
+<div class="navLinks">
+<a href="/" class="navLink">Debate</a>
+<a href="/history" class="navLink">History</a>
+<div class="userInfo">
+<span id="userName">User</span>
+<button id="logoutBtn" class="logoutBtn">Logout</button>
+</div>
+</div>
+</div>
+</nav>
+
 <div class="header">
 <img src="v1-01.png" class="logo">
 
 <div class="titleBlock">
 <h1>Cosine <span class="gradient-text">1.4</span></h1>
 <p class="subtitle">Make decisions more powerful.</p>
-</div>
-
-<div class="userInfo">
-<span id="userName">User</span>
-<button id="logoutBtn" class="logoutBtn">Logout</button>
 </div>
 </div>
 
