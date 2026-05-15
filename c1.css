@@ -50,6 +50,12 @@ align-items: center;
 width: 100%;
 height: 100vh;
 background: #000;
+position: relative;
+overflow: hidden;
+}
+
+.loginPage .userInfo {
+display: none !important;
 }
 
 .loginContainer {
@@ -76,7 +82,14 @@ opacity: 0.9;
 }
 
 .hidden {
-display: none;
+display: none !important;
+pointer-events: none !important;
+visibility: hidden !important;
+}
+
+/* Ensure main is hidden when loginPage is visible */
+#loginPage:not(.hidden) ~ .main {
+display: none !important;
 }
 
 /* MAIN AREA */
@@ -461,6 +474,77 @@ z-index:10;
 /* ===================== */
 
 @media (max-width: 768px) {
+    /* LOGIN PAGE - Mobile */
+    .loginPage {
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .loginContainer {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* GOOGLE SIGN-IN - Mobile */
+    .googleSignInContainer {
+        top: 15px;
+        right: 15px;
+    }
+
+    .googleSignInContainer button {
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+        min-height: 40px !important;
+    }
+
+    /* Hide logout on login page - Mobile */
+    .loginPage .userInfo {
+        display: none !important;
+    }
+
+    /* USER INFO - Mobile */
+    .userInfo {
+        top: 15px;
+        right: 15px;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 12px;
+    }
+
+    .logoutBtn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* TITLE BLOCK GLOW - Mobile */
+    .titleBlock::before {
+        width: 300px;
+        height: 200px;
+        filter: blur(60px);
+    }
+
+    .gradient-text {
+        font-size: 40px;
+    }
+
+    /* LOGIN PAGE - Mobile */
+    .loginPage {
+        padding-top: 60px;
+    }
+
+    .loginContainer {
+        gap: 30px;
+        padding: 20px;
+    }
+
+    .loginContent {
+        max-width: 100%;
+    }
+    
     /* MAIN AREA - Mobile */
     .main {
         width: 100%;
@@ -470,6 +554,12 @@ z-index:10;
         justify-content: center;
         align-items: center;
         padding: 0;
+    }
+
+    /* Hide main when it has hidden class on mobile */
+    .main.hidden {
+        display: none !important;
+        visibility: hidden !important;
     }
 
     /* HEADER - Mobile */
