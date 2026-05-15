@@ -62,8 +62,8 @@
 <nav class="navbar">
 <div class="navContainer">
 <div class="navLinks">
-<a href="/" class="navLink" onclick="showDebatePage(event)">Debate</a>
-<a href="/history" class="navLink" onclick="showHistoryPage(event)">History</a>
+<a href="#" class="navLink" onclick="showDebatePage(event)">Debate</a>
+<a href="#" class="navLink" onclick="showHistoryPage(event)">History</a>
 </div>
 <div class="userInfo">
 <span id="userName">User</span>
@@ -96,7 +96,7 @@
 </div>
 
 <!-- HISTORY PAGE -->
-<div id="historyPage" class="historyPage hidden">
+<div id="historyPage" class="historyPage">
 <div class="historyContainer">
 <h2>Your Debate History</h2>
 <div id="historyList" class="historyList"></div>
@@ -104,7 +104,7 @@
 </div>
 
 <!-- DEBATE DETAIL VIEW -->
-<div id="debateDetailPage" class="debateDetailPage hidden">
+<div id="debateDetailPage" class="debateDetailPage">
 <div class="debateDetailContainer">
 <button class="backBtn" onclick="showHistoryPage(event)">← Back to History</button>
 <div id="debateDetail" class="debateDetail"></div>

@@ -420,31 +420,55 @@ const debateDetailPage = document.getElementById("debateDetailPage");
 const historyList = document.getElementById("historyList");
 const debateDetail = document.getElementById("debateDetail");
 
+console.log("Page elements:", { debatePage, historyPage, debateDetailPage });
+
 function showDebatePage(e) {
-    if (e) e.preventDefault();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     
-    // Hide all pages
-    debatePage.classList.add("active");
+    console.log("showDebatePage called");
+    
+    // Remove active from all pages
+    debatePage.classList.remove("active");
     historyPage.classList.remove("active");
     debateDetailPage.classList.remove("active");
+    
+    // Add active to debate page
+    debatePage.classList.add("active");
     
     // Show chat if in chat mode
     if (chatStarted) {
         chatContainer.classList.remove("hidden");
     }
+    
+    console.log("Debate page active:", debatePage.classList.contains("active"));
 }
 
 function showHistoryPage(e) {
-    if (e) e.preventDefault();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     
-    // Hide all pages
+    console.log("showHistoryPage called");
+    
+    // Remove active from all pages
     debatePage.classList.remove("active");
-    historyPage.classList.add("active");
+    historyPage.classList.remove("active");
     debateDetailPage.classList.remove("active");
+    
+    // Add active to history page
+    historyPage.classList.add("active");
+    
+    // Hide chat container
     chatContainer.classList.add("hidden");
     
     // Load and display history
     loadDebateHistory();
+    
+    console.log("History page active:", historyPage.classList.contains("active"));
 }
 
 function loadDebateHistory() {
@@ -579,9 +603,27 @@ function escapeHtml(text) {
 }
 
 // Initialize the debate page as active on load
-window.addEventListener("load", function() {
-    initializeAuth();
+function initializePage() {
+    console.log("Initializing page");
     
-    // Set up default page
-    debatePage.classList.add("active");
+    // Make sure debate page is shown by default
+    if (debatePage) {
+        debatePage.classList.add("active");
+        console.log("Debate page initialized as active");
+    }
+    
+    if (historyPage) {
+        historyPage.classList.remove("active");
+    }
+    
+    if (debateDetailPage) {
+        debateDetailPage.classList.remove("active");
+    }
+}
+
+// Run on load
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM Content Loaded");
+    initializeAuth();
+    initializePage();
 });
