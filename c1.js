@@ -512,17 +512,14 @@ function displayDebateHistory(debates) {
     debates.forEach(debate => {
         const debateId = debate._id;
         const topic = debate.topic;
-        const messageCount = debate.message_count || 0;
         const created = new Date(debate.created_at);
         const dateStr = created.toLocaleDateString() + " " + created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         const item = document.createElement("div");
         item.className = "historyItem";
         item.innerHTML = `
-            <h3>${topic.substring(0, 30)}${topic.length > 30 ? '...' : ''}</h3>
-            <p class="topic">Topic: ${topic}</p>
-            <p>Messages: ${messageCount}</p>
-            <p>Date: ${dateStr}</p>
+            <h3>${topic}</h3>
+            <p>${dateStr}</p>
         `;
         
         item.addEventListener("click", () => {

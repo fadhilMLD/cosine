@@ -888,9 +888,9 @@ z-index:10;
 }
 
 .historyList {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
 }
 
@@ -898,7 +898,7 @@ z-index:10;
     background: rgba(30, 30, 30, 0.8);
     border: 1px solid #333;
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
@@ -908,28 +908,24 @@ z-index:10;
     background: rgba(40, 40, 40, 0.9);
     border-color: #FFD700;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 30px rgba(0, 255, 255, 0.2);
-    transform: translateY(-5px);
+    transform: translateX(5px);
 }
 
 .historyItem h3 {
-    font-size: 18px;
-    margin: 0 0 10px 0;
-    color: #FFD700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: #ffffff;
+    word-break: break-word;
 }
 
 .historyItem p {
-    font-size: 13px;
-    margin: 5px 0;
-    color: #aaa;
+    font-size: 12px;
+    margin: 0;
+    color: #ffffff;
 }
 
 .historyItem .topic {
-    color: #00FFFF;
-    font-weight: bold;
-    margin-top: 10px;
+    display: none;
 }
 
 .noHistoryMsg {
@@ -1014,8 +1010,7 @@ z-index:10;
     }
 
     .historyList {
-        grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 12px;
     }
 
     .historyItem {
@@ -1023,7 +1018,7 @@ z-index:10;
     }
 
     .historyItem h3 {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .debateDetailContainer {
