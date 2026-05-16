@@ -944,9 +944,9 @@ z-index:10;
 }
 
 .backBtn {
-    background: rgba(255, 255, 255, 0.845);
+    background: rgb(255, 255, 255);
     border: 1px solid #ffffff;
-    color: #ffffff;
+    color: #000000;
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
@@ -956,8 +956,8 @@ z-index:10;
 }
 
 .backBtn:hover {
-    background: rgba(255, 255, 255, 0.805);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.743);
+    background: rgb(255, 255, 255);
+    box-shadow: 0 0 15px rgb(255, 255, 255);
 }
 
 .debateDetail {
