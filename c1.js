@@ -81,7 +81,8 @@ function handleCredentialResponse(response) {
     fetch(getApiUrl("/auth/google"), {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true"
         },
         body: JSON.stringify({ token })
     })
@@ -477,13 +478,12 @@ function loadDebateHistory() {
         return;
     }
 
-    const url = new URL(getApiUrl("/debates/history"));
-    url.searchParams.set("token", authToken);
-
-    fetch(url, {
+    fetch(getApiUrl("/debates/history"), {
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`,
+            "ngrok-skip-browser-warning": "true"
         }
     })
     .then(response => {
@@ -548,13 +548,12 @@ function loadDebateMessages(debateSessionId, topic) {
         return;
     }
 
-    const url = new URL(getApiUrl(`/debates/${debateSessionId}/messages`));
-    url.searchParams.set("token", authToken);
-
-    fetch(url, {
+    fetch(getApiUrl(`/debates/${debateSessionId}/messages`), {
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`,
+            "ngrok-skip-browser-warning": "true"
         }
     })
     .then(response => {
