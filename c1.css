@@ -857,9 +857,12 @@ z-index:10;
 
 .debatePage, .historyPage, .debateDetailPage {
     width: 100%;
+    min-height: 100vh;
     padding-top: 80px;
     box-sizing: border-box;
     display: none !important;
+    overflow-y: auto;
+    scroll-padding-top: 80px;
 }
 
 .debatePage.active, .historyPage.active, .debateDetailPage.active {
