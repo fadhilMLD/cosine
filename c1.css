@@ -917,6 +917,7 @@ z-index:10;
 
 .historyItem:hover {
     background: rgba(255, 255, 255, 0.9);
+    color: #000;
     border-color: #ffffff;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.889), 0 0 30px rgb(255, 255, 255);
     transform: translateX(5px);
