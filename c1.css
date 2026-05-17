@@ -871,6 +871,14 @@ z-index:10;
     align-items: center;
 }
 
+.debatePage.active {
+    justify-content: center;
+}
+
+.historyPage.active, .debateDetailPage.active {
+    justify-content: flex-start;
+}
+
 .historyContainer {
     width: 100%;
     max-width: 900px;
