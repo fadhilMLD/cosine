@@ -24,8 +24,9 @@ function initializeAuth() {
         try {
             currentUser = JSON.parse(userFromUrl);
             localStorage.setItem("currentUser", userFromUrl);
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Clean up URL and redirect to logged.html
+            window.history.replaceState({}, document.title, "logged.html");
+            window.location.href = "logged.html";
         } catch (e) {
             console.error("Failed to parse user data", e);
         }
@@ -40,25 +41,43 @@ function initializeAuth() {
         }
     }
     
-    // Show main app if authenticated, otherwise show login page
+    // Check if user is on the correct page
+    const currentFile = window.location.pathname.split('/').pop() || 'home.html';
+    
     if (authToken && currentUser) {
+        // User is authenticated
+        if (!currentFile.includes('logged.html')) {
+            window.location.href = "logged.html";
+        }
         showMainApp();
     } else {
+        // User is not authenticated
+        if (!currentFile.includes('home.html')) {
+            window.location.href = "home.html";
+        }
         showLoginPage();
     }
 }
 
 function showLoginPage() {
-    loginPage.classList.remove("hidden");
-    mainApp.classList.add("hidden");
+    if (loginPage) {
+        loginPage.classList.remove("hidden");
+    }
+    if (mainApp) {
+        mainApp.classList.add("hidden");
+    }
 }
 
 function showMainApp() {
-    loginPage.classList.add("hidden");
-    mainApp.classList.remove("hidden");
-    if (currentUser) {
+    if (loginPage) {
+        loginPage.classList.add("hidden");
+    }
+    if (mainApp) {
+        mainApp.classList.remove("hidden");
+    }
+    if (currentUser && userNameEl) {
         userNameEl.textContent = currentUser.name || "User";
-    } else if (isGuest) {
+    } else if (isGuest && userNameEl) {
         userNameEl.textContent = "Guest User";
     }
 }
@@ -103,7 +122,8 @@ function handleCredentialResponse(response) {
             currentUser = data.user;
             localStorage.setItem("authToken", authToken);
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
-            showMainApp();
+            // Redirect to logged.html
+            window.location.href = "logged.html";
         } else {
             console.error("No access token in response:", data);
             alert("Authentication failed: No token in response");
@@ -121,8 +141,9 @@ function logout() {
     isGuest = false;
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
-    showLoginPage();
-    location.reload();
+    // Redirect to home.html
+    window.location.href = "home.html";
+}
 }
 
 logoutBtn.addEventListener("click", logout);

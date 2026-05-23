@@ -3,124 +3,1229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosine 1.4</title>
-<link rel="stylesheet" href="c1.css">
-<link rel="icon" type="image/png" href="favicon.png">
+<title>Cosine 1.4 — Feaven</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- Configuration -->
 <script src="config.js"></script>
-</head>
+<style>
+:root {
+  --bg: #000000;
+  --bg2: #070707;
+  --bg3: #0a0a0a;
+  --surface: rgba(255,255,255,0.03);
+  --surface2: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0eef8;
+  --text2: rgba(240,238,248,0.5);
+  --text3: rgba(240,238,248,0.26);
+  --accent: #c8b4f0;
+  --accent2: #f4a8c7;
+  --accent3: #7dd4b8;
+}
 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #000000;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+#grad-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; opacity: 0.6;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 60px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(32px);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 17px; letter-spacing: -0.02em;
+}
+.logo-mark { width: 30px; height: 30px; }
+.logo-mark svg { width: 100%; height: 100%; }
+
+.logo-version {
+  font-size: 12px; font-weight: 400; color: var(--accent2);
+  font-family: 'DM Sans', sans-serif;
+  background: rgba(244,168,199,0.08); padding: 2px 8px; border-radius: 20px;
+  border: 1px solid rgba(244,168,199,0.18);
+}
+
+.nav-links { display: flex; gap: 36px; list-style: none; }
+.nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+
+.btn-ghost {
+  background: none; border: 1px solid var(--border2); color: var(--text2);
+  padding: 8px 20px; border-radius: 100px; font-size: 14px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-weight: 400; transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-primary {
+  background: var(--accent); color: #000; border: none;
+  padding: 9px 22px; border-radius: 100px; font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn-primary:hover { background: #d4c0f6; transform: translateY(-1px); }
+
+/* HERO */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 140px 40px 80px;
+  position: relative; overflow: hidden; z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(200,180,240,0.06); border: 1px solid rgba(200,180,240,0.16);
+  padding: 6px 16px; border-radius: 100px; margin-bottom: 36px;
+  font-size: 12px; color: var(--accent); letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500;
+}
+
+.pulse {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent3);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.65)} }
+
+/* HEADING — DM Sans, same as section titles */
+h1 {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(36px, 5.5vw, 66px);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  margin-bottom: 28px;
+}
+
+.h1-accent {
+  font-style: italic;
+  background: linear-gradient(120deg, var(--accent) 0%, var(--accent2) 50%, #a0e8d4 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  background-size: 200% 200%;
+  animation: gradShift 6s ease infinite;
+}
+
+@keyframes gradShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-sub {
+  font-size: clamp(15px, 1.7vw, 18px); color: var(--text2); max-width: 520px;
+  margin: 0 auto 48px; line-height: 1.75; font-weight: 300;
+}
+
+.hero-ctas { display: flex; gap: 14px; justify-content: center; align-items: center; margin-bottom: 80px; }
+
+.btn-hero {
+  background: var(--accent); color: #000; border: none;
+  padding: 13px 30px; border-radius: 100px; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.25s;
+}
+.btn-hero:hover { background: #d8c8f6; transform: translateY(-2px); box-shadow: 0 16px 50px rgba(160,120,240,0.25); }
+
+.btn-hero-ghost {
+  background: none; border: 1px solid var(--border2); color: var(--text2);
+  padding: 13px 26px; border-radius: 100px; font-size: 15px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-weight: 300; transition: all 0.2s;
+}
+.btn-hero-ghost:hover { border-color: rgba(255,255,255,0.26); color: var(--text); }
+
+/* DEMO WINDOW */
+.demo-window {
+  width: 100%; max-width: 860px; margin: 0 auto;
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border2);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.035);
+}
+
+.demo-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 20px; background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+.demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dd-r{background:#ff5f57;} .dd-y{background:#febc2e;} .dd-g{background:#28c840;}
+.demo-title { font-size: 13px; color: var(--text3); margin: 0 auto; }
+
+.demo-body { padding: 24px; }
+
+.demo-strategy {
+  background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 14px;
+}
+.demo-strategy-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+.demo-strategy-text { color: var(--text2); line-height: 1.65; }
+.demo-strategy-text span { color: var(--text); }
+
+.run-btn {
+  width: 100%; background: rgba(200,180,240,0.07);
+  border: 1px solid rgba(200,180,240,0.2); color: var(--accent);
+  padding: 11px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; margin-bottom: 20px; transition: all 0.2s;
+}
+.run-btn:hover { background: rgba(200,180,240,0.13); }
+
+.agents-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.agent-card {
+  border-radius: 10px; padding: 14px 16px; border: 1px solid;
+  animation: fadeUp 0.4s ease forwards; opacity: 0;
+}
+.agent-card:nth-child(1){animation-delay:0.1s}
+.agent-card:nth-child(2){animation-delay:0.25s}
+.agent-card:nth-child(3){animation-delay:0.4s}
+.agent-card:nth-child(4){animation-delay:0.55s}
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.ac-cfo { background:rgba(200,170,80,0.06); border-color:rgba(200,170,80,0.18); }
+.ac-ops { background:rgba(125,212,184,0.06); border-color:rgba(125,212,184,0.18); }
+.ac-mkt { background:rgba(200,180,240,0.06); border-color:rgba(200,180,240,0.18); }
+.ac-dev { background:rgba(244,120,120,0.06); border-color:rgba(244,120,120,0.18); }
+
+.agent-name { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.an-cfo{color:#d4aa40;} .an-ops{color:#7dd4b8;} .an-mkt{color:#c8b4f0;} .an-dev{color:#f47878;}
+.agent-text { font-size: 13px; color: var(--text2); line-height: 1.55; }
+.agent-text strong { color: var(--text); font-weight: 500; }
+
+/* SECTIONS */
+section { padding: 120px 60px; position: relative; z-index: 1; }
+.section-inner { max-width: 1100px; margin: 0 auto; }
+
+.section-eyebrow {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500; margin-bottom: 16px; display: block;
+}
+
+.section-title {
+  font-family: 'DM Sans', sans-serif; font-weight: 400;
+  font-size: clamp(26px, 3.2vw, 44px); line-height: 1.18; letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+
+.section-sub { font-size: 16px; color: var(--text2); max-width: 460px; line-height: 1.75; font-weight: 300; }
+
+/* WHY SECTION */
+.why-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; margin-top: 64px; }
+
+.compare-label {
+  font-size: 13px; font-weight: 500; margin-bottom: 16px; letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 8px;
+}
+.cl-bad { color: #f47878; }
+.cl-good { color: var(--accent3); }
+.dot-bad { width: 7px; height: 7px; border-radius: 50%; background: #f47878; }
+.dot-good { width: 7px; height: 7px; border-radius: 50%; background: var(--accent3); }
+
+.chat-bubble { border-radius: 10px; padding: 14px 18px; font-size: 14px; line-height: 1.65; margin-bottom: 10px; }
+.cb-user { background: rgba(200,180,240,0.07); border: 1px solid rgba(200,180,240,0.12); color: var(--text2); font-style: italic; }
+.cb-bad { background: rgba(255,255,255,0.025); border: 1px solid rgba(244,120,120,0.1); color: var(--text2); }
+.cb-good-header { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 7px; }
+
+.verdict-bad { background: rgba(244,120,120,0.06); border: 1px solid rgba(244,120,120,0.16); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #f47878; margin-top: 12px; }
+.verdict-good { background: rgba(125,212,184,0.06); border: 1px solid rgba(125,212,184,0.16); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--accent3); margin-top: 12px; }
+
+.agent-response { border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; border: 1px solid; }
+.ar-cfo { background:rgba(200,170,80,0.05); border-color:rgba(200,170,80,0.16); }
+.ar-ops { background:rgba(125,212,184,0.05); border-color:rgba(125,212,184,0.16); }
+.ar-dev { background:rgba(244,120,120,0.05); border-color:rgba(244,120,120,0.16); }
+
+/* FEATURES */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 56px; }
+.feature-card {
+  background: #000; padding: 36px 30px; transition: background 0.3s; position: relative; overflow: hidden;
+}
+.feature-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,180,240,0.45), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.feature-card:hover { background: rgba(200,180,240,0.03); }
+.feature-card:hover::after { opacity: 1; }
+
+.feat-icon {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+}
+.fi-purple { background: rgba(200,180,240,0.08); border-color: rgba(200,180,240,0.2); }
+.fi-pink   { background: rgba(244,168,199,0.08); border-color: rgba(244,168,199,0.2); }
+.fi-teal   { background: rgba(125,212,184,0.08); border-color: rgba(125,212,184,0.2); }
+.fi-amber  { background: rgba(200,170,80,0.08);  border-color: rgba(200,170,80,0.2);  }
+.fi-red    { background: rgba(244,120,120,0.08); border-color: rgba(244,120,120,0.2); }
+.fi-blue   { background: rgba(100,160,255,0.08); border-color: rgba(100,160,255,0.2); }
+
+.feat-icon svg { width: 17px; height: 17px; }
+
+.feature-title { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; margin-bottom: 9px; letter-spacing: -0.01em; }
+.feature-desc { font-size: 13.5px; color: var(--text2); line-height: 1.65; }
+
+/* HOW IT WORKS */
+.how-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.steps-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 64px; position: relative; }
+.steps-row::before {
+  content: ''; position: absolute; top: 27px; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), rgba(200,180,240,0.35), var(--border2), transparent);
+}
+.step-item { text-align: center; padding: 0 14px; }
+.step-num {
+  width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 16px;
+  position: relative; z-index: 1; background: #000;
+}
+.sn1 { border: 1px solid rgba(200,180,240,0.28); color: var(--accent); }
+.sn2 { border: 1px solid rgba(244,168,199,0.26); color: var(--accent2); }
+.sn3 { border: 1px solid rgba(125,212,184,0.26); color: var(--accent3); }
+.sn4 { border: 1px solid rgba(200,170,80,0.26); color: #d4aa40; }
+.sn5 { border: 1px solid rgba(100,160,255,0.26); color: #80b4ff; }
+
+.step-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.step-desc { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+/* INTERACTIVE DEMO */
+.interactive-wrapper { display: grid; grid-template-columns: 1fr 1.3fr; gap: 48px; align-items: flex-start; margin-top: 64px; }
+
+.ic-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; display: block; }
+
+textarea {
+  width: 100%; background: rgba(255,255,255,0.025); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 15px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; line-height: 1.65; resize: vertical; min-height: 130px;
+  outline: none; transition: border-color 0.2s; font-weight: 300;
+}
+textarea:focus { border-color: rgba(200,180,240,0.36); }
+textarea::placeholder { color: var(--text3); }
+
+.agents-select { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.agent-toggle {
+  padding: 6px 13px; border-radius: 100px; font-size: 13px; cursor: pointer;
+  border: 1px solid var(--border2); background: none; color: var(--text2);
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.agent-toggle.active-cfo { background:rgba(200,170,80,0.09); border-color:rgba(200,170,80,0.28); color:#d4aa40; }
+.agent-toggle.active-ops { background:rgba(125,212,184,0.09); border-color:rgba(125,212,184,0.28); color:var(--accent3); }
+.agent-toggle.active-mkt { background:rgba(200,180,240,0.09); border-color:rgba(200,180,240,0.28); color:var(--accent); }
+.agent-toggle.active-dev { background:rgba(244,120,120,0.09); border-color:rgba(244,120,120,0.28); color:#f47878; }
+.agent-toggle.active-ind { background:rgba(100,160,255,0.09); border-color:rgba(100,160,255,0.28); color:#80b4ff; }
+
+.run-panel-btn {
+  width: 100%; margin-top: 20px; padding: 13px;
+  background: rgba(200,180,240,0.08); border: 1px solid rgba(200,180,240,0.26); color: var(--accent);
+  border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.25s;
+}
+.run-panel-btn:hover { background: rgba(200,180,240,0.16); box-shadow: 0 6px 30px rgba(160,120,240,0.12); }
+
+.output-panel {
+  background: rgba(255,255,255,0.015); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; min-height: 400px;
+}
+.op-header {
+  padding: 13px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text3);
+}
+.op-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+.out-card {
+  border-radius: 10px; padding: 14px 16px; border: 1px solid;
+  opacity: 0; transform: translateY(6px); transition: all 0.35s;
+}
+.out-card.visible { opacity: 1; transform: translateY(0); }
+.out-name { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+.out-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.out-text strong { color: var(--text); font-weight: 500; }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 340px; color: var(--text3); font-size: 14px; text-align: center; gap: 12px;
+}
+.es-icon { font-size: 28px; opacity: 0.2; }
+
+/* STATS */
+.stats-section {
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: #000; padding: 72px 60px; z-index: 1; position: relative;
+}
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1100px; margin: 0 auto; }
+.stat-item { text-align: center; padding: 32px 20px; border-right: 1px solid var(--border); }
+.stat-item:last-child { border-right: none; }
+.stat-val { font-family: 'DM Sans', sans-serif; font-size: 44px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
+.sv1 { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.sv2 { color: var(--accent3); }
+.sv3 { color: #d4aa40; }
+.sv4 { background: linear-gradient(135deg, var(--accent2), #f47878); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.stat-label { font-size: 13px; color: var(--text2); }
+
+/* TESTIMONIALS */
+.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 64px; }
+.testi-card {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px;
+  padding: 28px; transition: all 0.3s;
+}
+.testi-card:hover { background: rgba(255,255,255,0.04); border-color: var(--border2); }
+.testi-quote { font-size: 14.5px; color: var(--text2); line-height: 1.75; margin-bottom: 20px; font-style: italic; font-weight: 300; }
+.testi-quote em { color: var(--text); font-style: normal; font-weight: 400; }
+.testi-person { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px; }
+.testi-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+.ta1 { background: rgba(200,180,240,0.12); color: var(--accent); border: 1px solid rgba(200,180,240,0.22); }
+.ta2 { background: rgba(125,212,184,0.12); color: var(--accent3); border: 1px solid rgba(125,212,184,0.22); }
+.ta3 { background: rgba(244,168,199,0.12); color: var(--accent2); border: 1px solid rgba(244,168,199,0.22); }
+.testi-name { font-size: 14px; font-weight: 500; }
+.testi-role { font-size: 12px; color: var(--text3); }
+
+/* PRICING */
+.pricing-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 64px; }
+.plan-card {
+  border-radius: 16px; padding: 34px 30px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02); position: relative; overflow: hidden; transition: all 0.3s;
+}
+.plan-card:hover { transform: translateY(-3px); }
+.plan-card.featured { border-color: rgba(200,180,240,0.35); background: rgba(200,180,240,0.04); }
+.plan-card.featured::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+}
+
+.plan-badge {
+  display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 4px 12px; border-radius: 100px; margin-bottom: 22px;
+}
+.pb-free { background: rgba(125,212,184,0.08); color: var(--accent3); border: 1px solid rgba(125,212,184,0.2); }
+.pb-pro  { background: rgba(200,180,240,0.1); color: var(--accent); border: 1px solid rgba(200,180,240,0.25); }
+.pb-team { background: rgba(200,170,80,0.08); color: #d4aa40; border: 1px solid rgba(200,170,80,0.2); }
+
+.plan-name { font-family: 'DM Sans', sans-serif; font-size: 20px; font-weight: 500; margin-bottom: 4px; letter-spacing: -0.01em; }
+.plan-desc { font-size: 13.5px; color: var(--text2); margin-bottom: 26px; }
+.plan-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 30px; }
+.pp-num { font-family: 'DM Sans', sans-serif; font-size: 46px; font-weight: 400; letter-spacing: -0.04em; }
+.pp-free-text { font-size: 24px; font-weight: 400; font-family: 'DM Sans', sans-serif; color: var(--accent3); }
+.pp-sym { font-size: 18px; color: var(--text2); }
+.pp-period { font-size: 14px; color: var(--text3); }
+
+.plan-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--text2); }
+.feat-check { color: var(--accent3); line-height: 1.4; flex-shrink: 0; font-size: 14px; }
+.feat-x { color: var(--text3); line-height: 1.4; flex-shrink: 0; font-size: 14px; }
+
+.plan-btn {
+  width: 100%; padding: 12px; border-radius: 100px; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.pb-ghost  { background: none; border: 1px solid var(--border2); color: var(--text2); }
+.pb-ghost:hover  { border-color: rgba(255,255,255,0.26); color: var(--text); }
+.pb-accent { background: var(--accent); border: none; color: #000; }
+.pb-accent:hover { background: #d4c0f6; transform: translateY(-1px); }
+.pb-gold   { background: rgba(200,170,80,0.1); border: 1px solid rgba(200,170,80,0.26); color: #d4aa40; }
+.pb-gold:hover { background: rgba(200,170,80,0.2); }
+
+/* FAQ */
+.faq-grid { max-width: 700px; margin: 60px auto 0; display: flex; flex-direction: column; gap: 2px; }
+.faq-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); overflow: hidden; }
+.faq-item:first-child { border-radius: 12px 12px 0 0; }
+.faq-item:last-child  { border-radius: 0 0 12px 12px; }
+.faq-q {
+  width: 100%; text-align: left; background: none; border: none; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 400;
+  padding: 20px 24px; cursor: pointer; display: flex; justify-content: space-between;
+  align-items: center; gap: 12px; transition: background 0.2s;
+}
+.faq-q:hover { background: rgba(255,255,255,0.03); }
+.faq-arrow { color: var(--text3); font-size: 18px; transition: transform 0.2s; flex-shrink: 0; }
+.faq-item.open .faq-arrow { transform: rotate(45deg); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.faq-item.open .faq-a { max-height: 220px; }
+.faq-a-inner { padding: 0 24px 20px; font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+/* CTA */
+.cta-section {
+  text-align: center; padding: 160px 60px;
+  position: relative; overflow: hidden; z-index: 1;
+}
+.cta-title {
+  font-family: 'DM Sans', sans-serif; font-size: clamp(30px, 4.2vw, 58px);
+  font-weight: 400; line-height: 1.12; letter-spacing: -0.025em;
+  margin-bottom: 18px;
+}
+.cta-sub { font-size: 17px; color: var(--text2); margin-bottom: 48px; font-weight: 300; }
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border); padding: 44px 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 1; position: relative; background: #000;
+}
+.footer-left { display: flex; align-items: center; gap: 16px; }
+.footer-copy { font-size: 13px; color: var(--text3); }
+.footer-links { display: flex; gap: 28px; }
+.footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--text2); }
+
+/* SCROLL REVEAL */
+.fade-in { animation: fadeIn 0.8s ease forwards; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  section { padding: 72px 24px; }
+  .why-grid, .interactive-wrapper, .features-grid, .pricing-grid, .testi-grid { grid-template-columns: 1fr; gap: 24px; }
+  .features-grid { background: none; border: none; }
+  .steps-row { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .steps-row::before { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .agents-row { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 20px; text-align: center; }
+}
+</style>
+</head>
 <body>
 
-<!-- NAVIGATION BAR -->
-<nav class="navbar">
-<div class="navContainer">
-<div class="navLinks">
-<a href="/" class="navLink">Debate</a>
-<a href="/history" class="navLink" id="historyLink">History</a>
-</div>
-</div>
+<canvas id="grad-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14.5" stroke="rgba(200,180,240,0.25)" stroke-width="1"/>
+        <path d="M10 16 C10 10 22 10 22 16" stroke="#c8b4f0" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <circle cx="10" cy="16" r="2.5" fill="#c8b4f0"/>
+        <circle cx="22" cy="16" r="1.5" fill="rgba(244,168,199,0.85)"/>
+        <circle cx="16" cy="22" r="1.5" fill="rgba(125,212,184,0.85)"/>
+      </svg>
+    </div>
+    <span>Cosine</span>
+    <span class="logo-version">1.4</span>
+  </div>
+
+  <ul class="nav-links">
+    <li><a href="#why">Why Cosine</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#demo">Try it</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+
+  <div class="nav-cta">
+    <span style="font-size:13px;color:var(--text3);">by <strong style="color:var(--text2);font-weight:500;">Feaven</strong></span>
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-primary">Get early access</button>
+  </div>
 </nav>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="loginPage">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="pulse"></div>
+    Now in early access &mdash; Cosine 1.4
+  </div>
 
-<!-- Google Sign-In Button (Top Right) -->
-<div class="googleSignInContainer">
-<div id="g_id_onload"
-     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse">
-</div>
-<div class="g_id_signin" data-type="standard"></div>
-</div>
+  <h1 class="fade-in">
+    Make every decision<br>
+    <span class="h1-accent">bulletproof.</span>
+  </h1>
 
-<div class="loginContainer">
-<div class="header">
-<img src="v1-01.png" class="logo">
-<div class="titleBlock">
-<h1>Cosine <span class="gradient-text">1.4</span></h1>
-<p class="subtitle">Make decisions more powerful.</p>
-</div>
-</div>
+  <p class="hero-sub fade-in" style="animation-delay:0.15s">
+    Before your recommendation reaches the client, it goes through a panel of specialist AI agents &mdash; CFO, operations, market, devil's advocate &mdash; who debate it like senior partners would.
+  </p>
 
-<div class="loginContent">
-<div class="inputRow">
-<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
-<button id="sendBtn" class="sendBtn" type="button">
-<svg viewBox="0 0 24 24">
-<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
-</svg>
-</button>
-</div>
-</div>
-</div>
-</div>
+  <div class="hero-ctas fade-in" style="animation-delay:0.25s">
+    <button class="btn-hero">Start for free</button>
+    <button class="btn-hero-ghost">Watch 2-min demo</button>
+  </div>
 
-<!-- MAIN APP -->
-<div class="main hidden">
+  <div class="demo-window fade-in" style="animation-delay:0.4s">
+    <div class="demo-toolbar">
+      <div class="demo-dot dd-r"></div>
+      <div class="demo-dot dd-y"></div>
+      <div class="demo-dot dd-g"></div>
+      <span class="demo-title">cosine.feaven.ai &mdash; Challenge session</span>
+    </div>
+    <div class="demo-body">
+      <div class="demo-strategy">
+        <div class="demo-strategy-label">Strategy submitted</div>
+        <div class="demo-strategy-text">
+          Recommend entering the <span>UAE market</span> via a distribution partnership.
+          Estimated year-1 revenue: <span>&#8377;12 crore</span>. Payback: <span>18 months</span>.
+          Key risk flagged: currency exposure.
+        </div>
+      </div>
+      <button class="run-btn" onclick="this.textContent='Running panel\u2026'; this.style.opacity='0.6'">Run challenge panel &mdash; 5 agents</button>
+      <div class="agents-row">
+        <div class="agent-card ac-cfo">
+          <div class="agent-name an-cfo">CFO Agent</div>
+          <div class="agent-text">Gulf distribution contracts run <strong>60&ndash;90 day payment terms</strong>. At 75-day DSO, your payback extends to <strong>26 months</strong> and you need &#8377;2.2Cr working capital not in this plan.</div>
+        </div>
+        <div class="agent-card ac-ops">
+          <div class="agent-name an-ops">Operations Agent</div>
+          <div class="agent-text">UAE customs clearance averages <strong>12&ndash;18 days</strong> for industrial goods. Your model assumes <strong>8 days</strong>. Supply chain lead time is wrong.</div>
+        </div>
+        <div class="agent-card ac-mkt">
+          <div class="agent-name an-mkt">Market Agent</div>
+          <div class="agent-text">"A local industrial goods firm" is doing a lot of work here. If they carry <strong>competing product lines</strong>, you will be deprioritised. Who is this partner specifically?</div>
+        </div>
+        <div class="agent-card ac-dev">
+          <div class="agent-name an-dev">Devil's Advocate</div>
+          <div class="agent-text">If the partner underperforms, you have <strong>no direct sales fallback</strong>. What does the exit clause cost? This isn't a risk section &mdash; it's a <strong>hope section</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<nav class="navbar">
-<div class="navContainer">
-<div class="navLinks">
-<a href="#" class="navLink" onclick="showDebatePage(event)">Debate</a>
-<a href="#" class="navLink" onclick="showHistoryPage(event)">History</a>
-</div>
-<div class="userInfo">
-<span id="userName">User</span>
-<button id="logoutBtn" class="logoutBtn">Logout</button>
-</div>
-</div>
-</nav>
-
-<!-- DEBATE PAGE -->
-<div id="debatePage" class="debatePage">
-<div class="header">
-<img src="v1-01.png" class="logo">
-
-<div class="titleBlock">
-<h1>Cosine <span class="gradient-text">1.4</span></h1>
-<p class="subtitle">Make decisions more powerful.</p>
-</div>
-</div>
-
-<div id="chatContainer" class="chatContainer hidden"></div>
-
-<div class="inputRow">
-<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
-<button id="sendBtn" class="sendBtn" type="button">
-<svg viewBox="0 0 24 24">
-<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
-</svg>
-</button>
-</div>
-</div>
-
-<!-- HISTORY PAGE -->
-<div id="historyPage" class="historyPage">
-<div class="historyContainer">
-<h2>Your Debate History</h2>
-<div id="historyList" class="historyList"></div>
-</div>
-</div>
-
-<!-- DEBATE DETAIL VIEW -->
-<div id="debateDetailPage" class="debateDetailPage">
-<div class="debateDetailContainer">
-<button class="backBtn" onclick="showHistoryPage(event)">← Back to History</button>
-<div id="debateDetail" class="debateDetail"></div>
-</div>
+<!-- STATS -->
+<div class="stats-section">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-val sv1">4.7&times;</div>
+      <div class="stat-label">More blind spots caught vs. solo review</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val sv2">28s</div>
+      <div class="stat-label">Average time to full panel challenge</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val sv3">93%</div>
+      <div class="stat-label">Of consultants found a flaw in their first session</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val sv4">Zero</div>
+      <div class="stat-label">Ad spend needed to reach your first 50 clients</div>
+    </div>
+  </div>
 </div>
 
-</div>
+<!-- WHY -->
+<section class="why-section" id="why">
+  <div class="section-inner">
+    <span class="section-eyebrow">The problem</span>
+    <h2 class="section-title">Generic AI tells you<br>you're right. We don't.</h2>
+    <p class="section-sub">Single-model AI assistants are trained to be agreeable. That's exactly the wrong trait when your strategy needs real pressure before it reaches a client.</p>
 
-<div class="credit">
-<img src="feaven.png">
-<span>Feaven</span>
-</div>
+    <div class="why-grid">
+      <div>
+        <div class="compare-label"><div class="dot-bad"></div><span class="cl-bad">With a standard AI assistant</span></div>
+        <div class="chat-bubble cb-user">"Review my Gulf market entry plan. Any flaws?"</div>
+        <div class="chat-bubble cb-bad">
+          Your strategy is well-structured. The distribution partnership is a sound low-risk entry. A few things to consider: ensure your partner has strong relationships, and consider currency hedging. Overall this looks solid.
+        </div>
+        <div class="verdict-bad">Result: Consultant walks into the CEO meeting. CEO asks about 90-day payment terms. Consultant has no answer.</div>
+      </div>
 
-<script src="c1.js"></script>
+      <div>
+        <div class="compare-label"><div class="dot-good"></div><span class="cl-good">With Cosine 1.4</span></div>
+        <div class="agent-response ar-cfo">
+          <div class="cb-good-header" style="color:#d4aa40;">CFO Agent</div>
+          Your 18-month payback assumes <strong>30-day receivables</strong>. Gulf distribution is 60&ndash;90 days. Remodel at 75-day DSO &mdash; payback jumps to 26 months and you need &#8377;2.2Cr working capital not in this plan.
+        </div>
+        <div class="agent-response ar-ops">
+          <div class="cb-good-header" style="color:var(--accent3);">Operations Agent</div>
+          UAE customs clearance averages <strong>12&ndash;18 days</strong> for industrial goods. Your model assumes 8 days. The supply chain timeline is wrong.
+        </div>
+        <div class="agent-response ar-dev">
+          <div class="cb-good-header" style="color:#f47878;">Devil's Advocate</div>
+          If the partner underperforms, you have <strong>no direct sales fallback</strong>. This isn't a risk section &mdash; it's a hope section.
+        </div>
+        <div class="verdict-good">Result: Consultant finds 3 critical flaws before the meeting. Fixes them. Walks in confident. Client is impressed.</div>
+      </div>
+    </div>
+  </div>
+</section>
 
+<!-- FEATURES -->
+<section id="features" style="background:#000;">
+  <div class="section-inner">
+    <span class="section-eyebrow">Built for consultants</span>
+    <h2 class="section-title">Everything you need to<br>ship airtight strategy.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon fi-purple">
+          <svg viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="5" height="5" rx="1" stroke="#c8b4f0" stroke-width="1.3"/><rect x="10" y="3" width="5" height="5" rx="1" stroke="#c8b4f0" stroke-width="1.3"/><rect x="3" y="10" width="5" height="5" rx="1" stroke="#c8b4f0" stroke-width="1.3"/><rect x="10" y="10" width="5" height="5" rx="1" stroke="#c8b4f0" stroke-width="1.3"/></svg>
+        </div>
+        <div class="feature-title">Specialist agent panel</div>
+        <div class="feature-desc">CFO, Operations, Market, Devil's Advocate, and Industry Specialist &mdash; each with a hardcoded adversarial mandate. Not one voice. Five.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon fi-pink">
+          <svg viewBox="0 0 18 18" fill="none"><path d="M9 3 L15 14 L3 14 Z" stroke="#f4a8c7" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 8 L9 11" stroke="#f4a8c7" stroke-width="1.3" stroke-linecap="round"/><circle cx="9" cy="12.5" r="0.6" fill="#f4a8c7"/></svg>
+        </div>
+        <div class="feature-title">Role-based conflict</div>
+        <div class="feature-desc">Agents are designed to reach different conclusions. The tension between CFO and Ops is intentional &mdash; that's where the insight lives.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon fi-teal">
+          <svg viewBox="0 0 18 18" fill="none"><path d="M14 9 C14 12 11 14.5 9 14.5 C7 14.5 4 12 4 9 C4 6 6.5 3.5 9 3.5" stroke="#7dd4b8" stroke-width="1.3" stroke-linecap="round"/><path d="M12 4 L14.5 3.5 L15 6" stroke="#7dd4b8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="feature-title">Defend and iterate</div>
+        <div class="feature-desc">Push back on any challenge. The agent pushes harder. 2&ndash;3 rounds of adversarial pressure surfaces flaws that a single pass misses.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon fi-amber">
+          <svg viewBox="0 0 18 18" fill="none"><rect x="3" y="2.5" width="12" height="13" rx="1.5" stroke="#d4aa40" stroke-width="1.3"/><path d="M6 7 H12 M6 10 H10" stroke="#d4aa40" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">Pre-submission report</div>
+        <div class="feature-desc">Export a full challenge report &mdash; all objections, your responses, and open issues flagged. Your prep doc before every client meeting.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon fi-red">
+          <svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#f47878" stroke-width="1.3"/><path d="M9 6 L9 9.5" stroke="#f47878" stroke-width="1.3" stroke-linecap="round"/><circle cx="9" cy="12" r="0.65" fill="#f47878"/></svg>
+        </div>
+        <div class="feature-title">Severity flagging</div>
+        <div class="feature-desc">Every objection rated Critical, Moderate, or Minor so you know where to focus before deadline.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon fi-blue">
+          <svg viewBox="0 0 18 18" fill="none"><path d="M9 3 C5.5 3 3 5.5 3 9 C3 12.5 5.5 15 9 15" stroke="#80b4ff" stroke-width="1.3" stroke-linecap="round"/><path d="M12 7 C13.5 8 14.5 9 14.5 9 C14.5 9 13.5 10 12 11" stroke="#80b4ff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9 H14.5" stroke="#80b4ff" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feature-title">Industry specialist</div>
+        <div class="feature-desc">Define your vertical &mdash; healthcare, manufacturing, fintech, retail &mdash; and get sector-specific pushback from an agent that knows the terrain.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="section-inner">
+    <span class="section-eyebrow">How it works</span>
+    <h2 class="section-title">Five steps. Twenty-eight seconds.</h2>
+    <div class="steps-row">
+      <div class="step-item">
+        <div class="step-num sn1">1</div>
+        <div class="step-title">Paste your strategy</div>
+        <div class="step-desc">Free-text or structured fields. Any format your recommendation lives in.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num sn2">2</div>
+        <div class="step-title">Choose your panel</div>
+        <div class="step-desc">Select which agents run. Default: all five. Set the industry for the specialist.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num sn3">3</div>
+        <div class="step-title">Run the challenge</div>
+        <div class="step-desc">Agents run in parallel. Results stream in real time. 28 seconds average.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num sn4">4</div>
+        <div class="step-title">Defend and iterate</div>
+        <div class="step-desc">Respond to any objection. The agent pushes back. Repeat until resolved.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num sn5">5</div>
+        <div class="step-title">Export the report</div>
+        <div class="step-desc">Download your pre-submission challenge report. Walk into every meeting ready.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE DEMO -->
+<section id="demo" style="background:#000;">
+  <div class="section-inner">
+    <span class="section-eyebrow">Try it right now</span>
+    <h2 class="section-title">Paste a strategy.<br>See it challenged.</h2>
+    <p class="section-sub">Type or paste any business recommendation below and run it through the panel.</p>
+
+    <div class="interactive-wrapper">
+      <div>
+        <span class="ic-label">Your strategy or recommendation</span>
+        <textarea id="strat-input" placeholder="e.g. I recommend entering the UAE market via a distribution partnership with a local industrial goods firm. Year-1 revenue target: &#8377;12 crore. Payback: 18 months..."></textarea>
+
+        <div style="margin-top:20px;">
+          <span class="ic-label">Active agents</span>
+          <div class="agents-select">
+            <button class="agent-toggle active-cfo" data-agent="cfo" onclick="toggleAgent(this)">CFO</button>
+            <button class="agent-toggle active-ops" data-agent="ops" onclick="toggleAgent(this)">Operations</button>
+            <button class="agent-toggle active-mkt" data-agent="mkt" onclick="toggleAgent(this)">Market</button>
+            <button class="agent-toggle active-dev" data-agent="dev" onclick="toggleAgent(this)">Devil's Advocate</button>
+            <button class="agent-toggle active-ind" data-agent="ind" onclick="toggleAgent(this)">Industry</button>
+          </div>
+        </div>
+
+        <button class="run-panel-btn" onclick="runDemo()">Run challenge panel</button>
+
+        <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:0.07em;text-transform:uppercase;">What makes Cosine different</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Agents don't validate &mdash; they attack. Each has a hardcoded adversarial mandate and won't back down unless you give them evidence. This is how partner challenge sessions actually work.</div>
+        </div>
+      </div>
+
+      <div class="output-panel">
+        <div class="op-header">
+          <span style="width:7px;height:7px;border-radius:50%;background:rgba(125,212,184,0.45);display:inline-block;"></span>
+          Challenge panel output
+        </div>
+        <div class="op-body" id="demo-output">
+          <div class="empty-state" id="empty-state">
+            <div class="es-icon">&#9678;</div>
+            <div>Paste a strategy and run the panel<br>to see agents challenge it.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section style="background:var(--bg2);border-top:1px solid var(--border);">
+  <div class="section-inner">
+    <span class="section-eyebrow">Early users</span>
+    <h2 class="section-title">Consultants who never submit<br>a deck without it.</h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-quote">"The CFO agent found a working capital gap in my Gulf entry deck that would have been <em>embarrassing in the boardroom</em>. Found it in 30 seconds. Took me 3 hours to model it properly &mdash; but I had the answer ready."</div>
+        <div class="testi-person">
+          <div class="testi-avatar ta1">AR</div>
+          <div>
+            <div class="testi-name">Ananya R.</div>
+            <div class="testi-role">Independent Strategy Consultant, Mumbai</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-quote">"I used to spend half a day playing devil's advocate with myself before every client submission. Cosine replaces that. <em>It's faster and more brutal than I am with myself</em>, which is saying something."</div>
+        <div class="testi-person">
+          <div class="testi-avatar ta2">KM</div>
+          <div>
+            <div class="testi-name">Karan M.</div>
+            <div class="testi-role">Fractional CFO, Bangalore</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-quote">"The pre-submission report is what sold me. I send it to clients as an appendix now &mdash; shows rigor. <em>Clients trust me more because of it.</em>"</div>
+        <div class="testi-person">
+          <div class="testi-avatar ta3">SP</div>
+          <div>
+            <div class="testi-name">Shreya P.</div>
+            <div class="testi-role">Growth Strategy Advisor, Delhi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="section-inner">
+    <span class="section-eyebrow">Pricing</span>
+    <h2 class="section-title">Start free. Pay when<br>you see the value.</h2>
+    <p class="section-sub">No contracts. No annual lock-in. Built for consultants who charge more per hour than this costs per month.</p>
+
+    <div class="pricing-grid">
+      <div class="plan-card">
+        <div class="plan-badge pb-free">Free forever</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-desc">Test the panel. See the difference.</div>
+        <div class="plan-price"><span class="pp-free-text">Free</span></div>
+        <ul class="plan-features">
+          <li><span class="feat-check">&#10003;</span> 3 challenge sessions per month</li>
+          <li><span class="feat-check">&#10003;</span> All 5 agents included</li>
+          <li><span class="feat-check">&#10003;</span> Real-time streaming output</li>
+          <li><span class="feat-x">&#8211;</span> <span style="color:var(--text3);">Export reports</span></li>
+          <li><span class="feat-x">&#8211;</span> <span style="color:var(--text3);">Defend and iterate rounds</span></li>
+          <li><span class="feat-x">&#8211;</span> <span style="color:var(--text3);">Severity flagging</span></li>
+        </ul>
+        <button class="plan-btn pb-ghost">Get started free</button>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge pb-pro">Most popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-desc">For independent consultants who bill by the hour.</div>
+        <div class="plan-price">
+          <span class="pp-sym">$</span>
+          <span class="pp-num" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">49</span>
+          <span class="pp-period">/ month</span>
+        </div>
+        <ul class="plan-features">
+          <li><span class="feat-check">&#10003;</span> Unlimited challenge sessions</li>
+          <li><span class="feat-check">&#10003;</span> All 5 specialist agents</li>
+          <li><span class="feat-check">&#10003;</span> Defend and iterate (3 rounds)</li>
+          <li><span class="feat-check">&#10003;</span> Severity flagging per objection</li>
+          <li><span class="feat-check">&#10003;</span> PDF pre-submission report</li>
+          <li><span class="feat-check">&#10003;</span> Custom industry specialist prompt</li>
+        </ul>
+        <button class="plan-btn pb-accent">Start Pro &mdash; $49/mo</button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-badge pb-team">For small firms</div>
+        <div class="plan-name">Team</div>
+        <div class="plan-desc">Up to 5 consultants. Shared workspace.</div>
+        <div class="plan-price">
+          <span class="pp-sym">$</span>
+          <span class="pp-num" style="color:#d4aa40;">149</span>
+          <span class="pp-period">/ month</span>
+        </div>
+        <ul class="plan-features">
+          <li><span class="feat-check">&#10003;</span> Everything in Pro</li>
+          <li><span class="feat-check">&#10003;</span> Up to 5 team members</li>
+          <li><span class="feat-check">&#10003;</span> Shared session history</li>
+          <li><span class="feat-check">&#10003;</span> Custom agent personas</li>
+          <li><span class="feat-check">&#10003;</span> White-label reports with your logo</li>
+          <li><span class="feat-check">&#10003;</span> Priority support</li>
+        </ul>
+        <button class="plan-btn pb-gold">Start Team &mdash; $149/mo</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:28px;font-size:13px;color:var(--text3);">
+      All prices in USD. Indian billing available in INR at equivalent rates. &nbsp;&middot;&nbsp; 14-day money-back guarantee on Pro.
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding:100px 60px;background:#000;">
+  <div class="section-inner" style="text-align:center;">
+    <span class="section-eyebrow">FAQ</span>
+    <h2 class="section-title">Questions we get asked</h2>
+  </div>
+  <div class="faq-grid">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Why can't I use a standard AI assistant for this?<span class="faq-arrow">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Standard AI models are trained to be agreeable and helpful. When you ask them to challenge your strategy, they anchor to your framing, soften criticism, and converge toward validation. Cosine uses multiple agents with hardcoded adversarial mandates, each attacking from a different professional role &mdash; and they don't back down unless you give them evidence.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is my strategy data private?<span class="faq-arrow">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Yes. We do not train on your strategy inputs. Sessions are encrypted in transit and at rest. We never share your data with third parties. You can delete your session history at any time from your account settings.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How good are the agents at domain-specific challenges?<span class="faq-arrow">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Very good for strategy, market entry, financial assumptions, and operational feasibility &mdash; which covers most consultant recommendations. The Industry Specialist agent becomes more precise when you give it a detailed vertical (e.g. "B2B SaaS in Southeast Asia" vs. just "tech").</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can I customise the agents?<span class="faq-arrow">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">On the Pro plan, you can customise the Industry Specialist agent's prompt and vertical. On the Team plan, you can build fully custom agent personas with specific mandates. A full agent builder UI is on the V2 roadmap.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Who is Feaven?<span class="faq-arrow">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Feaven is the company behind Cosine 1.4. We build AI tools specifically for knowledge workers and consultants &mdash; people who make high-stakes decisions alone and need structured intelligence to challenge their thinking before it reaches clients.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2 class="cta-title">
+    Your next recommendation<br>
+    <span class="h1-accent">deserves a challenge.</span>
+  </h2>
+  <p class="cta-sub">Join consultants who never submit a deck without running it through the panel first.</p>
+  <div class="hero-ctas">
+    <button class="btn-hero">Get early access &mdash; it's free</button>
+    <button class="btn-hero-ghost">Talk to the founder</button>
+  </div>
+  <div style="margin-top:28px;font-size:13px;color:var(--text3);">No credit card. No commitment. 3 free sessions every month.</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="logo" style="font-size:15px;">
+      <div class="logo-mark" style="width:24px;height:24px;">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14.5" stroke="rgba(200,180,240,0.25)" stroke-width="1"/>
+          <path d="M10 16 C10 10 22 10 22 16" stroke="#c8b4f0" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <circle cx="10" cy="16" r="2.5" fill="#c8b4f0"/>
+        </svg>
+      </div>
+      Cosine 1.4
+    </div>
+    <span class="footer-copy">&#169; 2025 Feaven. All rights reserved.</span>
+  </div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+    <a href="#">Twitter / X</a>
+    <a href="#">LinkedIn</a>
+  </div>
+</footer>
+
+<script>
+/* ANIMATED MULTICOLOR GRADIENT — more vivid, more colors, shifts over time */
+(function() {
+  const canvas = document.getElementById('grad-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* More orbs, more hue variety, larger radii for full-page saturation */
+  const orbs = [
+    { x: 0.15, y: 0.12, r: 0.42, color: [110,  60, 230], speed: 0.00017, phase: 0.0  },
+    { x: 0.82, y: 0.22, r: 0.36, color: [230,  60, 140], speed: 0.00012, phase: 1.8  },
+    { x: 0.48, y: 0.68, r: 0.40, color: [ 40, 190, 155], speed: 0.00020, phase: 3.2  },
+    { x: 0.08, y: 0.82, r: 0.30, color: [220, 110,  40], speed: 0.00015, phase: 0.9  },
+    { x: 0.92, y: 0.78, r: 0.34, color: [ 60, 110, 240], speed: 0.00018, phase: 4.4  },
+    { x: 0.58, y: 0.32, r: 0.24, color: [200,  40, 210], speed: 0.00024, phase: 2.1  },
+    { x: 0.30, y: 0.55, r: 0.28, color: [ 30, 200, 100], speed: 0.00016, phase: 5.0  },
+    { x: 0.72, y: 0.52, r: 0.26, color: [240, 160,  40], speed: 0.00022, phase: 1.2  },
+    { x: 0.20, y: 0.38, r: 0.20, color: [ 80, 200, 220], speed: 0.00026, phase: 3.8  },
+  ];
+
+  let rafId;
+  function draw(ts) {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    orbs.forEach(o => {
+      const ox = o.x + Math.sin(ts * o.speed + o.phase) * 0.20;
+      const oy = o.y + Math.cos(ts * o.speed * 0.65 + o.phase) * 0.16;
+      const cx = ox * W, cy = oy * H;
+      const radius = o.r * Math.max(W, H);
+      const [r,g,b] = o.color;
+
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      grad.addColorStop(0,   `rgba(${r},${g},${b},0.26)`);
+      grad.addColorStop(0.45,`rgba(${r},${g},${b},0.10)`);
+      grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    rafId = requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* INTERACTIVE DEMO */
+const RESPONSES = {
+  cfo: {
+    name: "CFO Agent", color: "#d4aa40",
+    bg: "rgba(200,170,80,0.07)", border: "rgba(200,170,80,0.2)",
+    responses: [
+      "Your revenue projection assumes full channel sellthrough from month 3. That's optimistic for a new market entrant with no brand recognition. Validate against comparable entries or revise downward by 30&ndash;40%.",
+      "The payback period calculation is missing working capital requirements. Distribution models typically need 2&ndash;3 months of inventory float before first receivable. Model this or the number is fictional.",
+      "Have you stress-tested the margin at 60% of revenue target? If year-1 underperforms &mdash; which it typically does &mdash; does the unit economics still hold? Show the downside case."
+    ]
+  },
+  ops: {
+    name: "Operations Agent", color: "#7dd4b8",
+    bg: "rgba(125,212,184,0.07)", border: "rgba(125,212,184,0.2)",
+    responses: [
+      "The execution timeline assumes a signed distribution agreement by week 4. B2B partner negotiations in new markets average 8&ndash;12 weeks. Your entire plan is 4&ndash;8 weeks behind before you start.",
+      "Who manages the distribution relationship operationally? If it's the founding consultant, that's a single point of failure. What's the handoff plan when you move to the next engagement?",
+      "Have you validated that the partner has the warehousing capacity to support your year-1 volume projections? This is not a given for a new entrant."
+    ]
+  },
+  mkt: {
+    name: "Market Agent", color: "#c8b4f0",
+    bg: "rgba(200,180,240,0.07)", border: "rgba(200,180,240,0.2)",
+    responses: [
+      "You've described the market size but not the addressable market. How much of the total market is realistically reachable through this specific distribution channel in year 1?",
+      "Who are the top 3 competitors already in this market and what share do they hold? Your recommendation reads as if you're entering a vacuum. What's the displacement strategy?",
+      "Customer acquisition in a distribution model means the end-customer doesn't know you &mdash; they know the distributor. What's your brand-building plan if you want to own the customer relationship eventually?"
+    ]
+  },
+  dev: {
+    name: "Devil's Advocate", color: "#f47878",
+    bg: "rgba(244,120,120,0.07)", border: "rgba(244,120,120,0.2)",
+    responses: [
+      "Let's assume this fails in 18 months. What's the most likely cause? Walk me through the failure mode. If you can't name it precisely, your risk section isn't a risk section &mdash; it's a prayer.",
+      "The entire strategy depends on one partner performing. What's the exit clause cost? What does pivoting to direct sales require in terms of capital and time? You haven't modelled the plan B.",
+      "What does success look like in year 3, not year 1? If the strategy is working, what does the client need to do differently at the 18-month mark? Recommendations without a 'what comes next' are incomplete."
+    ]
+  },
+  ind: {
+    name: "Industry Specialist", color: "#80b4ff",
+    bg: "rgba(100,160,255,0.07)", border: "rgba(100,160,255,0.2)",
+    responses: [
+      "This market has sector-specific regulatory requirements not addressed in your recommendation. Local certification and registration can add 3&ndash;6 months to your go-live timeline depending on product category.",
+      "Industry-specific payment practices in this vertical differ from your assumptions. Typical buyers in this sector negotiate 90-day terms as a condition of doing business. Have you validated the financial model against sector norms?",
+      "Competitive dynamics in this vertical are driven by relationship tenure &mdash; most key accounts have been with their suppliers for 5+ years. A new entrant via distribution has a credibility gap your recommendation doesn't address."
+    ]
+  }
+};
+
+let activeAgents = new Set(['cfo','ops','mkt','dev','ind']);
+let usedResponses = {};
+
+function toggleAgent(btn) {
+  const agent = btn.dataset.agent;
+  if (activeAgents.has(agent)) {
+    if (activeAgents.size === 1) return;
+    activeAgents.delete(agent);
+    btn.className = 'agent-toggle';
+  } else {
+    activeAgents.add(agent);
+    btn.className = `agent-toggle active-${agent}`;
+  }
+}
+
+function runDemo() {
+  const input = document.getElementById('strat-input').value.trim();
+  const output = document.getElementById('demo-output');
+  if (!input) { document.getElementById('strat-input').placeholder = 'Please paste a strategy first\u2026'; return; }
+  const es = document.getElementById('empty-state');
+  if (es) es.style.display = 'none';
+  output.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0;letter-spacing:0.02em;">Running panel &mdash; agents analysing\u2026</div>';
+
+  setTimeout(() => {
+    output.innerHTML = '';
+    let delay = 0;
+    activeAgents.forEach(key => {
+      const a = RESPONSES[key];
+      if (!usedResponses[key]) usedResponses[key] = 0;
+      const ri = usedResponses[key] % a.responses.length;
+      usedResponses[key]++;
+      const card = document.createElement('div');
+      card.className = 'out-card';
+      card.style.cssText = `background:${a.bg};border-color:${a.border}`;
+      card.innerHTML = `<div class="out-name" style="color:${a.color}">${a.name}</div><div class="out-text">${a.responses[ri]}</div>`;
+      output.appendChild(card);
+      setTimeout(() => card.classList.add('visible'), delay);
+      delay += 180;
+    });
+  }, 900);
+}
+
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+/* SCROLL REVEAL */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.feature-card, .testi-card, .plan-card, .step-item').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(22px)';
+  el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  observer.observe(el);
+});
+
+/* AUTHENTICATION & STARTUP */
+document.addEventListener('DOMContentLoaded', () => {
+  // Check authentication on page load
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get("token");
+  const userFromUrl = params.get("user");
+  
+  if (tokenFromUrl && userFromUrl) {
+    localStorage.setItem("authToken", tokenFromUrl);
+    localStorage.setItem("currentUser", userFromUrl);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    window.location.href = "logged.html";
+  }
+  
+  // Redirect if already authenticated
+  const authToken = localStorage.getItem("authToken");
+  const currentUser = localStorage.getItem("currentUser");
+  if (authToken && currentUser) {
+    window.location.href = "logged.html";
+  }
+  
+  // Update nav buttons
+  const signInBtn = document.querySelector('.nav-cta .btn-ghost');
+  if (signInBtn) {
+    signInBtn.onclick = () => {
+      window.google?.accounts?.id?.renderButton(signInBtn, {});
+    };
+  }
+  
+  // "Start for free" button - redirect to logged.html for guest mode
+  const startBtn = document.querySelector('.hero-ctas .btn-hero');
+  if (startBtn) {
+    startBtn.onclick = () => {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("currentUser");
+      window.location.href = "logged.html";
+    };
+  }
+});
+
+// Initialize Google Sign-In
+function handleCredentialResponse(response) {
+  const token = response.credential;
+  if (!token) {
+    console.error("No token received");
+    return;
+  }
+  
+  console.log("Google token received, sending to server...");
+  
+  fetch(getApiUrl("/auth/google"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true"
+    },
+    body: JSON.stringify({ token })
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return res.json();
+  })
+  .then(data => {
+    if (data.access_token) {
+      localStorage.setItem("authToken", data.access_token);
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      window.location.href = "logged.html";
+    } else {
+      console.error("No access token in response");
+      alert("Authentication failed");
+    }
+  })
+  .catch(err => {
+    console.error("Auth error:", err);
+    alert("Authentication error: " + err.message);
+  });
+}
+
+window.onload = function () {
+  google.accounts.id.initialize({
+    client_id: "1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com",
+    callback: handleCredentialResponse
+  });
+};
+</script>
 </body>
 </html>

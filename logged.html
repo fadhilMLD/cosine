@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosine 1.4</title>
+<link rel="stylesheet" href="c1.css">
+<link rel="icon" type="image/png" href="favicon.png">
+<!-- Google Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Configuration -->
+<script src="config.js"></script>
+<script>
+// Check authentication on page load
+window.addEventListener('load', function() {
+  const authToken = localStorage.getItem("authToken");
+  const currentUser = localStorage.getItem("currentUser");
+  
+  if (!authToken || !currentUser) {
+    window.location.href = "home.html";
+  }
+});
+</script>
+</head>
+
+<body>
+
+<!-- NAVIGATION BAR -->
+<nav class="navbar">
+<div class="navContainer">
+<div class="navLinks">
+<a href="/" class="navLink">Debate</a>
+<a href="/history" class="navLink" id="historyLink">History</a>
+</div>
+</div>
+</nav>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="loginPage">
+
+<!-- Google Sign-In Button (Top Right) -->
+<div class="googleSignInContainer">
+<div id="g_id_onload"
+     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+</div>
+
+<div class="loginContainer">
+<div class="header">
+<img src="v1-01.png" class="logo">
+<div class="titleBlock">
+<h1>Cosine <span class="gradient-text">1.4</span></h1>
+<p class="subtitle">Make decisions more powerful.</p>
+</div>
+</div>
+
+<div class="loginContent">
+<div class="inputRow">
+<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
+<button id="sendBtn" class="sendBtn" type="button">
+<svg viewBox="0 0 24 24">
+<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MAIN APP -->
+<div class="main hidden">
+
+<nav class="navbar">
+<div class="navContainer">
+<div class="navLinks">
+<a href="#" class="navLink" onclick="showDebatePage(event)">Debate</a>
+<a href="#" class="navLink" onclick="showHistoryPage(event)">History</a>
+</div>
+<div class="userInfo">
+<span id="userName">User</span>
+<button id="logoutBtn" class="logoutBtn">Logout</button>
+</div>
+</div>
+</nav>
+
+<!-- DEBATE PAGE -->
+<div id="debatePage" class="debatePage">
+<div class="header">
+<img src="v1-01.png" class="logo">
+
+<div class="titleBlock">
+<h1>Cosine <span class="gradient-text">1.4</span></h1>
+<p class="subtitle">Make decisions more powerful.</p>
+</div>
+</div>
+
+<div id="chatContainer" class="chatContainer hidden"></div>
+
+<div class="inputRow">
+<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
+<button id="sendBtn" class="sendBtn" type="button">
+<svg viewBox="0 0 24 24">
+<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
+</svg>
+</button>
+</div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="historyPage" class="historyPage">
+<div class="historyContainer">
+<h2>Your Debate History</h2>
+<div id="historyList" class="historyList"></div>
+</div>
+</div>
+
+<!-- DEBATE DETAIL VIEW -->
+<div id="debateDetailPage" class="debateDetailPage">
+<div class="debateDetailContainer">
+<button class="backBtn" onclick="showHistoryPage(event)">← Back to History</button>
+<div id="debateDetail" class="debateDetail"></div>
+</div>
+</div>
+
+</div>
+
+<div class="credit">
+<img src="feaven.png">
+<span>Feaven</span>
+</div>
+
+<script src="c1.js"></script>
+
+</body>
+</html>
