@@ -488,6 +488,32 @@ padding:90px 10px 120px;
     display: none; /* No sender label for system messages */
 }
 
+.summaryMsg {
+    background: linear-gradient(135deg, #1a3a3a 0%, #0f2c3a 100%);
+    color: #b0e0e6;
+    border: 2px solid #00ccff;
+    border-radius: 8px;
+    padding: 16px;
+    width: 90%;
+    align-self: center;
+    margin: 20px 0;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.summaryMsg .senderLabel {
+    display: block;
+    color: #00ffff;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 .typing {
     opacity: 0.6;
     animation: pulse 1s ease-in-out infinite;
@@ -1042,8 +1068,7 @@ z-index:10;
         font-size: 14px;
     }
 }
-        font-size: 14px;
-    }
+    
 
     .senderLabel {
         position: absolute;
@@ -1095,4 +1120,3 @@ z-index:10;
         width: 45px;
         height: 45px;
     }
-}

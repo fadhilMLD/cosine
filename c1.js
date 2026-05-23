@@ -268,6 +268,9 @@ function addMessage(sender, text) {
         senderName = "You";
     } else if (sender === "System") {
         senderClass = "systemMsg";
+    } else if (sender === "Summary") {
+        senderClass = "summaryMsg";
+        senderName = "📋 Summary";
     } else {
         // For agents like Generator, Negator, etc.
         senderClass = "agentMsg";
@@ -277,7 +280,7 @@ function addMessage(sender, text) {
     msg.className = senderClass;
     
     // Add agent-specific class
-    if (sender !== "user" && sender !== "System") {
+    if (sender !== "user" && sender !== "System" && sender !== "Summary") {
         msg.classList.add(`agent-${sender.toLowerCase().replace(/\s+/g, "-")}`);
     }
     
