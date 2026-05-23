@@ -10,17 +10,6 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- Configuration -->
 <script src="config.js"></script>
-<script>
-// Check authentication on page load
-window.addEventListener('load', function() {
-  const authToken = localStorage.getItem("authToken");
-  const currentUser = localStorage.getItem("currentUser");
-  
-  if (!authToken || !currentUser) {
-    window.location.href = "home.html";
-  }
-});
-</script>
 </head>
 
 <body>
@@ -29,45 +18,22 @@ window.addEventListener('load', function() {
 <nav class="navbar">
 <div class="navContainer">
 <div class="navLinks">
+<a href="index.html" class="navLink">← Home</a>
 <a href="/" class="navLink">Debate</a>
 <a href="/history" class="navLink" id="historyLink">History</a>
+</div>
+<div class="userProfile">
+<div class="userProfileInfo">
+<div class="userName" id="userDisplayName">User</div>
+<div class="userPlan" id="userDisplayPlan">Plan</div>
+</div>
+<button id="logoutBtnNav" class="logoutBtn">Logout</button>
 </div>
 </div>
 </nav>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="loginPage">
-
-<!-- Google Sign-In Button (Top Right) -->
-<div class="googleSignInContainer">
-<div id="g_id_onload"
-     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse">
-</div>
-<div class="g_id_signin" data-type="standard"></div>
-</div>
-
-<div class="loginContainer">
-<div class="header">
-<img src="v1-01.png" class="logo">
-<div class="titleBlock">
-<h1>Cosine <span class="gradient-text">1.4</span></h1>
-<p class="subtitle">Make decisions more powerful.</p>
-</div>
-</div>
-
-<div class="loginContent">
-<div class="inputRow">
-<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
-<button id="sendBtn" class="sendBtn" type="button">
-<svg viewBox="0 0 24 24">
-<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
-</svg>
-</button>
-</div>
-</div>
-</div>
-</div>
+<!-- LOGIN PAGE (HIDDEN FOR THIS PAGE) -->
+<div id="loginPage" class="loginPage hidden"></div>
 
 <!-- MAIN APP -->
 <div class="main hidden">

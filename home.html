@@ -7,10 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-<!-- Google Sign-In -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<!-- Configuration -->
-<script src="config.js"></script>
 <style>
 :root {
   --bg: #000000;
@@ -1139,104 +1135,6 @@ document.querySelectorAll('.feature-card, .testi-card, .plan-card, .step-item').
   el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
   observer.observe(el);
 });
-
-/* AUTHENTICATION & STARTUP */
-document.addEventListener('DOMContentLoaded', () => {
-  // Check authentication on page load
-  const params = new URLSearchParams(window.location.search);
-  const tokenFromUrl = params.get("token");
-  const userFromUrl = params.get("user");
-  
-  if (tokenFromUrl && userFromUrl) {
-    localStorage.setItem("authToken", tokenFromUrl);
-    localStorage.setItem("currentUser", userFromUrl);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    window.location.href = "logged.html";
-  }
-  
-  // Redirect if already authenticated
-  const authToken = localStorage.getItem("authToken");
-  const currentUser = localStorage.getItem("currentUser");
-  if (authToken && currentUser) {
-    try {
-      const user = JSON.parse(currentUser);
-      // If user has subscription plan, redirect to logged.html, otherwise to plan.html
-      if (user.subscription_plan && user.subscription_plan !== "starter") {
-        window.location.href = "logged.html";
-      } else if (user.subscription_plan === "starter") {
-        window.location.href = "logged.html";
-      }
-    } catch (e) {
-      console.error("Failed to parse user data");
-    }
-  }
-  
-  // Update nav buttons
-  const signInBtn = document.querySelector('.nav-cta .btn-ghost');
-  if (signInBtn) {
-    signInBtn.onclick = () => {
-      window.google?.accounts?.id?.renderButton(signInBtn, {});
-    };
-  }
-  
-  // "Start for free" button - redirect to logged.html for guest mode
-  const startBtn = document.querySelector('.hero-ctas .btn-hero');
-  if (startBtn) {
-    startBtn.onclick = () => {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("currentUser");
-      window.location.href = "logged.html";
-    };
-  }
-});
-
-// Initialize Google Sign-In
-function handleCredentialResponse(response) {
-  const token = response.credential;
-  if (!token) {
-    console.error("No token received");
-    return;
-  }
-  
-  console.log("Google token received, sending to server...");
-  
-  fetch(getApiUrl("/auth/google"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "true"
-    },
-    body: JSON.stringify({ token })
-  })
-  .then(res => {
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    return res.json();
-  })
-  .then(data => {
-    if (data.access_token) {
-      localStorage.setItem("authToken", data.access_token);
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-      // Redirect to plan selection page
-      window.location.href = "plan.html";
-    } else {
-      console.error("No access token in response");
-      alert("Authentication failed");
-    }
-  })
-  .catch(err => {
-    console.error("Auth error:", err);
-    alert("Authentication error: " + err.message);
-  });
-}
-
-window.onload = function () {
-  google.accounts.id.initialize({
-    client_id: "1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com",
-    callback: handleCredentialResponse
-  });
-};
 </script>
 </body>
 </html>

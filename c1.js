@@ -4,8 +4,14 @@
 
 const loginPage = document.getElementById("loginPage");
 const mainApp = document.querySelector(".main");
-const logoutBtn = document.getElementById("logoutBtn");
-const userNameEl = document.getElementById("userName");
+
+// Get logout button (could be logoutBtn or logoutBtnNav depending on page)
+let logoutBtn = document.getElementById("logoutBtn") || document.getElementById("logoutBtnNav");
+
+// Get user name/plan elements (could be different on different pages)
+let userNameEl = document.getElementById("userName");
+let userDisplayName = document.getElementById("userDisplayName");
+let userDisplayPlan = document.getElementById("userDisplayPlan");
 
 let authToken = null;
 let currentUser = null;
@@ -24,9 +30,8 @@ function initializeAuth() {
         try {
             currentUser = JSON.parse(userFromUrl);
             localStorage.setItem("currentUser", userFromUrl);
-            // Clean up URL and redirect to logged.html
-            window.history.replaceState({}, document.title, "logged.html");
-            window.location.href = "logged.html";
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {
             console.error("Failed to parse user data", e);
         }
@@ -41,44 +46,38 @@ function initializeAuth() {
         }
     }
     
-    // Check if user is on the correct page
-    const currentFile = window.location.pathname.split('/').pop() || 'home.html';
-    
+    // Check if user is authenticated and has plan selected
     if (authToken && currentUser) {
-        // User is authenticated
-        if (!currentFile.includes('logged.html')) {
-            window.location.href = "logged.html";
-        }
         showMainApp();
     } else {
-        // User is not authenticated
-        if (!currentFile.includes('home.html')) {
-            window.location.href = "home.html";
-        }
         showLoginPage();
     }
 }
 
 function showLoginPage() {
-    if (loginPage) {
-        loginPage.classList.remove("hidden");
-    }
-    if (mainApp) {
-        mainApp.classList.add("hidden");
-    }
+    loginPage.classList.remove("hidden");
+    mainApp.classList.add("hidden");
 }
 
 function showMainApp() {
-    if (loginPage) {
-        loginPage.classList.add("hidden");
-    }
-    if (mainApp) {
-        mainApp.classList.remove("hidden");
-    }
-    if (currentUser && userNameEl) {
-        userNameEl.textContent = currentUser.name || "User";
-    } else if (isGuest && userNameEl) {
-        userNameEl.textContent = "Guest User";
+    loginPage.classList.add("hidden");
+    if (mainApp) mainApp.classList.remove("hidden");
+    
+    if (currentUser) {
+        // Update navbar user display (for logged.html)
+        if (userDisplayName) {
+            userDisplayName.textContent = currentUser.name || "User";
+        }
+        if (userDisplayPlan) {
+            const planDisplay = (currentUser.subscription_plan || "starter").toUpperCase();
+            userDisplayPlan.textContent = planDisplay;
+        }
+        // Update username (for other pages)
+        if (userNameEl) {
+            userNameEl.textContent = currentUser.name || "User";
+        }
+    } else if (isGuest) {
+        if (userNameEl) userNameEl.textContent = "Guest User";
     }
 }
 
@@ -122,8 +121,8 @@ function handleCredentialResponse(response) {
             currentUser = data.user;
             localStorage.setItem("authToken", authToken);
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
-            // Redirect to logged.html
-            window.location.href = "logged.html";
+            // Redirect to plan selection page
+            window.location.href = "plan.html";
         } else {
             console.error("No access token in response:", data);
             alert("Authentication failed: No token in response");
@@ -141,12 +140,12 @@ function logout() {
     isGuest = false;
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
-    // Redirect to home.html
-    window.location.href = "home.html";
-}
+    window.location.href = "index.html";
 }
 
-logoutBtn.addEventListener("click", logout);
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", logout);
+}
 
 // ============================================
 // CHAT APPLICATION
