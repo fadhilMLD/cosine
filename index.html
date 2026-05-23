@@ -1158,17 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const authToken = localStorage.getItem("authToken");
   const currentUser = localStorage.getItem("currentUser");
   if (authToken && currentUser) {
-    try {
-      const user = JSON.parse(currentUser);
-      // If user has subscription plan, redirect to logged.html, otherwise to plan.html
-      if (user.subscription_plan && user.subscription_plan !== "starter") {
-        window.location.href = "logged.html";
-      } else if (user.subscription_plan === "starter") {
-        window.location.href = "logged.html";
-      }
-    } catch (e) {
-      console.error("Failed to parse user data");
-    }
+    window.location.href = "logged.html";
   }
   
   // Update nav buttons
@@ -1218,8 +1208,7 @@ function handleCredentialResponse(response) {
     if (data.access_token) {
       localStorage.setItem("authToken", data.access_token);
       localStorage.setItem("currentUser", JSON.stringify(data.user));
-      // Redirect to plan selection page
-      window.location.href = "plan.html";
+      window.location.href = "logged.html";
     } else {
       console.error("No access token in response");
       alert("Authentication failed");

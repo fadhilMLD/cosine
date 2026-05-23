@@ -4,14 +4,8 @@
 
 const loginPage = document.getElementById("loginPage");
 const mainApp = document.querySelector(".main");
-
-// Get logout button (could be logoutBtn or logoutBtnNav depending on page)
-let logoutBtn = document.getElementById("logoutBtn") || document.getElementById("logoutBtnNav");
-
-// Get user name/plan elements (could be different on different pages)
-let userNameEl = document.getElementById("userName");
-let userDisplayName = document.getElementById("userDisplayName");
-let userDisplayPlan = document.getElementById("userDisplayPlan");
+const logoutBtn = document.getElementById("logoutBtn");
+const userNameEl = document.getElementById("userName");
 
 let authToken = null;
 let currentUser = null;
@@ -46,7 +40,7 @@ function initializeAuth() {
         }
     }
     
-    // Check if user is authenticated and has plan selected
+    // Show main app if authenticated, otherwise show login page
     if (authToken && currentUser) {
         showMainApp();
     } else {
@@ -61,23 +55,11 @@ function showLoginPage() {
 
 function showMainApp() {
     loginPage.classList.add("hidden");
-    if (mainApp) mainApp.classList.remove("hidden");
-    
+    mainApp.classList.remove("hidden");
     if (currentUser) {
-        // Update navbar user display (for logged.html)
-        if (userDisplayName) {
-            userDisplayName.textContent = currentUser.name || "User";
-        }
-        if (userDisplayPlan) {
-            const planDisplay = (currentUser.subscription_plan || "starter").toUpperCase();
-            userDisplayPlan.textContent = planDisplay;
-        }
-        // Update username (for other pages)
-        if (userNameEl) {
-            userNameEl.textContent = currentUser.name || "User";
-        }
+        userNameEl.textContent = currentUser.name || "User";
     } else if (isGuest) {
-        if (userNameEl) userNameEl.textContent = "Guest User";
+        userNameEl.textContent = "Guest User";
     }
 }
 
@@ -121,8 +103,7 @@ function handleCredentialResponse(response) {
             currentUser = data.user;
             localStorage.setItem("authToken", authToken);
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
-            // Redirect to plan selection page
-            window.location.href = "plan.html";
+            showMainApp();
         } else {
             console.error("No access token in response:", data);
             alert("Authentication failed: No token in response");
@@ -140,12 +121,11 @@ function logout() {
     isGuest = false;
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
-    window.location.href = "index.html";
+    showLoginPage();
+    location.reload();
 }
 
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", logout);
-}
+logoutBtn.addEventListener("click", logout);
 
 // ============================================
 // CHAT APPLICATION
