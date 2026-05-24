@@ -354,6 +354,14 @@
 
                 const data = await response.json();
 
+                if (response.status === 401) {
+                    // Token is invalid or expired
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/signin.html';
+                    return;
+                }
+
                 if (response.ok) {
                     // Update local user data
                     user.plan = selectedPlan;

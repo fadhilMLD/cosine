@@ -119,8 +119,7 @@ function logout() {
     authToken = null;
     currentUser = null;
     isGuest = false;
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("currentUser");
+    clearAuthSession();
     showLoginPage();
     location.reload();
 }

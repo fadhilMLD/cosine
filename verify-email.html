@@ -345,8 +345,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('authToken', data.access_token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // Use utility function to safely manage session
+                    setAuthSession(data.access_token, data.user);
                     showSuccess('Email verified successfully!');
                     setTimeout(() => {
                         window.location.href = '/select-plan.html';

@@ -12,3 +12,30 @@ function getApiUrl(path) {
 function getWsUrl(path) {
     return `${API_CONFIG.WS_URL}${path}`;
 }
+
+// ============================================
+// SESSION MANAGEMENT UTILITIES
+// ============================================
+
+/**
+ * Clear all authentication data from localStorage
+ * Use this before setting new auth data to prevent session collisions
+ */
+function clearAuthSession() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentProjectId');
+    localStorage.removeItem('registeredEmail');
+}
+
+/**
+ * Set new auth session data
+ * @param {string} token - JWT access token
+ * @param {object} user - User object from API
+ */
+function setAuthSession(token, user) {
+    clearAuthSession();
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+}

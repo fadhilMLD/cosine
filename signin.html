@@ -434,13 +434,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('authToken', data.access_token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    if (data.user.plan === 'Free') {
-                        window.location.href = '/projects.html';
-                    } else {
-                        window.location.href = '/projects.html';
+                    // Use utility function to safely manage session
+                    setAuthSession(data.access_token, data.user);
+                    window.location.href = '/projects.html';
                     }
                 } else {
                     showError(data.detail || 'Sign in failed');
@@ -464,8 +460,8 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    localStorage.setItem('authToken', data.access_token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // Use utility function to safely manage session
+                    setAuthSession(data.access_token, data.user);
                     window.location.href = '/select-plan.html';
                 } else {
                     showError(data.detail || 'Google sign in failed');

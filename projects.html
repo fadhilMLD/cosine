@@ -492,10 +492,14 @@
 
             document.getElementById('userName').textContent = user.name || 'User';
             document.getElementById('planBadge').textContent = user.plan || 'Free';
+            
+            // Store current user ID for validation
+            window.currentUserId = user.user_id;
         }
 
         async function loadProjects() {
             const token = localStorage.getItem('authToken');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
 
             try {
                 const response = await fetch('http://localhost:8000/projects', {
@@ -504,6 +508,14 @@
                     }
                 });
 
+                if (response.status === 401) {
+                    // Token is invalid or expired, redirect to signin
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/signin.html';
+                    return;
+                }
+                
                 if (!response.ok) throw new Error('Failed to load projects');
 
                 const projects = await response.json();
@@ -657,9 +669,7 @@
         }
 
         function handleLogout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            localStorage.removeItem('currentProjectId');
+            clearAuthSession();
             window.location.href = '/signin.html';
         }
 
