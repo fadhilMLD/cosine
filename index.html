@@ -7,10 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-<!-- Google Sign-In -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<!-- Configuration -->
-<script src="config.js"></script>
 <style>
 :root {
   --bg: #000000;
@@ -534,8 +530,8 @@ footer {
 
   <div class="nav-cta">
     <span style="font-size:13px;color:var(--text3);">by <strong style="color:var(--text2);font-weight:500;">Feaven</strong></span>
-    <button class="btn-ghost">Sign in</button>
-    <button class="btn-primary">Get early access</button>
+    <a href="signin.html"><button class="btn-ghost">Sign in</button></a>
+    <button class="btn-primary" onclick="window.location.href='signin.html'">Get started</button>
   </div>
 </nav>
 
