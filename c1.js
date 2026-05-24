@@ -625,4 +625,54 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM Content Loaded");
     initializeAuth();
     initializePage();
+    loadProjectFromUrl();
 });
+
+// ============================================
+// PROJECT INITIALIZATION FROM URL
+// ============================================
+
+let currentProjectId = null;
+
+function loadProjectFromUrl() {
+    // Extract projectId from hash (e.g., #/project/[projectId])
+    const hash = window.location.hash;
+    const match = hash.match(/#\/project\/(.+)$/);
+    
+    if (match && match[1]) {
+        currentProjectId = match[1];
+        loadProjectDetails(currentProjectId);
+    } else if (localStorage.getItem('currentProjectId')) {
+        // Fallback to localStorage for backward compatibility
+        currentProjectId = localStorage.getItem('currentProjectId');
+        loadProjectDetails(currentProjectId);
+    }
+}
+
+async function loadProjectDetails(projectId) {
+    const token = localStorage.getItem('authToken');
+    
+    if (!token || !projectId) {
+        return;
+    }
+
+    try {
+        const response = await fetch(getApiUrl(`/projects/${projectId}`), {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const projectNameEl = document.getElementById('projectName');
+            if (projectNameEl && data.name) {
+                projectNameEl.textContent = `Project: ${data.name}`;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading project details:', error);
+    }
+}

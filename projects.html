@@ -628,7 +628,7 @@
 
         function openProject(projectId) {
             localStorage.setItem('currentProjectId', projectId);
-            window.location.href = '/logged.html';
+            window.location.href = `/logged.html#/project/${projectId}`;
         }
 
         async function deleteProject(projectId, projectName) {
