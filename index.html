@@ -528,12 +528,29 @@ footer {
     <li><a href="#pricing">Pricing</a></li>
   </ul>
 
-  <div class="nav-cta">
+  <div class="nav-cta" id="nav-cta">
     <span style="font-size:13px;color:var(--text3);">by <strong style="color:var(--text2);font-weight:500;">Feaven</strong></span>
-    <a href="signin.html"><button class="btn-ghost">Sign in</button></a>
-    <button class="btn-primary" onclick="window.location.href='signin.html'">Get started</button>
+    <a href="signin.html"><button class="btn-ghost" id="signin-btn">Sign in</button></a>
+    <button class="btn-primary" id="cta-btn" onclick="window.location.href='signin.html'">Get started</button>
   </div>
 </nav>
+
+<script>
+// Check if user is authenticated
+document.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('auth_token');
+  const signinBtn = document.getElementById('signin-btn');
+  const ctaBtn = document.getElementById('cta-btn');
+  const signinLink = signinBtn.parentElement;
+
+  if (token) {
+    // User is logged in - show "Go to projects" button
+    signinLink.innerHTML = '<button class="btn-ghost" onclick="window.location.href=\'projects.html\'">My Projects</button>';
+    ctaBtn.textContent = 'Go to projects';
+    ctaBtn.onclick = () => window.location.href = 'projects.html';
+  }
+});
+</script>
 
 <!-- HERO -->
 <section class="hero">
