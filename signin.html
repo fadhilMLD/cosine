@@ -437,7 +437,6 @@
                     // Use utility function to safely manage session
                     setAuthSession(data.access_token, data.user);
                     window.location.href = '/projects.html';
-                    }
                 } else {
                     showError(data.detail || 'Sign in failed');
                 }
