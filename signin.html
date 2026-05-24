@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosine - Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --bg2: #070707;
+            --bg3: #0a0a0a;
+            --surface: rgba(255,255,255,0.03);
+            --surface2: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --text: #f0eef8;
+            --text2: rgba(240,238,248,0.5);
+            --text3: rgba(240,238,248,0.26);
+            --accent: #c8b4f0;
+            --accent2: #f4a8c7;
+            --accent3: #7dd4b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: #000000;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .signin-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(32px);
+        }
+
+        .signin-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .signin-header h1 {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .signin-header p {
+            color: var(--text2);
+            font-size: 14px;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            background: none;
+            border: none;
+            color: var(--text2);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(200, 180, 240, 0.05);
+        }
+
+        input::placeholder {
+            color: var(--text3);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .btn-primary:hover {
+            background: #d4c0f6;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--text3);
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider span {
+            margin: 0 12px;
+        }
+
+        .google-signin {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0;
+        }
+
+        .text-center {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 20px;
+        }
+
+        .text-center a {
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .text-center a:hover {
+            color: #d4c0f6;
+        }
+
+        .error-message {
+            background: rgba(244, 168, 199, 0.1);
+            border: 1px solid rgba(244, 168, 199, 0.3);
+            color: var(--accent2);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--text2);
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .password-requirements {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--surface);
+            border-radius: 6px;
+        }
+
+        .requirement {
+            margin: 4px 0;
+        }
+
+        .requirement.met {
+            color: var(--accent3);
+        }
+    </style>
+</head>
+<body>
+    <div class="signin-container">
+        <div class="signin-header">
+            <h1>Cosine</h1>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('email')">Email</button>
+            <button class="tab-btn" onclick="switchTab('google')">Google</button>
+        </div>
+
+        <!-- Email Sign In/Register Tab -->
+        <div id="email-tab" class="tab-content active">
+            <div class="error-message" id="emailError"></div>
+
+            <!-- Sign In Mode -->
+            <div id="signInMode">
+                <form onsubmit="handleEmailSignIn(event)">
+                    <div class="form-group">
+                        <label for="signInEmail">Email Address</label>
+                        <input type="email" id="signInEmail" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signInPassword">Password</label>
+                        <input type="password" id="signInPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Sign In</button>
+                </form>
+                <div class="text-center">
+                    Don't have an account? <a onclick="switchMode('register')">Create one</a>
+                </div>
+            </div>
+
+            <!-- Register Mode -->
+            <div id="registerMode" style="display: none;">
+                <form onsubmit="handleEmailRegister(event)">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email Address</label>
+                        <input type="email" id="registerEmail" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Create Password</label>
+                        <input type="password" id="registerPassword" placeholder="••••••••" oninput="checkPasswordStrength()" required>
+                        <div class="password-requirements">
+                            <div class="requirement" id="req-length">✓ At least 8 characters</div>
+                            <div class="requirement" id="req-upper">✓ One uppercase letter</div>
+                            <div class="requirement" id="req-number">✓ One number</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="registerSubmitBtn">Create Account</button>
+                </form>
+                <div class="text-center">
+                    Already have an account? <a onclick="switchMode('signin')">Sign in</a>
+                </div>
+            </div>
+
+            <div class="loading" id="emailLoading">
+                <div class="spinner"></div>
+                <div style="margin-top: 8px;">Processing...</div>
+            </div>
+        </div>
+
+        <!-- Google Sign In Tab -->
+        <div id="google-tab" class="tab-content">
+            <div class="google-signin">
+                <div id="g_id_onload"
+                     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+                     data-callback="handleGoogleSignIn">
+                </div>
+                <div class="g_id_signin" data-type="standard"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function switchMode(mode) {
+            document.getElementById('signInMode').style.display = mode === 'signin' ? 'block' : 'none';
+            document.getElementById('registerMode').style.display = mode === 'register' ? 'block' : 'none';
+            document.getElementById('emailError').classList.remove('show');
+            document.getElementById('emailError').textContent = '';
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('registerPassword').value;
+            
+            const requirements = {
+                length: password.length >= 8,
+                upper: /[A-Z]/.test(password),
+                number: /\d/.test(password)
+            };
+
+            document.getElementById('req-length').classList.toggle('met', requirements.length);
+            document.getElementById('req-upper').classList.toggle('met', requirements.upper);
+            document.getElementById('req-number').classList.toggle('met', requirements.number);
+
+            const allMet = Object.values(requirements).every(Boolean);
+            document.getElementById('registerSubmitBtn').disabled = !allMet;
+        }
+
+        async function handleEmailRegister(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('registerEmail').value;
+            const name = document.getElementById('registerName').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                showLoading(true);
+                const response = await fetch('http://localhost:8000/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('registeredEmail', email);
+                    window.location.href = '/verify-email.html?email=' + encodeURIComponent(email);
+                } else {
+                    showError(data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleEmailSignIn(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('signInEmail').value;
+            const password = document.getElementById('signInPassword').value;
+
+            try {
+                showLoading(true);
+                const response = await fetch('http://localhost:8000/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    if (data.user.plan === 'Free') {
+                        window.location.href = '/projects.html';
+                    } else {
+                        window.location.href = '/projects.html';
+                    }
+                } else {
+                    showError(data.detail || 'Sign in failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleGoogleSignIn(response) {
+            try {
+                showLoading(true);
+                const res = await fetch('http://localhost:8000/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/select-plan.html';
+                } else {
+                    showError(data.detail || 'Google sign in failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('emailError');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function showLoading(show) {
+            document.getElementById('emailLoading').classList.toggle('show', show);
+        }
+    </script>
+</body>
+</html>

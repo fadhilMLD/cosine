@@ -25,16 +25,7 @@
 </nav>
 
 <!-- LOGIN PAGE -->
-<div id="loginPage" class="loginPage">
-
-<!-- Google Sign-In Button (Top Right) -->
-<div class="googleSignInContainer">
-<div id="g_id_onload"
-     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse">
-</div>
-<div class="g_id_signin" data-type="standard"></div>
-</div>
+<div id="loginPage" class="loginPage hidden">
 
 <div class="loginContainer">
 <div class="header">
@@ -59,15 +50,17 @@
 </div>
 
 <!-- MAIN APP -->
-<div class="main hidden">
+<div class="main">
 
 <nav class="navbar">
 <div class="navContainer">
 <div class="navLinks">
 <a href="#" class="navLink" onclick="showDebatePage(event)">Debate</a>
 <a href="#" class="navLink" onclick="showHistoryPage(event)">History</a>
+<a href="/projects.html" class="navLink">My Projects</a>
 </div>
 <div class="userInfo">
+<span id="projectName" style="color: var(--accent); margin-right: 16px; font-size: 13px;"></span>
 <span id="userName">User</span>
 <button id="logoutBtn" class="logoutBtn">Logout</button>
 </div>
