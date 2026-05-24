@@ -344,12 +344,41 @@
 
         <!-- Google Sign In Tab -->
         <div id="google-tab" class="tab-content">
-            <div class="google-signin">
-                <div id="g_id_onload"
-                     data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-                     data-callback="handleGoogleSignIn">
+            <div class="error-message" id="googleError"></div>
+            
+            <!-- Google Sign In Mode -->
+            <div id="googleSignInMode">
+                <div class="google-signin">
+                    <p style="text-align: center; margin-bottom: 16px; color: var(--text2); font-size: 14px;">Sign in to your existing account</p>
+                    <div id="g_id_onload_signin"
+                         data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+                         data-callback="handleGoogleSignIn">
+                    </div>
+                    <div class="g_id_signin" data-type="standard"></div>
                 </div>
-                <div class="g_id_signin" data-type="standard"></div>
+                <div class="text-center" style="margin-top: 16px;">
+                    Don't have an account? <a onclick="switchGoogleMode('signup')">Create one with Google</a>
+                </div>
+            </div>
+            
+            <!-- Google Sign Up Mode -->
+            <div id="googleSignUpMode" style="display: none;">
+                <div class="google-signin">
+                    <p style="text-align: center; margin-bottom: 16px; color: var(--text2); font-size: 14px;">Create a new account with Google</p>
+                    <div id="g_id_onload_signup"
+                         data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+                         data-callback="handleGoogleSignUp">
+                    </div>
+                    <div class="g_id_signin" data-type="standard"></div>
+                </div>
+                <div class="text-center" style="margin-top: 16px;">
+                    Already have an account? <a onclick="switchGoogleMode('signin')">Sign in instead</a>
+                </div>
+            </div>
+            
+            <div class="loading" id="googleLoading">
+                <div class="spinner"></div>
+                <div style="margin-top: 8px;">Processing...</div>
             </div>
         </div>
     </div>
@@ -368,6 +397,13 @@
             document.getElementById('registerMode').style.display = mode === 'register' ? 'block' : 'none';
             document.getElementById('emailError').classList.remove('show');
             document.getElementById('emailError').textContent = '';
+        }
+
+        function switchGoogleMode(mode) {
+            document.getElementById('googleSignInMode').style.display = mode === 'signin' ? 'block' : 'none';
+            document.getElementById('googleSignUpMode').style.display = mode === 'signup' ? 'block' : 'none';
+            document.getElementById('googleError').classList.remove('show');
+            document.getElementById('googleError').textContent = '';
         }
 
         function checkPasswordStrength() {
@@ -449,7 +485,8 @@
 
         async function handleGoogleSignIn(response) {
             try {
-                showLoading(true);
+                showGoogleLoading(true);
+                clearGoogleError();
                 const res = await fetch('http://localhost:8000/auth/google', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -461,14 +498,41 @@
                 if (res.ok) {
                     // Use utility function to safely manage session
                     setAuthSession(data.access_token, data.user);
-                    window.location.href = '/select-plan.html';
+                    window.location.href = '/projects.html';
                 } else {
-                    showError(data.detail || 'Google sign in failed');
+                    showGoogleError(data.detail || 'Google sign in failed');
                 }
             } catch (error) {
-                showError('Network error: ' + error.message);
+                showGoogleError('Network error: ' + error.message);
             } finally {
-                showLoading(false);
+                showGoogleLoading(false);
+            }
+        }
+
+        async function handleGoogleSignUp(response) {
+            try {
+                showGoogleLoading(true);
+                clearGoogleError();
+                const res = await fetch('http://localhost:8000/auth/google-signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Store the email and user info for plan selection
+                    localStorage.setItem('registeredEmail', data.email);
+                    // Redirect to plan selection for new Google users
+                    window.location.href = '/select-plan.html?new=true&email=' + encodeURIComponent(data.email);
+                } else {
+                    showGoogleError(data.detail || 'Google sign up failed');
+                }
+            } catch (error) {
+                showGoogleError('Network error: ' + error.message);
+            } finally {
+                showGoogleLoading(false);
             }
         }
 
@@ -478,8 +542,24 @@
             errorEl.classList.add('show');
         }
 
+        function showGoogleError(message) {
+            const errorEl = document.getElementById('googleError');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function clearGoogleError() {
+            const errorEl = document.getElementById('googleError');
+            errorEl.classList.remove('show');
+            errorEl.textContent = '';
+        }
+
         function showLoading(show) {
             document.getElementById('emailLoading').classList.toggle('show', show);
+        }
+
+        function showGoogleLoading(show) {
+            document.getElementById('googleLoading').classList.toggle('show', show);
         }
     </script>
 </body>

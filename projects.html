@@ -412,6 +412,7 @@
                 <span id="userName">User</span>
                 <span class="plan-badge" id="planBadge">Free</span>
             </div>
+            <button class="logout-btn" onclick="goToProfile()" style="cursor: pointer; border: none; background: none; padding: 0; color: var(--text2); font-size: 20px; transition: color 0.2s;">⚙️</button>
             <button class="logout-btn" onclick="handleLogout()">Logout</button>
         </div>
     </nav>
@@ -667,6 +668,10 @@
             } catch (error) {
                 alert('Error deleting project: ' + error.message);
             }
+        }
+
+        function goToProfile() {
+            window.location.href = '/profile.html';
         }
 
         function handleLogout() {
