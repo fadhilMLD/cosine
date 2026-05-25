@@ -47,6 +47,14 @@
             backdrop-filter: blur(32px);
         }
 
+        .logo-link {
+            transition: opacity 0.2s;
+        }
+
+        .logo-link:hover {
+            opacity: 0.8;
+        }
+
         .logo {
             font-family: 'Instrument Serif', serif;
             font-size: 20px;
@@ -321,7 +329,10 @@
 <body>
     <!-- Navigation -->
     <nav>
-        <div class="logo">Cosine</div>
+        <a href="projects.html" class="logo-link" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+            <img src="v1-01.png" alt="Cosine Logo" style="width: 30px; height: 30px; object-fit: contain;">
+            <div class="logo">Cosine</div>
+        </a>
         <div class="nav-right">
             <button class="back-btn" onclick="goBack()">← Back</button>
             <button class="logout-btn" onclick="handleLogout()">Logout</button>

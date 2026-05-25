@@ -46,6 +46,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
         }
 
         .signin-container {
@@ -273,9 +274,30 @@
         .requirement.met {
             color: var(--accent3);
         }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: 1px solid var(--border2);
+            color: var(--text2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
     </style>
 </head>
-<body>
+<bodybutton class="back-button" onclick="goBackToCosine()">← Back to Cosine.live</button>
+    <>
     <div class="signin-container">
         <div class="signin-header">
             <h1>Cosine</h1>
@@ -351,8 +373,9 @@
                 <div class="google-signin">
                     <p style="text-align: center; margin-bottom: 16px; color: var(--text2); font-size: 14px;">Sign in to your existing account</p>
                     <div id="g_id_onload_signin"
-                         data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
-                         data-callback="handleGoogleSignIn">
+                         data-auto_prompt="false">
+                    </div>
+                    <div id="google_signin_button
                     </div>
                     <div class="g_id_signin" data-type="standard"></div>
                 </div>
@@ -364,9 +387,10 @@
             <!-- Google Sign Up Mode -->
             <div id="googleSignUpMode" style="display: none;">
                 <div class="google-signin">
-                    <p style="text-align: center; margin-bottom: 16px; color: var(--text2); font-size: 14px;">Create a new account with Google</p>
-                    <div id="g_id_onload_signup"
-                         data-client_id="1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
+                    <p style="text-align: center; margin-bo
+                         data-auto_prompt="false">
+                    </div>
+                    <div id="google_signup_button3evrq0c5f496gf7b7udralb.apps.googleusercontent.com"
                          data-callback="handleGoogleSignUp">
                     </div>
                     <div class="g_id_signin" data-type="standard"></div>
@@ -388,6 +412,38 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
+
+            // Reinitialize Google Sign-In button if Google tab is clicked
+            if (tab === 'google') {
+                setTimeout(() => {
+                    if (window.google && window.google.accounts && window.google.accounts.id) {
+                        window.google.accounts.id.renderButton(
+                            document.querySelector('#google_signin_button'),
+                            { theme: 'outline', size: 'large' }
+                        );
+                    }
+                }, 100);
+            }
+        }
+
+            // Re-initialize callback and button for the switched mode
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                const buttonId = mode === 'signin' ? '#google_signin_button' : '#google_signup_button';
+                const callback = mode === 'signin' ? handleGoogleSignIn : handleGoogleSignUp;
+                
+                window.google.accounts.id.initialize({
+                    client_id: '1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com',
+                    callback: callback
+                });
+                
+                window.google.accounts.id.renderButton(
+                    document.querySelector(buttonId),
+                    { theme: 'outline', size: 'large' }
+                );
+            }
+
+        function goBackToCosine() {
+            window.location.href = 'https://cosine.live';
             document.getElementById(tab + '-tab').classList.add('active');
             event.target.classList.add('active');
         }
@@ -526,6 +582,23 @@
                     localStorage.setItem('registeredEmail', data.email);
                     // Redirect to plan selection for new Google users
                     window.location.href = '/select-plan.html?new=true&email=' + encodeURIComponent(data.email);
+
+        // Initialize Google Sign-In on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for Google API to load
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                window.google.accounts.id.initialize({
+                    client_id: '1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com',
+                    callback: handleGoogleSignIn
+                });
+                
+                // Render the button
+                window.google.accounts.id.renderButton(
+                    document.querySelector('#google_signin_button'),
+                    { theme: 'outline', size: 'large' }
+                );
+            }
+        });
                 } else {
                     showGoogleError(data.detail || 'Google sign up failed');
                 }
