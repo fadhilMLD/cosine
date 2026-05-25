@@ -509,13 +509,7 @@ footer {
 <nav>
   <div class="logo">
     <div class="logo-mark">
-      <svg viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="14.5" stroke="rgba(200,180,240,0.25)" stroke-width="1"/>
-        <path d="M10 16 C10 10 22 10 22 16" stroke="#c8b4f0" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-        <circle cx="10" cy="16" r="2.5" fill="#c8b4f0"/>
-        <circle cx="22" cy="16" r="1.5" fill="rgba(244,168,199,0.85)"/>
-        <circle cx="16" cy="22" r="1.5" fill="rgba(125,212,184,0.85)"/>
-      </svg>
+      <img src="../media/logo/feaven.png" alt="Cosine Logo" style="width:100%;height:100%;">
     </div>
     <span>Cosine</span>
     <span class="logo-version">1.4</span>
@@ -569,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </p>
 
   <div class="hero-ctas fade-in" style="animation-delay:0.25s">
-    <button class="btn-hero">Start for free</button>
+    <button class="btn-hero" onclick="window.location.href='signin.html'">Start for free</button>
     <button class="btn-hero-ghost">Watch 2-min demo</button>
   </div>
 
@@ -855,9 +849,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="pricing-grid">
       <div class="plan-card">
         <div class="plan-badge pb-free">Free forever</div>
-        <div class="plan-name">Starter</div>
-        <div class="plan-desc">Test the panel. See the difference.</div>
-        <div class="plan-price"><span class="pp-free-text">Free</span></div>
+        <div class="plan-name">Free</div>
+        <div class="plan-desc">Get started with Cosine.</div>
+        <div class="plan-price"><span class="pp-free-text">₹0</span></div>
         <ul class="plan-features">
           <li><span class="feat-check">&#10003;</span> 3 challenge sessions per month</li>
           <li><span class="feat-check">&#10003;</span> All 5 agents included</li>
@@ -866,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <li><span class="feat-x">&#8211;</span> <span style="color:var(--text3);">Defend and iterate rounds</span></li>
           <li><span class="feat-x">&#8211;</span> <span style="color:var(--text3);">Severity flagging</span></li>
         </ul>
-        <button class="plan-btn pb-ghost">Get started free</button>
+        <button class="plan-btn pb-ghost" onclick="window.location.href='signin.html'">Get started free</button>
       </div>
 
       <div class="plan-card featured">
@@ -874,8 +868,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="plan-name">Pro</div>
         <div class="plan-desc">For independent consultants who bill by the hour.</div>
         <div class="plan-price">
-          <span class="pp-sym">$</span>
-          <span class="pp-num" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">49</span>
+          <span class="pp-sym">₹</span>
+          <span class="pp-num" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">499</span>
           <span class="pp-period">/ month</span>
         </div>
         <ul class="plan-features">
@@ -886,32 +880,32 @@ document.addEventListener('DOMContentLoaded', function() {
           <li><span class="feat-check">&#10003;</span> PDF pre-submission report</li>
           <li><span class="feat-check">&#10003;</span> Custom industry specialist prompt</li>
         </ul>
-        <button class="plan-btn pb-accent">Start Pro &mdash; $49/mo</button>
+        <button class="plan-btn pb-accent" onclick="window.location.href='signin.html'">Start Pro &mdash; ₹499/mo</button>
       </div>
 
       <div class="plan-card">
-        <div class="plan-badge pb-team">For small firms</div>
-        <div class="plan-name">Team</div>
-        <div class="plan-desc">Up to 5 consultants. Shared workspace.</div>
+        <div class="plan-badge pb-team">Premium</div>
+        <div class="plan-name">Master</div>
+        <div class="plan-desc">For firms and advanced users.</div>
         <div class="plan-price">
-          <span class="pp-sym">$</span>
-          <span class="pp-num" style="color:#d4aa40;">149</span>
+          <span class="pp-sym">₹</span>
+          <span class="pp-num" style="color:#d4aa40;">1299</span>
           <span class="pp-period">/ month</span>
         </div>
         <ul class="plan-features">
           <li><span class="feat-check">&#10003;</span> Everything in Pro</li>
-          <li><span class="feat-check">&#10003;</span> Up to 5 team members</li>
-          <li><span class="feat-check">&#10003;</span> Shared session history</li>
+          <li><span class="feat-check">&#10003;</span> Unlimited team members</li>
+          <li><span class="feat-check">&#10003;</span> Advanced session history</li>
           <li><span class="feat-check">&#10003;</span> Custom agent personas</li>
           <li><span class="feat-check">&#10003;</span> White-label reports with your logo</li>
-          <li><span class="feat-check">&#10003;</span> Priority support</li>
+          <li><span class="feat-check">&#10003;</span> Priority 24/7 support</li>
         </ul>
-        <button class="plan-btn pb-gold">Start Team &mdash; $149/mo</button>
+        <button class="plan-btn pb-gold" onclick="window.location.href='signin.html'">Start Master &mdash; ₹1299/mo</button>
       </div>
     </div>
 
     <div style="text-align:center;margin-top:28px;font-size:13px;color:var(--text3);">
-      All prices in USD. Indian billing available in INR at equivalent rates. &nbsp;&middot;&nbsp; 14-day money-back guarantee on Pro.
+      All prices in Indian Rupees. 30-day billing cycle. Cancel anytime.
     </div>
   </div>
 </section>
@@ -954,8 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </h2>
   <p class="cta-sub">Join consultants who never submit a deck without running it through the panel first.</p>
   <div class="hero-ctas">
-    <button class="btn-hero">Get early access &mdash; it's free</button>
-    <button class="btn-hero-ghost">Talk to the founder</button>
+    <button class="btn-hero" onclick="window.location.href='signin.html'">Start for free</button>
   </div>
   <div style="margin-top:28px;font-size:13px;color:var(--text3);">No credit card. No commitment. 3 free sessions every month.</div>
 </section>
@@ -965,11 +958,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="footer-left">
     <div class="logo" style="font-size:15px;">
       <div class="logo-mark" style="width:24px;height:24px;">
-        <svg viewBox="0 0 32 32" fill="none">
-          <circle cx="16" cy="16" r="14.5" stroke="rgba(200,180,240,0.25)" stroke-width="1"/>
-          <path d="M10 16 C10 10 22 10 22 16" stroke="#c8b4f0" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-          <circle cx="10" cy="16" r="2.5" fill="#c8b4f0"/>
-        </svg>
+        <img src="../media/logo/feaven.png" alt="Cosine Logo" style="width:100%;height:100%;">
       </div>
       Cosine 1.4
     </div>
@@ -979,8 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <a href="#">Privacy</a>
     <a href="#">Terms</a>
     <a href="#">Contact</a>
-    <a href="#">Twitter / X</a>
-    <a href="#">LinkedIn</a>
+    <a href="#">Instagram</a>
   </div>
 </footer>
 
