@@ -414,9 +414,15 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        #grad-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; opacity: 0.6;
+        }
     </style>
 </head>
 <body>
+    <canvas id="grad-canvas"></canvas>
     <!-- Navigation -->
     <nav>
         <a href="projects.html" class="logo-link">
@@ -698,6 +704,58 @@
         function showModalLoading(show) {
             document.getElementById('modalLoading').style.display = show ? 'block' : 'none';
         }
+
+        /* Gradient Canvas Animation */
+        (function() {
+            const canvas = document.getElementById('grad-canvas');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const orbs = [
+                { x: 0.15, y: 0.12, r: 0.42, color: [110,  60, 230], speed: 0.00017, phase: 0.0  },
+                { x: 0.82, y: 0.22, r: 0.36, color: [230,  60, 140], speed: 0.00012, phase: 1.8  },
+                { x: 0.48, y: 0.68, r: 0.40, color: [ 40, 190, 155], speed: 0.00020, phase: 3.2  },
+                { x: 0.08, y: 0.82, r: 0.30, color: [220, 110,  40], speed: 0.00015, phase: 0.9  },
+                { x: 0.92, y: 0.78, r: 0.34, color: [ 60, 110, 240], speed: 0.00018, phase: 4.4  },
+                { x: 0.58, y: 0.32, r: 0.24, color: [200,  40, 210], speed: 0.00024, phase: 2.1  },
+                { x: 0.30, y: 0.55, r: 0.28, color: [ 30, 200, 100], speed: 0.00016, phase: 5.0  },
+                { x: 0.72, y: 0.52, r: 0.26, color: [240, 160,  40], speed: 0.00022, phase: 1.2  },
+                { x: 0.20, y: 0.38, r: 0.20, color: [ 80, 200, 220], speed: 0.00026, phase: 3.8  },
+            ];
+
+            let rafId;
+            function draw(ts) {
+                const W = canvas.width, H = canvas.height;
+                ctx.clearRect(0, 0, W, H);
+
+                orbs.forEach(o => {
+                    const ox = o.x + Math.sin(ts * o.speed + o.phase) * 0.20;
+                    const oy = o.y + Math.cos(ts * o.speed * 0.65 + o.phase) * 0.16;
+                    const cx = ox * W, cy = oy * H;
+                    const radius = o.r * Math.max(W, H);
+                    const [r,g,b] = o.color;
+
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    grad.addColorStop(0,   `rgba(${r},${g},${b},0.26)`);
+                    grad.addColorStop(0.45,`rgba(${r},${g},${b},0.10)`);
+                    grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                rafId = requestAnimationFrame(draw);
+            }
+            requestAnimationFrame(draw);
+        })();
     </script>
 </body>
 </html>

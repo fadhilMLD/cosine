@@ -306,16 +306,28 @@ function setupWebSocket() {
         return;
     }
 
-    // Build WebSocket URL with token if authenticated
+    // Validate project_id is available
+    if (!currentProjectId) {
+        console.error("Cannot establish WebSocket: No project selected");
+        alert("Please select a project first");
+        window.location.href = 'projects.html';
+        return;
+    }
+
+    // Build WebSocket URL with token and project_id
     let wsUrl = getWsUrl("/ws");
     if (authToken) {
-        wsUrl += "?token=" + authToken;
+        wsUrl += "?token=" + authToken + "&project_id=" + encodeURIComponent(currentProjectId);
+    } else {
+        console.error("Cannot establish WebSocket: User not authenticated");
+        alert("Please log in first");
+        return;
     }
 
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-        console.log("WebSocket connection established.");
+        console.log("WebSocket connection established for project: " + currentProjectId);
         socketReady = true;
         if (pendingPrompt) {
             socket.send(pendingPrompt);
@@ -366,10 +378,29 @@ function setupWebSocket() {
         }
     };
 
-    socket.onclose = () => {
-        console.log("WebSocket connection closed.");
+    socket.onclose = (event) => {
+        console.log("WebSocket connection closed.", event.code, event.reason);
         socketReady = false;
-        addMessage("System", "Connection to server lost. Please refresh.");
+        
+        // Handle different close codes
+        let message = "Connection to server lost. Please refresh.";
+        if (event.code === 1008) {
+            // Policy violation - authentication or project validation failed
+            if (event.reason === "Project ID required") {
+                message = "No project selected. Please select a project first.";
+                setTimeout(() => window.location.href = 'projects.html', 2000);
+            } else if (event.reason === "Project not found or access denied") {
+                message = "Project not found or you don't have access to it.";
+                setTimeout(() => window.location.href = 'projects.html', 2000);
+            } else if (event.reason === "Authentication required") {
+                message = "Authentication required. Please log in first.";
+                setTimeout(() => window.location.href = 'signin.html', 2000);
+            } else if (event.reason === "Invalid token") {
+                message = "Your session has expired. Please log in again.";
+                setTimeout(() => window.location.href = 'signin.html', 2000);
+            }
+        }
+        addMessage("System", message);
     };
 
     socket.onerror = (error) => {
