@@ -377,6 +377,11 @@
                 </div>
                 <div class="plan-badge" id="currentPlanBadge">Free</div>
             </div>
+
+            <!-- Subscription Info -->
+            <div id="subscriptionInfo" style="display: none; margin-top: 15px; padding: 12px; background-color: var(--secondary); border-radius: 8px;">
+                <div style="font-size: 13px; color: var(--text-secondary);" id="subscriptionEndDate"></div>
+            </div>
             
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
                 <label for="planSelect">Change Plan</label>
@@ -418,6 +423,26 @@
             document.getElementById('currentPlanName').textContent = (user.plan || 'Free') + ' Plan';
             document.getElementById('currentPlanBadge').textContent = user.plan || 'Free';
             document.getElementById('planSelect').value = user.plan || 'Free';
+
+            // Display subscription end date if available
+            const endDateEl = document.getElementById('subscriptionEndDate');
+            if (endDateEl) {
+                if (user.subscription_end_date) {
+                    const endDate = new Date(user.subscription_end_date);
+                    const formatted = endDate.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    endDateEl.textContent = `Renews on ${formatted}`;
+                    document.getElementById('subscriptionInfo').style.display = 'block';
+                } else if (user.plan !== 'Free') {
+                    endDateEl.textContent = 'Loading subscription details...';
+                    document.getElementById('subscriptionInfo').style.display = 'block';
+                } else {
+                    document.getElementById('subscriptionInfo').style.display = 'none';
+                }
+            }
         }
 
         async function updateName() {
@@ -468,6 +493,22 @@
 
             if (newPlan === user.plan) {
                 showError('Please select a different plan');
+                return;
+            }
+
+            // Plan hierarchy: Free < Pro < Master
+            const planHierarchy = {
+                'Free': 0,
+                'Pro': 1,
+                'Master': 2
+            };
+
+            const currentPlanLevel = planHierarchy[user.plan] || 0;
+            const newPlanLevel = planHierarchy[newPlan] || 0;
+
+            // Check if attempting to downgrade
+            if (newPlanLevel < currentPlanLevel) {
+                showError(`Cannot downgrade from ${user.plan} to ${newPlan}. Upgrades only allowed.`);
                 return;
             }
 
@@ -568,9 +609,12 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Update local user data
+                    // Update local user data with subscription information
                     const user = JSON.parse(localStorage.getItem('user') || '{}');
                     user.plan = plan;
+                    if (data.user && data.user.subscription_end_date) {
+                        user.subscription_end_date = data.user.subscription_end_date;
+                    }
                     localStorage.setItem('user', JSON.stringify(user));
                     
                     loadProfile();
@@ -606,6 +650,9 @@
                 if (response.ok) {
                     const user = JSON.parse(localStorage.getItem('user') || '{}');
                     user.plan = plan;
+                    if (data.user && data.user.subscription_end_date) {
+                        user.subscription_end_date = data.user.subscription_end_date;
+                    }
                     localStorage.setItem('user', JSON.stringify(user));
                     
                     loadProfile();
