@@ -56,6 +56,7 @@
             border-radius: 16px;
             padding: 40px;
             backdrop-filter: blur(32px);
+            position: relative;
         }
 
         .signin-header {
@@ -275,16 +276,16 @@
         }
 
         .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
+            position: absolute;
+            top: 16px;
+            left: 16px;
             background: none;
             border: 1px solid var(--border2);
             color: var(--text2);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
             z-index: 10;
@@ -297,9 +298,9 @@
         }
     </style>
 </head>
-<bodybutton class="back-button" onclick="goBackToCosine()">← Back to Cosine.live</button>
-    <>
+<body>
     <div class="signin-container">
+        <button class="back-button" onclick="goBackToCosine()">← Back to Cosine.live</button>
         <div class="signin-header">
             <h1>Cosine</h1>
             <p>Sign in to your account</p>
