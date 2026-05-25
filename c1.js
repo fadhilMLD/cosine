@@ -645,6 +645,9 @@ function loadProjectFromUrl() {
         // Fallback to localStorage for backward compatibility
         currentProjectId = localStorage.getItem('currentProjectId');
         loadProjectDetails(currentProjectId);
+    } else {
+        // No project selected - redirect to projects page
+        window.location.href = 'projects.html';
     }
 }
 
