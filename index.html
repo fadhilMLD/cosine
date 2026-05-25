@@ -1171,13 +1171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
   
-  // "Start for free" button - redirect to logged.html for guest mode
+  // "Start for free" button - redirect to signin for signup
   const startBtn = document.querySelector('.hero-ctas .btn-hero');
   if (startBtn) {
     startBtn.onclick = () => {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("currentUser");
-      window.location.href = "logged.html";
+      window.location.href = "signin.html?mode=signup";
     };
   }
 });
