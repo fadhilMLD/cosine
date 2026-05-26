@@ -253,17 +253,7 @@ z-index: 1;
 }
 
 .titleBlock::before {
-content: '';
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-width: 600px;
-height: 400px;
-background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.25) 0%, rgba(0, 255, 255, 0.15) 25%, rgba(255, 20, 147, 0.1) 50%, rgba(157, 0, 255, 0.08) 75%, transparent 100%);
-filter: blur(80px);
-pointer-events: none;
-z-index: -1;
+display: none;
 }
 
 .logo{
