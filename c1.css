@@ -1,3 +1,19 @@
+:root {
+    --bg: #000000;
+    --bg2: #070707;
+    --bg3: #0a0a0a;
+    --surface: rgba(255,255,255,0.03);
+    --surface2: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0eef8;
+    --text2: rgba(240,238,248,0.5);
+    --text3: rgba(240,238,248,0.26);
+    --accent: #c8b4f0;
+    --accent2: #f4a8c7;
+    --accent3: #7dd4b8;
+}
+
 body{
 margin:0;
 font-family:Arial, sans-serif;
@@ -894,11 +910,11 @@ z-index:10;
 .debatePage.active, .historyPage.active, .debateDetailPage.active {
     display: flex !important;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 .debatePage.active {
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .historyPage.active, .debateDetailPage.active {
@@ -1236,4 +1252,190 @@ z-index:10;
     color: #ff6b6b;
     border-color: #ff6b6b;
     background: rgba(255, 107, 107, 0.1);
+}
+
+/* ===================== */
+/* PROJECT LAYOUT */
+/* ===================== */
+
+.projectHeader {
+    width: 100%;
+    padding: 20px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+}
+
+.projectHeader h2 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.debateMainContainer {
+    display: grid;
+    grid-template-columns: 300px 1fr 320px;
+    gap: 20px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px 40px;
+    box-sizing: border-box;
+}
+
+.leftPanel, .rightPanel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    height: fit-content;
+    box-sizing: border-box;
+}
+
+.centerPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.panelHeader {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.panelHeader h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.filesList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.fileItem {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text2);
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fileItem:hover {
+    background: rgba(200, 180, 240, 0.05);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.settingsContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settingGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settingsSlider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg);
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.settingsSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settingsSlider::-webkit-slider-thumb:hover {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.settingsSlider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.settingsSlider::-moz-range-thumb:hover {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.settingsCheckbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* Responsive: Three Column Layout */
+@media (max-width: 1400px) {
+    .debateMainContainer {
+        grid-template-columns: 280px 1fr 300px;
+        gap: 15px;
+        padding: 15px 20px;
+    }
+
+    .leftPanel, .rightPanel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .debateMainContainer {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .leftPanel, .rightPanel {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .centerPanel {
+        order: 0;
+    }
+
+    .leftPanel {
+        order: 1;
+    }
+
+    .rightPanel {
+        order: 2;
+    }
 }

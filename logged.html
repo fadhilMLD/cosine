@@ -65,6 +65,25 @@
 
 <!-- DEBATE PAGE -->
 <div id="debatePage" class="debatePage">
+<!-- PROJECT HEADER -->
+<div class="projectHeader">
+<h2 id="projectHeaderName">Project Name</h2>
+</div>
+
+<!-- THREE COLUMN LAYOUT -->
+<div class="debateMainContainer">
+<!-- LEFT PANEL: UPLOADED FILES -->
+<div class="leftPanel">
+<div class="panelHeader">
+<h3>Uploaded Files</h3>
+</div>
+<div id="uploadedFilesList" class="filesList">
+<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>
+</div>
+</div>
+
+<!-- CENTER: MAIN INTERFACE -->
+<div class="centerPanel">
 <div class="header">
 <img src="v1-01.png" class="logo">
 
@@ -120,6 +139,33 @@
 </svg>
 </button>
 <div id="messageLimit" class="messageLimit hidden"></div>
+</div>
+</div>
+
+<!-- RIGHT PANEL: SETTINGS -->
+<div class="rightPanel">
+<div class="panelHeader">
+<h3>Settings</h3>
+</div>
+<div class="settingsContent">
+<div class="settingGroup">
+<label for="messageSlider" style="color: var(--text2); font-size: 12px; display: block; margin-bottom: 8px;">
+Number of messages:
+</label>
+<div style="display: flex; align-items: center; gap: 8px;">
+<input type="range" id="messageSlider" min="5" max="50" value="10" class="settingsSlider">
+<span id="messageCount" style="color: var(--text); font-size: 13px; min-width: 30px;">10</span>
+</div>
+</div>
+
+<div class="settingGroup">
+<label style="color: var(--text2); font-size: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+<input type="checkbox" id="webSearchCheckbox" class="settingsCheckbox">
+<span>Use web search</span>
+</label>
+</div>
+</div>
+</div>
 </div>
 </div>
 

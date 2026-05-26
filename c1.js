@@ -561,7 +561,46 @@ function setupPauseButton() {
 [loginPageBtn, mainAppBtn].forEach(btn => {
     btn.addEventListener("click", sendPrompt);
 });
+// ============================================
+// PROJECT SETTINGS
+// ============================================
 
+function setupProjectSettings() {
+    const messageSlider = document.getElementById('messageSlider');
+    const messageCount = document.getElementById('messageCount');
+    const webSearchCheckbox = document.getElementById('webSearchCheckbox');
+    
+    if (messageSlider && messageCount) {
+        // Update the message count display when slider changes
+        messageSlider.addEventListener('input', (e) => {
+            messageCount.textContent = e.target.value;
+            // Save to localStorage for persistence
+            localStorage.setItem('messageSliderValue', e.target.value);
+        });
+        
+        // Load saved value from localStorage
+        const savedValue = localStorage.getItem('messageSliderValue');
+        if (savedValue) {
+            messageSlider.value = savedValue;
+            messageCount.textContent = savedValue;
+        }
+    }
+    
+    if (webSearchCheckbox) {
+        // Load saved state from localStorage
+        const savedState = localStorage.getItem('webSearchEnabled');
+        if (savedState !== null) {
+            webSearchCheckbox.checked = savedState === 'true';
+        }
+        
+        // Save state when checkbox changes
+        webSearchCheckbox.addEventListener('change', (e) => {
+            localStorage.setItem('webSearchEnabled', e.target.checked);
+        });
+    }
+}
+
+// Setup button event listener for both buttons
 // Initialize authentication on page load
 // ============================================
 // HISTORY PAGE
@@ -776,6 +815,7 @@ document.addEventListener("DOMContentLoaded", function() {
     initializePage();
     loadProjectFromUrl();
     setupPauseButton();  // Setup pause/resume button handlers
+    setupProjectSettings();  // Setup message slider and web search checkbox
 });
 
 // ============================================
@@ -821,8 +861,26 @@ async function loadProjectDetails(projectId) {
         if (response.ok) {
             const data = await response.json();
             const projectNameEl = document.getElementById('projectName');
+            const projectHeaderNameEl = document.getElementById('projectHeaderName');
+            
             if (projectNameEl && data.name) {
                 projectNameEl.textContent = `Project: ${data.name}`;
+            }
+            
+            if (projectHeaderNameEl && data.name) {
+                projectHeaderNameEl.textContent = data.name;
+            }
+            
+            // Populate uploaded files list
+            const filesList = document.getElementById('uploadedFilesList');
+            if (filesList && data.files && Array.isArray(data.files)) {
+                if (data.files.length > 0) {
+                    filesList.innerHTML = data.files.map(file => 
+                        `<div class="fileItem">📄 ${file.name || file}</div>`
+                    ).join('');
+                } else {
+                    filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
+                }
             }
         }
     } catch (error) {
