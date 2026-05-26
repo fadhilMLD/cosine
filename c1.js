@@ -11,12 +11,25 @@ let authToken = null;
 let currentUser = null;
 let isGuest = false;
 
+function getStoredUser() {
+    const rawUser = localStorage.getItem("currentUser") || localStorage.getItem("user");
+    if (!rawUser) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(rawUser);
+    } catch (e) {
+        console.error("Failed to parse stored user", e);
+        return null;
+    }
+}
+
 // Check if user is already logged in (from URL params or localStorage)
 function initializeAuth() {
     const params = new URLSearchParams(window.location.search);
     const tokenFromUrl = params.get("token");
     const userFromUrl = params.get("user");
-    const testMode = params.get("test") === "true"; // Allow test mode via URL param
     
     authToken = tokenFromUrl || localStorage.getItem("authToken");
     
@@ -31,24 +44,11 @@ function initializeAuth() {
             console.error("Failed to parse user data", e);
         }
     } else {
-        const savedUser = localStorage.getItem("currentUser");
-        if (savedUser) {
-            try {
-                currentUser = JSON.parse(savedUser);
-            } catch (e) {
-                console.error("Failed to parse saved user", e);
-            }
-        }
+        currentUser = getStoredUser();
     }
     
     // Show main app if authenticated or in test mode, otherwise show login page
     if (authToken && currentUser) {
-        showMainApp();
-    } else if (testMode) {
-        // Allow test mode access without authentication
-        isGuest = true;
-        authToken = "test-token";
-        currentUser = { email: "test@cosine.dev", name: "Test User" };
         showMainApp();
     } else {
         showLoginPage();
@@ -57,17 +57,43 @@ function initializeAuth() {
 
 
 function showLoginPage() {
+    hideAccessDenied();
     loginPage.classList.remove("hidden");
     mainApp.classList.add("hidden");
 }
 
 function showMainApp() {
+    hideAccessDenied();
     loginPage.classList.add("hidden");
     mainApp.classList.remove("hidden");
     if (currentUser) {
         userNameEl.textContent = currentUser.name || "User";
     } else if (isGuest) {
         userNameEl.textContent = "Guest User";
+    }
+}
+
+function showAccessDenied(message) {
+    const panel = document.getElementById("accessDenied");
+    const messageEl = document.getElementById("accessDeniedMessage");
+    if (panel) {
+        panel.classList.remove("hidden");
+    }
+    if (messageEl && message) {
+        messageEl.textContent = message;
+    }
+    if (loginPage) {
+        loginPage.classList.add("hidden");
+    }
+    if (mainApp) {
+        mainApp.classList.add("hidden");
+    }
+}
+
+function hideAccessDenied() {
+    const panel = document.getElementById("accessDenied");
+    if (panel) {
+        panel.classList.add("hidden");
     }
 }
 
@@ -886,7 +912,8 @@ async function loadProjectDetails(projectId) {
     const token = localStorage.getItem('authToken');
     
     if (!token || !projectId) {
-        console.log("No token or projectId, skipping load");
+        console.log("No token or projectId, blocking project load");
+        showAccessDenied("You must be signed in to open this project.");
         return;
     }
 
@@ -902,29 +929,48 @@ async function loadProjectDetails(projectId) {
 
         console.log("Fetch response status:", response.status);
         
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Project data received:", data);
-            const projectNameEl = document.getElementById('projectName');
-            
-            if (projectNameEl && data.name) {
-                projectNameEl.textContent = `Project: ${data.name}`;
-            }
-            
-            // Populate uploaded files list
-            const filesList = document.getElementById('uploadedFilesList');
-            if (filesList && data.files && Array.isArray(data.files)) {
-                if (data.files.length > 0) {
-                    filesList.innerHTML = data.files.map(file => 
-                        `<div class="fileItem">📄 ${file.name || file}</div>`
-                    ).join('');
-                } else {
-                    filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
-                }
+        if (response.status === 401) {
+            clearAuthSession();
+            showAccessDenied("Your session expired. Please sign in again.");
+            return;
+        }
+
+        if (response.status === 403) {
+            showAccessDenied("You do not have access to this project.");
+            return;
+        }
+
+        if (response.status === 404) {
+            showAccessDenied("Project not found or access denied.");
+            return;
+        }
+
+        if (!response.ok) {
+            showAccessDenied("Unable to load this project right now.");
+            return;
+        }
+
+        const data = await response.json();
+        console.log("Project data received:", data);
+        const projectNameEl = document.getElementById('projectName');
+        
+        if (projectNameEl && data.name) {
+            projectNameEl.textContent = `Project: ${data.name}`;
+        }
+        
+        // Populate uploaded files list
+        const filesList = document.getElementById('uploadedFilesList');
+        if (filesList && data.files && Array.isArray(data.files)) {
+            if (data.files.length > 0) {
+                filesList.innerHTML = data.files.map(file => 
+                    `<div class="fileItem">📄 ${file.name || file}</div>`
+                ).join('');
+            } else {
+                filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
             }
         }
     } catch (error) {
         console.error('Error loading project details:', error);
-        console.log('Page will still display with default content');
+        showAccessDenied("Unable to verify access to this project.");
     }
 }
