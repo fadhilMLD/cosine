@@ -792,11 +792,13 @@ function escapeHtml(text) {
 // Initialize the debate page as active on load
 function initializePage() {
     console.log("Initializing page");
+    console.log("debatePage element:", debatePage);
     
     // Make sure debate page is shown by default
     if (debatePage) {
         debatePage.classList.add("active");
-        console.log("Debate page initialized as active");
+        console.log("Debate page classList:", debatePage.classList);
+        console.log("Debate page display check:", window.getComputedStyle(debatePage).display);
     }
     
     if (historyPage) {
@@ -827,17 +829,23 @@ let currentProjectId = null;
 function loadProjectFromUrl() {
     // Extract projectId from hash (e.g., #/project/[projectId])
     const hash = window.location.hash;
+    console.log("Current hash:", hash);
     const match = hash.match(/#\/project\/(.+)$/);
+    
+    console.log("Match result:", match);
     
     if (match && match[1]) {
         currentProjectId = match[1];
+        console.log("Project ID found:", currentProjectId);
         loadProjectDetails(currentProjectId);
     } else if (localStorage.getItem('currentProjectId')) {
         // Fallback to localStorage for backward compatibility
         currentProjectId = localStorage.getItem('currentProjectId');
+        console.log("Project ID from localStorage:", currentProjectId);
         loadProjectDetails(currentProjectId);
     } else {
         // No project selected - redirect to projects page
+        console.log("No project ID found, redirecting to projects page");
         window.location.href = 'projects.html';
     }
 }
