@@ -211,7 +211,7 @@ width:100%;
 height:100vh;              /* FIX: force full viewport */
 display:flex;
 flex-direction:column;
-justify-content:flex-start;
+justify-content:center;
 align-items:stretch;
 padding-top: 60px;
 box-sizing: border-box;
@@ -911,7 +911,7 @@ z-index:10;
 }
 
 .debatePage.active {
-    justify-content: flex-start;
+    justify-content: center;
     background: #000 !important;
 }
 
@@ -1273,15 +1273,15 @@ z-index:10;
 
 .debateMainContainer {
     display: grid;
-    grid-template-columns: 300px 1fr 320px;
+    grid-template-columns: 280px 1fr 280px;
     gap: 20px;
     width: 100%;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 20px 40px;
+    padding: 20px;
     box-sizing: border-box;
     min-height: auto;
     background: #000;
-    align-items: center;
 }
 
 .leftPanel, .rightPanel {
