@@ -550,9 +550,10 @@
             const user = JSON.parse(localStorage.getItem('user') || '{}');
 
             try {
-                const response = await fetch('http://localhost:8000/projects', {
+                const response = await fetch(getApiUrl('/projects'), {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     }
                 });
 
@@ -671,10 +672,11 @@
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    const response = await fetch(`http://localhost:8000/projects/${currentUploadProjectId}/upload`, {
+                    const response = await fetch(getApiUrl(`/projects/${currentUploadProjectId}/upload`), {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${token}`,
+                            'ngrok-skip-browser-warning': 'true'
                         },
                         body: formData
                     });
@@ -735,11 +737,12 @@
                 showModalLoading(true);
 
                 // Create project
-                const response = await fetch('http://localhost:8000/projects/create', {
+                const response = await fetch(getApiUrl('/projects/create'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({ project_name: projectName })
                 });
@@ -754,10 +757,11 @@
                         const formData = new FormData();
                         formData.append('file', file);
 
-                        await fetch(`http://localhost:8000/projects/${project.project_id}/upload`, {
+                        await fetch(getApiUrl(`/projects/${project.project_id}/upload`), {
                             method: 'POST',
                             headers: {
-                                'Authorization': `Bearer ${token}`
+                                'Authorization': `Bearer ${token}`,
+                                'ngrok-skip-browser-warning': 'true'
                             },
                             body: formData
                         });
@@ -786,10 +790,11 @@
             const token = localStorage.getItem('authToken');
 
             try {
-                const response = await fetch(`http://localhost:8000/projects/${projectId}`, {
+                const response = await fetch(getApiUrl(`/projects/${projectId}`), {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     }
                 });
 
