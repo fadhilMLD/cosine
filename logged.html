@@ -91,25 +91,12 @@
 <!-- AGENT SELECTION PANEL -->
 <div id="agentSelectionPanel" class="agentSelectionPanel">
 <div class="agentPanelContent">
-<h3>Select Debate Agents</h3>
-<p style="color: var(--text2); font-size: 12px; margin-bottom: 16px;">Choose which agents participate in the debate</p>
-<div class="agentsList">
-<label class="agentCheckbox">
-<input type="checkbox" class="agent-select" value="CFO Agent" checked> 
-<span>💰 CFO Agent</span>
-</label>
-<label class="agentCheckbox">
-<input type="checkbox" class="agent-select" value="Operations Agent" checked>
-<span>⚙️ Operations Agent</span>
-</label>
-<label class="agentCheckbox">
-<input type="checkbox" class="agent-select" value="Market Agent" checked>
-<span>📊 Market Agent</span>
-</label>
-<label class="agentCheckbox">
-<input type="checkbox" class="agent-select" value="Devil's Advocate" checked>
-<span>😈 Devil's Advocate</span>
-</label>
+<h3>Active Agents</h3>
+<div class="agents-select">
+<button class="agent-toggle active-cfo" data-agent="cfo">CFO</button>
+<button class="agent-toggle active-ops" data-agent="ops">Operations</button>
+<button class="agent-toggle active-mkt" data-agent="mkt">Market</button>
+<button class="agent-toggle active-dev" data-agent="dev">Devil's Advocate</button>
 </div>
 </div>
 </div>

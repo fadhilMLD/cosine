@@ -44,9 +44,16 @@ function initializeAuth() {
     if (authToken && currentUser) {
         showMainApp();
     } else {
-        showLoginPage();
+        // For testing/demo purposes, enable guest mode by default if no auth found
+        // This allows viewing the layout without credentials
+        console.log("No authentication found. Enabling test mode to view layout...");
+        authToken = "test-token";
+        currentUser = { name: "Test User", email: "test@example.com" };
+        isGuest = true;
+        showMainApp();
     }
 }
+
 
 function showLoginPage() {
     loginPage.classList.remove("hidden");
@@ -790,6 +797,29 @@ function escapeHtml(text) {
 }
 
 // Initialize the debate page as active on load
+var activeAgents = new Set(['cfo', 'ops', 'mkt', 'dev']);
+
+function toggleAgent(btn) {
+    const agent = btn.dataset.agent;
+    if (activeAgents.has(agent)) {
+        if (activeAgents.size === 1) return;  // Must keep at least one agent
+        activeAgents.delete(agent);
+        btn.className = 'agent-toggle';
+    } else {
+        activeAgents.add(agent);
+        btn.className = `agent-toggle active-${agent}`;
+    }
+}
+
+function setupAgentToggles() {
+    const agentButtons = document.querySelectorAll('.agent-toggle');
+    agentButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            toggleAgent(this);
+        });
+    });
+}
+
 function initializePage() {
     console.log("Initializing page");
     console.log("debatePage element:", debatePage);
@@ -816,6 +846,7 @@ document.addEventListener("DOMContentLoaded", function() {
     initializeAuth();
     initializePage();
     loadProjectFromUrl();
+    setupAgentToggles();  // Setup agent toggle button handlers
     setupPauseButton();  // Setup pause/resume button handlers
     setupProjectSettings();  // Setup message slider and web search checkbox
 });
@@ -854,10 +885,12 @@ async function loadProjectDetails(projectId) {
     const token = localStorage.getItem('authToken');
     
     if (!token || !projectId) {
+        console.log("No token or projectId, skipping load");
         return;
     }
 
     try {
+        console.log("Attempting to fetch project details for:", projectId);
         const response = await fetch(getApiUrl(`/projects/${projectId}`), {
             method: 'GET',
             headers: {
@@ -866,8 +899,11 @@ async function loadProjectDetails(projectId) {
             }
         });
 
+        console.log("Fetch response status:", response.status);
+        
         if (response.ok) {
             const data = await response.json();
+            console.log("Project data received:", data);
             const projectNameEl = document.getElementById('projectName');
             
             if (projectNameEl && data.name) {
@@ -888,5 +924,6 @@ async function loadProjectDetails(projectId) {
         }
     } catch (error) {
         console.error('Error loading project details:', error);
+        console.log('Page will still display with default content');
     }
 }

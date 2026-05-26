@@ -899,12 +899,8 @@ z-index:10;
 
 .debatePage, .historyPage, .debateDetailPage {
     width: 100%;
-    min-height: 100vh;
-    padding-top: 60px;
-    box-sizing: border-box;
     display: none !important;
     overflow-y: auto;
-    scroll-padding-top: 80px;
 }
 
 .debatePage.active, .historyPage.active, .debateDetailPage.active {
@@ -912,7 +908,6 @@ z-index:10;
     flex-direction: column;
     align-items: stretch;
     width: 100% !important;
-    min-height: auto !important;
 }
 
 .debatePage.active {
@@ -1285,21 +1280,18 @@ z-index:10;
     padding: 20px 40px;
     box-sizing: border-box;
     min-height: auto;
-    border: 2px solid red;
     background: #000;
+    align-items: center;
 }
 
 .leftPanel, .rightPanel {
-    background: var(--bg2);
-    border: 2px solid var(--accent);
-    border-radius: 12px;
+    background: #000;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
     padding: 20px;
     height: fit-content;
     box-sizing: border-box;
-    min-width: 0;
-    overflow: hidden;
     display: block;
-    visibility: visible;
 }
 
 .centerPanel {
@@ -1313,6 +1305,54 @@ z-index:10;
     min-width: 0;
 }
 
+.agents-select { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+    margin-top: 8px; 
+}
+
+.agent-toggle {
+    padding: 6px 13px; 
+    border-radius: 100px; 
+    font-size: 13px; 
+    cursor: pointer;
+    border: 1px solid var(--border2); 
+    background: none; 
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif; 
+    transition: all 0.2s;
+}
+
+.agent-toggle:hover {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.agent-toggle.active-cfo { 
+    background: rgba(200,170,80,0.09); 
+    border-color: rgba(200,170,80,0.28); 
+    color: #d4aa40; 
+}
+
+.agent-toggle.active-ops { 
+    background: rgba(125,212,184,0.09); 
+    border-color: rgba(125,212,184,0.28); 
+    color: var(--accent3); 
+}
+
+.agent-toggle.active-mkt { 
+    background: rgba(200,180,240,0.09); 
+    border-color: rgba(200,180,240,0.28); 
+    color: var(--accent); 
+}
+
+.agent-toggle.active-dev { 
+    background: rgba(244,120,120,0.09); 
+    border-color: rgba(244,120,120,0.28); 
+    color: #f47878; 
+}
+
 .panelHeader {
     border-bottom: 1px solid var(--border);
     padding-bottom: 12px;
@@ -1323,7 +1363,7 @@ z-index:10;
     margin: 0;
     color: var(--text);
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 200;
 }
 
 .filesList {
