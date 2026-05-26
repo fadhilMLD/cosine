@@ -456,6 +456,34 @@
         </div>
     </div>
 
+    <!-- Upload Files Modal -->
+    <div class="create-project-modal" id="uploadFilesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Files to Project</h2>
+                <p style="color: var(--text2); font-size: 13px;" id="uploadProjectName"></p>
+            </div>
+
+            <form onsubmit="handleUploadFiles(event)">
+                <div class="form-group">
+                    <label for="uploadProjectFiles">Select Files</label>
+                    <input type="file" id="uploadProjectFiles" multiple required>
+                    <div class="file-list" id="uploadFileList"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Upload Files</button>
+                </div>
+            </form>
+
+            <div class="loading" id="uploadModalLoading">
+                <div class="spinner"></div>
+                <div style="margin-top: 8px;">Uploading files...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Create Project Modal -->
     <div class="create-project-modal" id="createProjectModal">
         <div class="modal-content">
@@ -492,6 +520,8 @@
     <script src="config.js"></script>
     <script>
         let selectedFiles = [];
+        let uploadModalSelectedFiles = [];
+        let currentUploadProjectId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
@@ -563,6 +593,7 @@
                     </div>
                     <div class="project-actions">
                         <button onclick="openProject('${project.project_id}')">Open</button>
+                        <button onclick="openUploadModal('${project.project_id}', '${project.project_name}')">Upload</button>
                         <button class="delete" onclick="deleteProject('${project.project_id}', '${project.project_name}')">Delete</button>
                     </div>
                 </div>
@@ -579,6 +610,92 @@
 
         function closeCreateProjectModal() {
             document.getElementById('createProjectModal').classList.remove('show');
+        }
+
+        function openUploadModal(projectId, projectName) {
+            currentUploadProjectId = projectId;
+            uploadModalSelectedFiles = [];
+            document.getElementById('uploadProjectName').textContent = projectName;
+            document.getElementById('uploadProjectFiles').value = '';
+            document.getElementById('uploadFileList').innerHTML = '';
+            document.getElementById('uploadFilesModal').classList.add('show');
+            setupUploadFileInput();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadFilesModal').classList.remove('show');
+            currentUploadProjectId = null;
+            uploadModalSelectedFiles = [];
+        }
+
+        function setupUploadFileInput() {
+            document.getElementById('uploadProjectFiles').addEventListener('change', (e) => {
+                uploadModalSelectedFiles = Array.from(e.target.files);
+                updateUploadFileList();
+            });
+        }
+
+        function updateUploadFileList() {
+            const fileList = document.getElementById('uploadFileList');
+            fileList.innerHTML = uploadModalSelectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <span>${file.name}</span>
+                    <button type="button" class="remove-file" onclick="removeUploadFile(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeUploadFile(index) {
+            uploadModalSelectedFiles.splice(index, 1);
+            updateUploadFileList();
+        }
+
+        async function handleUploadFiles(event) {
+            event.preventDefault();
+
+            const token = localStorage.getItem('authToken');
+            if (!token || !currentUploadProjectId) {
+                alert('Error: Missing authentication or project ID');
+                return;
+            }
+
+            if (uploadModalSelectedFiles.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+
+            showUploadModalLoading(true);
+
+            try {
+                for (const file of uploadModalSelectedFiles) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(`http://localhost:8000/projects/${currentUploadProjectId}/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to upload ${file.name}`);
+                    }
+                }
+
+                closeUploadModal();
+                loadProjects();
+                alert('Files uploaded successfully!');
+            } catch (error) {
+                alert('Error uploading files: ' + error.message);
+            } finally {
+                showUploadModalLoading(false);
+            }
+        }
+
+        function showUploadModalLoading(show) {
+            document.getElementById('uploadModalLoading').style.display = show ? 'block' : 'none';
         }
 
         function setupFileInput() {

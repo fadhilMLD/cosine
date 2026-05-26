@@ -1120,3 +1120,120 @@ z-index:10;
         width: 45px;
         height: 45px;
     }
+}
+
+/* Agent Selection Panel */
+.agentSelectionPanel {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.agentPanelContent h3 {
+    color: var(--text);
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.agentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agentCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.agentCheckbox:hover {
+    border-color: var(--accent);
+    background: rgba(200, 180, 240, 0.05);
+}
+
+.agentCheckbox input {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.agentCheckbox span {
+    color: var(--text2);
+    font-size: 14px;
+    user-select: none;
+}
+
+/* Summary Section */
+.summarySection {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px auto;
+    max-width: 900px;
+}
+
+.summaryContent h4 {
+    color: var(--accent);
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.summaryList {
+    color: var(--text2);
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Pause & Resume Buttons */
+.pauseBtn, .resumeBtn {
+    padding: 8px 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    color: var(--accent2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+}
+
+.pauseBtn:hover, .resumeBtn:hover {
+    border-color: var(--accent2);
+    background: rgba(244, 168, 199, 0.08);
+}
+
+.pauseBtn.hidden, .resumeBtn.hidden {
+    display: none;
+}
+
+/* Message Limit Display */
+.messageLimit {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.messageLimit.warning {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+}

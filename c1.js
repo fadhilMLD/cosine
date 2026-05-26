@@ -300,6 +300,36 @@ let socket;
 let socketReady = false;
 let pendingPrompt = null;
 let typingMessages = {};  // Track typing messages by speaker
+let isDebateActive = false;  // Track if debate is running
+let currentMessageCount = 0;  // Track messages generated
+let messageLimit = 0;  // Set based on user plan
+let isPaused = false;  // Track pause state
+
+function getSelectedAgents() {
+    const checkboxes = document.querySelectorAll('.agent-select:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function updateMessageLimit() {
+    const limitEl = document.getElementById('messageLimit');
+    if (!limitEl || !isDebateActive) return;
+    
+    if (currentMessageCount >= messageLimit) {
+        limitEl.textContent = `⚠️ Message limit reached (${currentMessageCount}/${messageLimit})`;
+        limitEl.classList.add('warning');
+    } else if (currentMessageCount >= messageLimit * 0.8) {
+        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit} (Approaching limit)`;
+        limitEl.classList.remove('warning');
+        limitEl.classList.add('warning');
+    } else {
+        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit}`;
+        limitEl.classList.remove('warning');
+    }
+    
+    if (isDebateActive) {
+        limitEl.classList.remove('hidden');
+    }
+}
 
 function setupWebSocket() {
     if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) {
@@ -338,41 +368,56 @@ function setupWebSocket() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
-        if (data.is_typing) {
+        // Update message count if provided
+        if (data.message_count !== undefined) {
+            currentMessageCount = data.message_count;
+            messageLimit = data.message_limit || messageLimit;
+            updateMessageLimit();
+        }
+        
+        // Handle different message types
+        if (data.type === "typing" && data.is_typing) {
             // Handle typing indicator
             const speaker = data.speaker;
             const dots = data.dots || ".";
             
             if (!typingMessages[speaker]) {
-                // Create new typing message
                 typingMessages[speaker] = true;
                 addMessage(speaker, dots);
             } else {
-                // Update the text node of the last message from this speaker
                 const lastMsg = chatContainer.lastElementChild;
                 if (lastMsg && lastMsg.textContent.includes(speaker)) {
-                    // Find and update only the text node (not the senderLabel span)
                     const textNode = Array.from(lastMsg.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
                     if (textNode) {
                         textNode.textContent = dots;
                     }
                 }
             }
+        } else if (data.type === "summary") {
+            // Handle summary message
+            addMessage("📝 Summary", data.message);
+            displaySummary(data.message);
+        } else if (data.type === "pause") {
+            // Handle pause notification
+            isPaused = true;
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('resumeBtn').classList.remove('hidden');
+            addMessage("System", data.message);
+        } else if (data.type === "error") {
+            // Handle error message
+            addMessage("⚠️ Error", data.message);
         } else {
-            // Handle actual message
+            // Handle regular message
             delete typingMessages[data.speaker];
             
-            // Replace last typing message or add new message
             const lastMsg = chatContainer.lastElementChild;
             if (lastMsg && lastMsg.textContent.includes(data.speaker) && lastMsg.textContent.match(/^[.\s\w]+$/)) {
-                // Replace typing dots with actual message
                 const textNode = Array.from(lastMsg.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
                 if (textNode) {
                     textNode.textContent = data.message;
                 }
                 lastMsg.classList.remove("typing");
             } else {
-                // Add as new message
                 addMessage(data.speaker, data.message);
             }
         }
@@ -421,7 +466,7 @@ async function sendPrompt() {
     if (!authToken) {
         isGuest = true;
         activateChatUI();
-        addMessage("System", "Guest Mode: Limited to 10 messages. Sign in for unlimited access.");
+        addMessage("System", "Guest Mode: Limited to 25 messages. Sign in for full access.");
     }
 
     activateChatUI();
@@ -429,12 +474,86 @@ async function sendPrompt() {
     box.value = "";
     box.classList.remove("active");
     resetBoxSize(box);
+    
+    // Mark debate as active
+    isDebateActive = true;
+    currentMessageCount = 0;
+    
+    // Set message limit based on user plan
+    if (currentUser && currentUser.plan) {
+        const planLimits = { "Free": 25, "Pro": 40, "Master": 80 };
+        messageLimit = planLimits[currentUser.plan] || 25;
+    } else {
+        messageLimit = 25; // Default to free plan limit
+    }
+    
+    // Hide agent selection and show pause button
+    const agentPanel = document.getElementById('agentSelectionPanel');
+    if (agentPanel) agentPanel.classList.add('hidden');
+    
+    const pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) pauseBtn.classList.remove('hidden');
+    
+    const resumeBtn = document.getElementById('resumeBtn');
+    if (resumeBtn) resumeBtn.classList.add('hidden');
+    
+    // Clear previous summaries
+    const summaryList = document.getElementById('summaryList');
+    if (summaryList) summaryList.innerHTML = '';
+    const summarySection = document.getElementById('summarySection');
+    if (summarySection) summarySection.classList.add('hidden');
+    
+    // Get selected agents
+    const selectedAgents = getSelectedAgents();
+    
+    // Prepare message data with agents
+    const messageData = JSON.stringify({
+        topic: prompt,
+        agents: selectedAgents
+    });
 
     if (!socketReady) {
-        pendingPrompt = prompt;
+        pendingPrompt = messageData;
         setupWebSocket();
     } else {
-        socket.send(prompt);
+        socket.send(messageData);
+    }
+}
+
+function displaySummary(summaryText) {
+    const summarySection = document.getElementById('summarySection');
+    const summaryList = document.getElementById('summaryList');
+    
+    if (summarySection && summaryList) {
+        summarySection.classList.remove('hidden');
+        summaryList.textContent = summaryText;
+    }
+}
+
+function setupPauseButton() {
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ action: 'pause' }));
+                isPaused = true;
+                pauseBtn.classList.add('hidden');
+                resumeBtn.classList.remove('hidden');
+            }
+        });
+    }
+    
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ action: 'resume' }));
+                isPaused = false;
+                pauseBtn.classList.remove('hidden');
+                resumeBtn.classList.add('hidden');
+            }
+        });
     }
 }
 
@@ -656,6 +775,7 @@ document.addEventListener("DOMContentLoaded", function() {
     initializeAuth();
     initializePage();
     loadProjectFromUrl();
+    setupPauseButton();  // Setup pause/resume button handlers
 });
 
 // ============================================

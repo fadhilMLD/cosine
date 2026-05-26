@@ -74,15 +74,52 @@
 </div>
 </div>
 
+<!-- AGENT SELECTION PANEL -->
+<div id="agentSelectionPanel" class="agentSelectionPanel">
+<div class="agentPanelContent">
+<h3>Select Debate Agents</h3>
+<p style="color: var(--text2); font-size: 12px; margin-bottom: 16px;">Choose which agents participate in the debate</p>
+<div class="agentsList">
+<label class="agentCheckbox">
+<input type="checkbox" class="agent-select" value="CFO Agent" checked> 
+<span>💰 CFO Agent</span>
+</label>
+<label class="agentCheckbox">
+<input type="checkbox" class="agent-select" value="Operations Agent" checked>
+<span>⚙️ Operations Agent</span>
+</label>
+<label class="agentCheckbox">
+<input type="checkbox" class="agent-select" value="Market Agent" checked>
+<span>📊 Market Agent</span>
+</label>
+<label class="agentCheckbox">
+<input type="checkbox" class="agent-select" value="Devil's Advocate" checked>
+<span>😈 Devil's Advocate</span>
+</label>
+</div>
+</div>
+</div>
+
 <div id="chatContainer" class="chatContainer hidden"></div>
+
+<!-- SUMMARY SECTION -->
+<div id="summarySection" class="summarySection hidden">
+<div class="summaryContent">
+<h4>📝 Summary</h4>
+<div id="summaryList" class="summaryList"></div>
+</div>
+</div>
 
 <div class="inputRow">
 <textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
+<button id="pauseBtn" class="pauseBtn hidden" type="button">⏸ Pause</button>
+<button id="resumeBtn" class="resumeBtn hidden" type="button">▶ Resume</button>
 <button id="sendBtn" class="sendBtn" type="button">
 <svg viewBox="0 0 24 24">
 <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
 </svg>
 </button>
+<div id="messageLimit" class="messageLimit hidden"></div>
 </div>
 </div>
 
