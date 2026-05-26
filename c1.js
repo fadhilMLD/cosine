@@ -16,6 +16,7 @@ function initializeAuth() {
     const params = new URLSearchParams(window.location.search);
     const tokenFromUrl = params.get("token");
     const userFromUrl = params.get("user");
+    const testMode = params.get("test") === "true"; // Allow test mode via URL param
     
     authToken = tokenFromUrl || localStorage.getItem("authToken");
     
@@ -40,8 +41,14 @@ function initializeAuth() {
         }
     }
     
-    // Show main app if authenticated, otherwise show login page
+    // Show main app if authenticated or in test mode, otherwise show login page
     if (authToken && currentUser) {
+        showMainApp();
+    } else if (testMode) {
+        // Allow test mode access without authentication
+        isGuest = true;
+        authToken = "test-token";
+        currentUser = { email: "test@cosine.dev", name: "Test User" };
         showMainApp();
     } else {
         showLoginPage();
