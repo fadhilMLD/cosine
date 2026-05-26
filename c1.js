@@ -861,14 +861,9 @@ async function loadProjectDetails(projectId) {
         if (response.ok) {
             const data = await response.json();
             const projectNameEl = document.getElementById('projectName');
-            const projectHeaderNameEl = document.getElementById('projectHeaderName');
             
             if (projectNameEl && data.name) {
                 projectNameEl.textContent = `Project: ${data.name}`;
-            }
-            
-            if (projectHeaderNameEl && data.name) {
-                projectHeaderNameEl.textContent = data.name;
             }
             
             // Populate uploaded files list

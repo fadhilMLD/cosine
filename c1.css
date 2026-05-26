@@ -900,7 +900,7 @@ z-index:10;
 .debatePage, .historyPage, .debateDetailPage {
     width: 100%;
     min-height: 100vh;
-    padding-top: 80px;
+    padding-top: 60px;
     box-sizing: border-box;
     display: none !important;
     overflow-y: auto;
@@ -1282,6 +1282,8 @@ z-index:10;
     margin: 0 auto;
     padding: 20px 40px;
     box-sizing: border-box;
+    min-height: calc(100vh - 80px);
+    align-items: start;
 }
 
 .leftPanel, .rightPanel {
@@ -1299,6 +1301,7 @@ z-index:10;
     align-items: center;
     justify-content: center;
     gap: 20px;
+    background: transparent;
 }
 
 .panelHeader {
