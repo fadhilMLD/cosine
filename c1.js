@@ -44,13 +44,7 @@ function initializeAuth() {
     if (authToken && currentUser) {
         showMainApp();
     } else {
-        // For testing/demo purposes, enable guest mode by default if no auth found
-        // This allows viewing the layout without credentials
-        console.log("No authentication found. Enabling test mode to view layout...");
-        authToken = "test-token";
-        currentUser = { name: "Test User", email: "test@example.com" };
-        isGuest = true;
-        showMainApp();
+        showLoginPage();
     }
 }
 
