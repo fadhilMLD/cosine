@@ -1373,6 +1373,22 @@ z-index:10;
     min-width: 0;
 }
 
+body.project-started .debateMainContainer {
+    grid-template-columns: 1fr;
+}
+
+body.project-started .leftPanel,
+body.project-started .rightPanel,
+body.project-started .centerPanel .header,
+body.project-started .centerPanel .inputRow,
+body.project-started #agentSelectionPanel {
+    display: none !important;
+}
+
+body.project-started .centerPanel {
+    justify-content: flex-start;
+}
+
 .agents-select { 
     display: flex; 
     flex-wrap: wrap; 

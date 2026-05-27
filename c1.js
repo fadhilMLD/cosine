@@ -338,6 +338,7 @@ let isDebateActive = false;  // Track if debate is running
 let currentMessageCount = 0;  // Track messages generated
 let messageLimit = 0;  // Set based on user plan
 let isPaused = false;  // Track pause state
+let currentProjectState = { hasPrompt: false };
 
 function getSelectedAgents() {
     const checkboxes = document.querySelectorAll('.agent-select:checked');
@@ -496,6 +497,11 @@ async function sendPrompt() {
         return;
     }
 
+    if (currentProjectState.hasPrompt) {
+        addMessage("System", "This project already has a saved prompt. Create a new project to start a new debate.");
+        return;
+    }
+
     // If user is not authenticated, set them as guest
     if (!authToken) {
         isGuest = true;
@@ -508,6 +514,9 @@ async function sendPrompt() {
     box.value = "";
     box.classList.remove("active");
     resetBoxSize(box);
+
+    currentProjectState.hasPrompt = true;
+    document.body.classList.add("project-started");
     
     // Mark debate as active
     isDebateActive = true;
@@ -543,7 +552,8 @@ async function sendPrompt() {
     // Prepare message data with agents
     const messageData = JSON.stringify({
         topic: prompt,
-        agents: selectedAgents
+        agents: selectedAgents,
+        settings: getProjectSettingsPayload()
     });
 
     if (!socketReady) {
@@ -632,6 +642,16 @@ function setupProjectSettings() {
             localStorage.setItem('webSearchEnabled', e.target.checked);
         });
     }
+}
+
+function getProjectSettingsPayload() {
+    const messageSlider = document.getElementById('messageSlider');
+    const webSearchCheckbox = document.getElementById('webSearchCheckbox');
+
+    return {
+        message_count: messageSlider ? Number(messageSlider.value) : null,
+        web_search_enabled: webSearchCheckbox ? webSearchCheckbox.checked : false
+    };
 }
 
 // Setup button event listener for both buttons
@@ -884,6 +904,35 @@ document.addEventListener("DOMContentLoaded", function() {
 
 let currentProjectId = null;
 
+function restoreProjectHistory(projectData) {
+    if (!projectData) {
+        return;
+    }
+
+    const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
+
+    activateChatUI();
+    document.body.classList.add("project-started");
+    chatContainer.innerHTML = "";
+
+    const summaryList = document.getElementById('summaryList');
+    const summarySection = document.getElementById('summarySection');
+    if (summaryList) summaryList.innerHTML = '';
+    if (summarySection) summarySection.classList.add('hidden');
+
+    messages.forEach(entry => {
+        if (!entry || !entry.message) {
+            return;
+        }
+        const speaker = entry.speaker || "System";
+        addMessage(speaker, entry.message);
+    });
+
+    if (projectData.summary) {
+        displaySummary(projectData.summary);
+    }
+}
+
 function loadProjectFromUrl() {
     // Extract projectId from hash (e.g., #/project/[projectId])
     const hash = window.location.hash;
@@ -1001,6 +1050,13 @@ async function loadProjectDetails(projectId) {
             } else {
                 filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
             }
+        }
+
+        currentProjectState = { hasPrompt: Boolean(data.has_prompt) };
+        if (currentProjectState.hasPrompt) {
+            restoreProjectHistory(data);
+        } else {
+            document.body.classList.remove("project-started");
         }
     } catch (error) {
         console.error('Error loading project details:', error);
