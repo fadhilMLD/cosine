@@ -341,8 +341,14 @@ let isPaused = false;  // Track pause state
 let currentProjectState = { hasPrompt: false };
 
 function getSelectedAgents() {
-    const checkboxes = document.querySelectorAll('.agent-select:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
+    const mapping = {
+        cfo: "CFO Agent",
+        ops: "Operations Agent",
+        mkt: "Market Agent",
+        dev: "Devil's Advocate"
+    };
+
+    return Array.from(activeAgents).map(key => mapping[key]).filter(Boolean);
 }
 
 function updateMessageLimit() {
@@ -497,10 +503,6 @@ async function sendPrompt() {
         return;
     }
 
-    if (currentProjectState.hasPrompt) {
-        addMessage("System", "This project already has a saved prompt. Create a new project to start a new debate.");
-        return;
-    }
 
     // If user is not authenticated, set them as guest
     if (!authToken) {
@@ -515,52 +517,62 @@ async function sendPrompt() {
     box.classList.remove("active");
     resetBoxSize(box);
 
-    currentProjectState.hasPrompt = true;
-    document.body.classList.add("project-started");
-    
-    // Mark debate as active
-    isDebateActive = true;
-    currentMessageCount = 0;
-    
-    // Set message limit based on user plan
-    if (currentUser && currentUser.plan) {
-        const planLimits = { "Free": 25, "Pro": 40, "Master": 80 };
-        messageLimit = planLimits[currentUser.plan] || 25;
-    } else {
-        messageLimit = 25; // Default to free plan limit
-    }
-    
-    // Hide agent selection and show pause button
-    const agentPanel = document.getElementById('agentSelectionPanel');
-    if (agentPanel) agentPanel.classList.add('hidden');
-    
-    const pauseBtn = document.getElementById('pauseBtn');
-    if (pauseBtn) pauseBtn.classList.remove('hidden');
-    
-    const resumeBtn = document.getElementById('resumeBtn');
-    if (resumeBtn) resumeBtn.classList.add('hidden');
-    
-    // Clear previous summaries
-    const summaryList = document.getElementById('summaryList');
-    if (summaryList) summaryList.innerHTML = '';
-    const summarySection = document.getElementById('summarySection');
-    if (summarySection) summarySection.classList.add('hidden');
-    
     // Get selected agents
     const selectedAgents = getSelectedAgents();
     
-    // Prepare message data with agents
-    const messageData = JSON.stringify({
-        topic: prompt,
-        agents: selectedAgents,
-        settings: getProjectSettingsPayload()
-    });
+    if (!currentProjectState.hasPrompt) {
+        currentProjectState.hasPrompt = true;
+        document.body.classList.add("project-started");
 
-    if (!socketReady) {
-        pendingPrompt = messageData;
-        setupWebSocket();
+        // Mark debate as active
+        isDebateActive = true;
+        currentMessageCount = 0;
+        
+        // Set message limit based on user plan
+        if (currentUser && currentUser.plan) {
+            const planLimits = { "Free": 25, "Pro": 40, "Master": 80 };
+            messageLimit = planLimits[currentUser.plan] || 25;
+        } else {
+            messageLimit = 25; // Default to free plan limit
+        }
+        
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn) pauseBtn.classList.remove('hidden');
+        
+        const resumeBtn = document.getElementById('resumeBtn');
+        if (resumeBtn) resumeBtn.classList.add('hidden');
+        
+        // Clear previous summaries
+        const summaryList = document.getElementById('summaryList');
+        if (summaryList) summaryList.innerHTML = '';
+        const summarySection = document.getElementById('summarySection');
+        if (summarySection) summarySection.classList.add('hidden');
+
+        // Prepare message data with agents
+        const messageData = JSON.stringify({
+            topic: prompt,
+            agents: selectedAgents,
+            settings: getProjectSettingsPayload()
+        });
+
+        if (!socketReady) {
+            pendingPrompt = messageData;
+            setupWebSocket();
+        } else {
+            socket.send(messageData);
+        }
     } else {
-        socket.send(messageData);
+        const messageData = JSON.stringify({
+            action: "user_message",
+            message: prompt
+        });
+
+        if (!socketReady) {
+            pendingPrompt = messageData;
+            setupWebSocket();
+        } else {
+            socket.send(messageData);
+        }
     }
 }
 
@@ -592,6 +604,7 @@ function setupPauseButton() {
     if (resumeBtn) {
         resumeBtn.addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ action: 'change_agents', agents: getSelectedAgents() }));
                 socket.send(JSON.stringify({ action: 'resume' }));
                 isPaused = false;
                 pauseBtn.classList.remove('hidden');

@@ -1374,14 +1374,10 @@ z-index:10;
 }
 
 body.project-started .debateMainContainer {
-    grid-template-columns: 1fr;
+    grid-template-columns: 280px 1fr;
 }
 
-body.project-started .leftPanel,
-body.project-started .rightPanel,
-body.project-started .centerPanel .header,
-body.project-started .centerPanel .inputRow,
-body.project-started #agentSelectionPanel {
+body.project-started .rightPanel {
     display: none !important;
 }
 
