@@ -959,13 +959,45 @@ async function loadProjectDetails(projectId) {
             projectNameEl.textContent = `Project: ${data.name}`;
         }
         
+        const getFileExtension = (value) => {
+            const text = String(value || "");
+            const dotIndex = text.lastIndexOf(".");
+            if (dotIndex > 0 && dotIndex < text.length - 1) {
+                return text.slice(dotIndex + 1);
+            }
+            return "";
+        };
+
+        const getFileDisplayName = (file) => {
+            if (typeof file === "string") {
+                return file;
+            }
+
+            if (!file || typeof file !== "object") {
+                return "Unnamed file";
+            }
+
+            const rawName = file.original_name || file.name || file.stored_name || "";
+            if (rawName) {
+                return rawName;
+            }
+
+            const ext = file.extension || file.ext || getFileExtension(rawName);
+            if (ext) {
+                return `.${ext}`;
+            }
+
+            return "Unnamed file";
+        };
+
         // Populate uploaded files list
         const filesList = document.getElementById('uploadedFilesList');
         if (filesList && data.files && Array.isArray(data.files)) {
             if (data.files.length > 0) {
-                filesList.innerHTML = data.files.map(file => 
-                    `<div class="fileItem">📄 ${file.name || file}</div>`
-                ).join('');
+                filesList.innerHTML = data.files.map(file => {
+                    const label = getFileDisplayName(file);
+                    return `<div class="fileItem">📄 ${escapeHtml(String(label))}</div>`;
+                }).join('');
             } else {
                 filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
             }
