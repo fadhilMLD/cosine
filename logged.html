@@ -79,10 +79,10 @@
 <div id="debatePage" class="debatePage">
 <!-- THREE COLUMN LAYOUT -->
 <div class="debateMainContainer">
-<!-- LEFT PANEL: UPLOADED FILES -->
+<!-- LEFT PANEL: FILES -->
 <div class="leftPanel">
 <div class="panelHeader">
-<h3>Uploaded Files</h3>
+<h3>Files</h3>
 </div>
 <div id="uploadedFilesList" class="filesList">
 <p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>
@@ -91,19 +91,40 @@
 
 <!-- CENTER: MAIN INTERFACE -->
 <div class="centerPanel">
-<div class="header">
-<img src="v1-01.png" class="logo">
+<div class="centerTitle">Agent Debate</div>
+<div id="chatContainer" class="chatContainer hidden"></div>
 
-<div class="titleBlock">
-<h1>Cosine <span class="gradient-text">1.4</span></h1>
-<p class="subtitle">Make decisions more powerful.</p>
+<div class="inputRow">
+<button id="pauseBtn" class="pauseBtn hidden" type="button">⏸ Pause</button>
+<button id="resumeBtn" class="resumeBtn hidden" type="button">▶ Resume</button>
+<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
+<button id="sendBtn" class="sendBtn" type="button">
+<svg viewBox="0 0 24 24">
+<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
+</svg>
+</button>
 </div>
 </div>
 
-<!-- AGENT SELECTION PANEL -->
+<!-- RIGHT PANEL: SUMMARY + AGENTS + STATUS -->
+<div class="rightPanel">
+<div class="panelCard">
+<div class="panelHeader">
+<h3>Summary</h3>
+</div>
+<div id="summarySection" class="summarySection hidden">
+<div class="summaryContent">
+<div id="summaryList" class="summaryList"></div>
+</div>
+</div>
+</div>
+
+<div class="panelCard">
+<div class="panelHeader">
+<h3>Active agents</h3>
+</div>
 <div id="agentSelectionPanel" class="agentSelectionPanel">
 <div class="agentPanelContent">
-<h3>Active Agents</h3>
 <div class="agents-select">
 <button class="agent-toggle active-cfo" data-agent="cfo">CFO</button>
 <button class="agent-toggle active-ops" data-agent="ops">Operations</button>
@@ -112,51 +133,15 @@
 </div>
 </div>
 </div>
-
-<div id="chatContainer" class="chatContainer hidden"></div>
-
-<!-- SUMMARY SECTION -->
-<div id="summarySection" class="summarySection hidden">
-<div class="summaryContent">
-<h4>📝 Summary</h4>
-<div id="summaryList" class="summaryList"></div>
-</div>
 </div>
 
-<div class="inputRow">
-<textarea id="promptBox" placeholder="Type your prompt" spellcheck="false"></textarea>
-<button id="pauseBtn" class="pauseBtn hidden" type="button">⏸ Pause</button>
-<button id="resumeBtn" class="resumeBtn hidden" type="button">▶ Resume</button>
-<button id="sendBtn" class="sendBtn" type="button">
-<svg viewBox="0 0 24 24">
-<path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"></path>
-</svg>
-</button>
-<div id="messageLimit" class="messageLimit hidden"></div>
-</div>
-</div>
-
-<!-- RIGHT PANEL: SETTINGS -->
-<div class="rightPanel">
+<div class="panelCard">
 <div class="panelHeader">
-<h3>Settings</h3>
+<h3>Debate Status</h3>
 </div>
-<div class="settingsContent">
-<div class="settingGroup">
-<label for="messageSlider" style="color: var(--text2); font-size: 12px; display: block; margin-bottom: 8px;">
-Number of messages:
-</label>
-<div style="display: flex; align-items: center; gap: 8px;">
-<input type="range" id="messageSlider" min="5" max="50" value="10" class="settingsSlider">
-<span id="messageCount" style="color: var(--text); font-size: 13px; min-width: 30px;">10</span>
-</div>
-</div>
-
-<div class="settingGroup">
-<label style="color: var(--text2); font-size: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
-<input type="checkbox" id="webSearchCheckbox" class="settingsCheckbox">
-<span>Use web search</span>
-</label>
+<div class="statusContent">
+<div id="debateStatus" class="statusValue">Idle</div>
+<div id="messageLimit" class="messageLimit hidden"></div>
 </div>
 </div>
 </div>

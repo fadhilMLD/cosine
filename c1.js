@@ -340,6 +340,13 @@ let messageLimit = 0;  // Set based on user plan
 let isPaused = false;  // Track pause state
 let currentProjectState = { hasPrompt: false };
 
+function setDebateStatus(text) {
+    const statusEl = document.getElementById('debateStatus');
+    if (statusEl) {
+        statusEl.textContent = text;
+    }
+}
+
 function getSelectedAgents() {
     const mapping = {
         cfo: "CFO Agent",
@@ -467,6 +474,7 @@ function setupWebSocket() {
     socket.onclose = (event) => {
         console.log("WebSocket connection closed.", event.code, event.reason);
         socketReady = false;
+        setDebateStatus("Disconnected");
         
         // Handle different close codes
         let message = "Connection to server lost. Please refresh.";
@@ -523,6 +531,8 @@ async function sendPrompt() {
     if (!currentProjectState.hasPrompt) {
         currentProjectState.hasPrompt = true;
         document.body.classList.add("project-started");
+
+        setDebateStatus("Running");
 
         // Mark debate as active
         isDebateActive = true;
@@ -597,6 +607,7 @@ function setupPauseButton() {
                 isPaused = true;
                 pauseBtn.classList.add('hidden');
                 resumeBtn.classList.remove('hidden');
+                setDebateStatus("Paused");
             }
         });
     }
@@ -609,6 +620,7 @@ function setupPauseButton() {
                 isPaused = false;
                 pauseBtn.classList.remove('hidden');
                 resumeBtn.classList.add('hidden');
+                setDebateStatus("Running");
             }
         });
     }
@@ -940,6 +952,8 @@ function restoreProjectHistory(projectData) {
         const speaker = entry.speaker || "System";
         addMessage(speaker, entry.message);
     });
+
+    setDebateStatus("Running");
 
     if (projectData.summary) {
         displaySummary(projectData.summary);

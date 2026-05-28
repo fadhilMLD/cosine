@@ -306,6 +306,161 @@ body.chat-mode .header {
     display: none;
 }
 
+/* DEBATE LAYOUT */
+
+.debateMainContainer {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(480px, 2fr) minmax(240px, 1fr);
+    gap: 18px;
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 120px;
+    box-sizing: border-box;
+}
+
+.leftPanel,
+.centerPanel {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    min-height: 68vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rightPanel {
+    min-height: 68vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.panelCard {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panelHeader {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.panelHeader h3 {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+    font-weight: 600;
+}
+
+.filesList {
+    padding: 12px 14px 18px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.fileItem {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text2);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.centerTitle {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text2);
+}
+
+.centerPanel .chatContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 260px);
+}
+
+.summarySection {
+    padding: 14px 16px 18px;
+}
+
+.summaryList {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+}
+
+.agentSelectionPanel {
+    padding: 14px 16px 18px;
+}
+
+.agents-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.agent-toggle {
+    border: 1px solid var(--border2);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text2);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.agent-toggle:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.agent-toggle.active-cfo { border-color: rgba(200, 170, 80, 0.4); color: #d4aa40; background: rgba(200, 170, 80, 0.08); }
+.agent-toggle.active-ops { border-color: rgba(125, 212, 184, 0.4); color: var(--accent3); background: rgba(125, 212, 184, 0.08); }
+.agent-toggle.active-mkt { border-color: rgba(200, 180, 240, 0.4); color: var(--accent); background: rgba(200, 180, 240, 0.08); }
+.agent-toggle.active-dev { border-color: rgba(244, 120, 120, 0.4); color: #f47878; background: rgba(244, 120, 120, 0.08); }
+
+.statusContent {
+    padding: 14px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.statusValue {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.messageLimit {
+    font-size: 12px;
+    color: var(--text2);
+}
+
+.messageLimit.warning {
+    color: var(--accent2);
+}
+
 /* HEADER */
 
 .header{
@@ -433,6 +588,27 @@ cursor:pointer;
 transition:transform .2s ease, background .2s ease, border-color .2s ease;
 }
 
+.pauseBtn,
+.resumeBtn {
+    height: 58px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    background: #111;
+    color: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.pauseBtn:hover,
+.resumeBtn:hover {
+    background: #191919;
+    border-color: #4a4a4a;
+}
+
 .sendBtn:hover{
 background:#191919;
 border-color:#4a4a4a;
@@ -481,11 +657,6 @@ display:none;
 
 body.chat-mode .chatContainer{
 display:flex;
-flex-direction:column;
-width:100%;
-max-width:800px;
-margin:0 auto;
-padding:90px 10px 120px;
 }
 
 
@@ -614,7 +785,7 @@ padding:90px 10px 120px;
 body.chat-mode .main{
 height:auto;
 justify-content:flex-start;
-align-items:center;
+align-items:stretch;
 padding-top:80px;
 }
 
@@ -647,14 +818,15 @@ font-size:20px;
 /* input bottom */
 
 body.chat-mode .inputRow{
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-justify-content:center;
-padding:12px;
-background:#000;
-z-index:10;
+position: sticky;
+bottom: 0;
+left: 0;
+width: 100%;
+justify-content: center;
+padding: 12px 16px 16px;
+background: rgba(0, 0, 0, 0.9);
+z-index: 10;
+border-top: 1px solid var(--border);
 }
 
 /* ===================== */
@@ -909,8 +1081,26 @@ z-index:10;
     body.chat-mode .main {
         height: auto;
         justify-content: flex-start;
-        align-items: center;
+        align-items: stretch;
         padding-top: 60px;
+    }
+
+    .debateMainContainer {
+        display: flex;
+        flex-direction: column;
+        padding: 16px 16px 120px;
+    }
+
+    .rightPanel {
+        order: 3;
+    }
+
+    .centerPanel {
+        order: 2;
+    }
+
+    .leftPanel {
+        order: 1;
     }
 
     body.chat-mode .header {
@@ -946,7 +1136,11 @@ z-index:10;
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
-        padding: 60px 10px 100px;
+        padding: 16px 12px 24px;
+    }
+
+    .centerPanel .chatContainer {
+        max-height: none;
     }
 
     /* Messages - Mobile */
@@ -1178,20 +1372,20 @@ z-index:10;
     }
 
     body.chat-mode .inputRow {
-        position: fixed;
+        position: sticky;
         bottom: 0;
         left: 0;
         width: 100%;
         justify-content: center;
-        padding: 10px;
+        padding: 10px 12px 12px;
         background: #000;
         z-index: 10;
         gap: 8px;
     }
 
     body.chat-mode textarea {
-        width: calc(100% - 60px);
-        max-width: calc(100% - 60px);
+        width: calc(100% - 160px);
+        max-width: calc(100% - 160px);
         min-height: 45px;
         max-height: 140px;
         padding: 10px;
