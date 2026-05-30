@@ -784,6 +784,25 @@ display:flex;
     border: 2px solid #00ccff;
     border-radius: 8px;
     padding: 16px;
+    width: 90%;
+    align-self: center;
+    margin: 20px 0;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.summaryMsg .senderLabel {
+    display: block;
+    color: #00ffff;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
 .summaryEntry {
     padding: 12px 0;
@@ -816,25 +835,6 @@ display:flex;
 .inline-strong {
     font-weight: 700;
 }
-    width: 90%;
-    align-self: center;
-    margin: 20px 0;
-    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.summaryMsg .senderLabel {
-    display: block;
-    color: #00ffff;
-    font-weight: bold;
-    margin-bottom: 12px;
-    font-size: 16px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
 
 .typing {
     opacity: 0.6;
@@ -850,10 +850,11 @@ display:flex;
 /* switch layout AFTER first prompt */
 
 body.chat-mode .main{
-height:auto;
+height: calc(100vh - 60px);
 justify-content:flex-start;
 align-items:stretch;
-padding-top:80px;
+padding-top:60px;
+overflow: hidden;
 }
 
 /* header top */
@@ -894,6 +895,48 @@ padding: 12px 16px 16px;
 background: rgba(0, 0, 0, 0.9);
 z-index: 10;
 border-top: 1px solid var(--border);
+}
+
+body.chat-mode .debateMainContainer {
+    height: calc(100vh - 180px);
+    min-height: 0;
+    padding: 16px 18px 18px;
+    overflow: hidden;
+}
+
+body.chat-mode .leftPanel,
+body.chat-mode .centerPanel,
+body.chat-mode .rightPanel {
+    min-height: 0;
+    height: 100%;
+}
+
+body.chat-mode .rightPanel {
+    overflow: hidden;
+}
+
+body.chat-mode .rightPanel .panelCard:first-child {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+body.chat-mode .rightPanel .panelCard:nth-child(2),
+body.chat-mode .rightPanel .panelCard:nth-child(3) {
+    flex: 0 0 auto;
+}
+
+body.chat-mode .summarySection {
+    max-height: none;
+    flex: 1;
+}
+
+body.chat-mode .summaryList {
+    max-height: calc(100vh - 420px);
+    overflow-y: auto;
+}
+
+body.chat-mode .centerPanel .chatContainer {
+    max-height: none;
 }
 
 /* ===================== */
