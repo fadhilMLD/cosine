@@ -747,7 +747,6 @@ display:flex;
 .agentMsg.agent-generator {
     background: rgba(212, 170, 64, 0.07);
     border-color: rgba(212, 170, 64, 0.28);
-    color: #f2c15a;
     box-shadow: 0 10px 30px rgba(212, 170, 64, 0.08);
 }
 
@@ -755,7 +754,6 @@ display:flex;
 .agentMsg.agent-negator {
     background: rgba(125, 212, 184, 0.07);
     border-color: rgba(125, 212, 184, 0.28);
-    color: #7dd4b8;
     box-shadow: 0 10px 30px rgba(125, 212, 184, 0.08);
 }
 
@@ -763,7 +761,6 @@ display:flex;
 .agentMsg.agent-risk-analyzer {
     background: rgba(200, 180, 240, 0.07);
     border-color: rgba(200, 180, 240, 0.28);
-    color: #c8b4f0;
     box-shadow: 0 10px 30px rgba(200, 180, 240, 0.08);
 }
 
@@ -771,8 +768,8 @@ display:flex;
 .agentMsg.agent-constraint-enforcer {
     background: rgba(244, 120, 120, 0.07);
     border-color: rgba(244, 120, 120, 0.28);
-    color: #f47878;
     box-shadow: 0 10px 30px rgba(244, 120, 120, 0.08);
+    color: var(--text2);
 }
 
 .agentMsg.agent-cfo-agent .senderLabel,
@@ -793,6 +790,17 @@ display:flex;
 .agentMsg.agent-devil-s-advocate .senderLabel,
 .agentMsg.agent-constraint-enforcer .senderLabel {
     color: #f47878;
+}
+
+.agentMsg.agent-cfo-agent,
+.agentMsg.agent-operations-agent,
+.agentMsg.agent-market-agent,
+.agentMsg.agent-devil-s-advocate,
+.agentMsg.agent-generator,
+.agentMsg.agent-negator,
+.agentMsg.agent-risk-analyzer,
+.agentMsg.agent-constraint-enforcer {
+    color: var(--text2);
 }
 
 .agentMsg {
