@@ -1567,14 +1567,6 @@ border-top: 1px solid var(--border);
     min-width: 0;
 }
 
-body.project-started .debateMainContainer {
-    grid-template-columns: 280px 1fr;
-}
-
-body.project-started .rightPanel {
-    display: none !important;
-}
-
 body.project-started .centerPanel {
     justify-content: flex-start;
 }
