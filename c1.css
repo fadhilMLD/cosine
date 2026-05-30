@@ -743,58 +743,56 @@ display:flex;
 }
 
 /* Agent-specific styling */
+.agentMsg.agent-cfo-agent,
 .agentMsg.agent-generator {
-    background: rgba(200, 170, 80, 0.05);
-    border-color: rgba(200, 170, 80, 0.18);
+    background: rgba(212, 170, 64, 0.07);
+    border-color: rgba(212, 170, 64, 0.28);
+    color: #f2c15a;
+    box-shadow: 0 10px 30px rgba(212, 170, 64, 0.08);
 }
 
+.agentMsg.agent-operations-agent,
 .agentMsg.agent-negator {
-    background: rgba(125, 212, 184, 0.05);
-    border-color: rgba(125, 212, 184, 0.18);
+    background: rgba(125, 212, 184, 0.07);
+    border-color: rgba(125, 212, 184, 0.28);
+    color: #7dd4b8;
+    box-shadow: 0 10px 30px rgba(125, 212, 184, 0.08);
 }
 
+.agentMsg.agent-market-agent,
 .agentMsg.agent-risk-analyzer {
-    background: rgba(200, 180, 240, 0.05);
-    border-color: rgba(200, 180, 240, 0.18);
+    background: rgba(200, 180, 240, 0.07);
+    border-color: rgba(200, 180, 240, 0.28);
+    color: #c8b4f0;
+    box-shadow: 0 10px 30px rgba(200, 180, 240, 0.08);
 }
 
+.agentMsg.agent-devil-s-advocate,
 .agentMsg.agent-constraint-enforcer {
-    background: rgba(244, 120, 120, 0.05);
-    border-color: rgba(244, 120, 120, 0.18);
+    background: rgba(244, 120, 120, 0.07);
+    border-color: rgba(244, 120, 120, 0.28);
+    color: #f47878;
+    box-shadow: 0 10px 30px rgba(244, 120, 120, 0.08);
 }
 
-.agentMsg.agent-refiner {
-    background: rgba(100, 160, 255, 0.05);
-    border-color: rgba(100, 160, 255, 0.18);
-}
-
-.agentMsg.agent-moderator {
-    background: rgba(200, 180, 240, 0.05);
-    border-color: rgba(200, 180, 240, 0.18);
-}
-
+.agentMsg.agent-cfo-agent .senderLabel,
 .agentMsg.agent-generator .senderLabel {
-    color: #d4aa40;
+    color: #f2c15a;
 }
 
+.agentMsg.agent-operations-agent .senderLabel,
 .agentMsg.agent-negator .senderLabel {
     color: var(--accent3);
 }
 
+.agentMsg.agent-market-agent .senderLabel,
 .agentMsg.agent-risk-analyzer .senderLabel {
     color: var(--accent);
 }
 
+.agentMsg.agent-devil-s-advocate .senderLabel,
 .agentMsg.agent-constraint-enforcer .senderLabel {
     color: #f47878;
-}
-
-.agentMsg.agent-refiner .senderLabel {
-    color: #80b4ff;
-}
-
-.agentMsg.agent-moderator .senderLabel {
-    color: var(--accent);
 }
 
 .agentMsg {
