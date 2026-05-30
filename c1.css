@@ -772,6 +772,10 @@ display:flex;
     color: var(--text2);
 }
 
+.agentMsg.agent-devil-s-advocate {
+    color: #f47878;
+}
+
 .agentMsg.agent-cfo-agent .senderLabel,
 .agentMsg.agent-generator .senderLabel {
     color: #f2c15a;

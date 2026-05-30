@@ -1058,6 +1058,9 @@ function restoreProjectHistory(projectData) {
         if (!entry || !entry.message) {
             return;
         }
+        if (entry.type === 'summary' || entry.speaker === 'Summary') {
+            return;
+        }
         const speaker = entry.speaker || "System";
         addMessage(speaker, entry.message);
     });
