@@ -319,6 +319,11 @@ padding-top: 60px;
 box-sizing: border-box;
 }
 
+/* Prevent the page from producing its own vertical scrollbar; let panels manage scrolling */
+.main {
+    overflow: hidden;
+}
+
 body.chat-mode .main{
 height:auto;
 justify-content:flex-start;
@@ -359,6 +364,11 @@ body.chat-mode .header {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+/* Ensure right column doesn't create an extra scroll — only inner summary list should scroll */
+.rightPanel {
+    overflow: hidden;
 }
 
 .panelCard {
@@ -1669,6 +1679,8 @@ body.chat-mode .centerPanel .chatContainer {
     padding: 16px;
     margin: 16px auto;
     max-width: 900px;
+    /* Let the inner list scroll; avoid nested scrollbars */
+    overflow: visible;
 }
 
 .summaryContent h4 {
@@ -1684,6 +1696,9 @@ body.chat-mode .centerPanel .chatContainer {
     line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;
+    max-height: calc(100vh - 560px);
+    overflow-y: auto;
+    padding-right: 6px;
 }
 
 /* Pause & Resume Buttons */
