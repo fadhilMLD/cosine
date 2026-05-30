@@ -398,6 +398,8 @@ body.chat-mode .header {
 
 .summarySection {
     padding: 14px 16px 18px;
+    max-height: calc(100vh - 520px);
+    overflow-y: auto;
 }
 
 .summaryList {
@@ -1409,8 +1411,8 @@ border-top: 1px solid var(--border);
         font-size: 14px;
     }
 }
-    
 
+@media (max-width: 768px) {
     .senderLabel {
         position: absolute;
         top: 4px;
@@ -1742,6 +1744,7 @@ body.project-started .centerPanel {
     border-radius: 3px;
     background: var(--bg);
     outline: none;
+    appearance: none;
     -webkit-appearance: none;
     cursor: pointer;
 }

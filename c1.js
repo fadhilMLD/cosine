@@ -317,6 +317,7 @@ function addMessage(sender, text) {
         msg.classList.add(`agent-${sender.toLowerCase().replace(/\s+/g, "-")}`);
     }
     
+    msg.dataset.speaker = sender;
     msg.innerHTML = formatGeneratedText(text);
     msg.prepend(senderSpan);
 
@@ -328,6 +329,27 @@ function addMessage(sender, text) {
     chatContainer.appendChild(msg);
     // Scroll the window to the bottom to show new messages
     window.scrollTo(0, document.body.scrollHeight);
+}
+
+function updateMessageElement(element, sender, text, typing = false) {
+    if (!element) {
+        return;
+    }
+
+    const senderSpan = element.querySelector('.senderLabel');
+    element.innerHTML = '';
+    if (senderSpan) {
+        element.appendChild(senderSpan);
+    } else {
+        const newSenderSpan = document.createElement('span');
+        newSenderSpan.className = 'senderLabel';
+        newSenderSpan.innerText = sender;
+        element.appendChild(newSenderSpan);
+    }
+
+    element.dataset.speaker = sender;
+    element.insertAdjacentHTML('beforeend', formatGeneratedText(text));
+    element.classList.toggle('typing', typing);
 }
 
 let socket;
@@ -508,16 +530,10 @@ function setupWebSocket() {
             const dots = data.dots || ".";
             
             if (!typingMessages[speaker]) {
-                typingMessages[speaker] = true;
                 addMessage(speaker, dots);
+                typingMessages[speaker] = chatContainer.lastElementChild;
             } else {
-                const lastMsg = chatContainer.lastElementChild;
-                if (lastMsg && lastMsg.textContent.includes(speaker)) {
-                    const textNode = Array.from(lastMsg.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
-                    if (textNode) {
-                        textNode.textContent = dots;
-                    }
-                }
+                updateMessageElement(typingMessages[speaker], speaker, dots, true);
             }
         } else if (data.type === "summary") {
             // Handle summary message
@@ -541,15 +557,10 @@ function setupWebSocket() {
             addMessage("⚠️ Error", data.message);
         } else {
             // Handle regular message
-            delete typingMessages[data.speaker];
-            
-            const lastMsg = chatContainer.lastElementChild;
-            if (lastMsg && lastMsg.textContent.includes(data.speaker) && lastMsg.textContent.match(/^[.\s\w]+$/)) {
-                const textNode = Array.from(lastMsg.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
-                if (textNode) {
-                    textNode.textContent = data.message;
-                }
-                lastMsg.classList.remove("typing");
+            const typingElement = typingMessages[data.speaker];
+            if (typingElement) {
+                updateMessageElement(typingElement, data.speaker, data.message, false);
+                delete typingMessages[data.speaker];
             } else {
                 addMessage(data.speaker, data.message);
             }
