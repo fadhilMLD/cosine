@@ -463,7 +463,7 @@ function updateMessageLimit() {
     if (!limitEl || !isDebateActive) return;
     
     if (currentMessageCount >= messageLimit) {
-        limitEl.textContent = `⚠️ Message limit reached (${currentMessageCount}/${messageLimit})`;
+        limitEl.textContent = ` Message limit reached (${currentMessageCount}/${messageLimit})`;
         limitEl.classList.add('warning');
     } else if (currentMessageCount >= messageLimit * 0.8) {
         limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit} (Approaching limit)`;
@@ -538,6 +538,9 @@ function setupWebSocket() {
         } else if (data.type === "summary") {
             // Handle summary message
             displaySummary(data.message);
+        } else if (data.type === "web_sources") {
+            // Handle web sources list
+            displayWebSources(data.sources || []);
         } else if (data.type === "pause") {
             // Handle pause notification
             isPaused = true;
@@ -554,7 +557,7 @@ function setupWebSocket() {
             syncDebateControls(data.status);
         } else if (data.type === "error") {
             // Handle error message
-            addMessage("⚠️ Error", data.message);
+            addMessage("Error", data.message);
         } else {
             // Handle regular message
             const typingElement = typingMessages[data.speaker];
@@ -657,6 +660,9 @@ async function sendPrompt() {
         // Clear previous summaries
         const summaryList = document.getElementById('summaryList');
         if (summaryList) summaryList.innerHTML = '';
+        // Clear previous web sources
+        const webSourcesList = document.getElementById('webSourcesList');
+        if (webSourcesList) webSourcesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
         const summarySection = document.getElementById('summarySection');
         if (summarySection) summarySection.classList.add('hidden');
 
@@ -1083,6 +1089,12 @@ function restoreProjectHistory(projectData) {
     } else if (projectData.summary) {
         displaySummary(projectData.summary);
     }
+    // Restore saved web sources if present
+    if (Array.isArray(projectData.web_sources) && projectData.web_sources.length > 0) {
+        displayWebSources(projectData.web_sources);
+    } else if (Array.isArray(projectData.sources) && projectData.sources.length > 0) {
+        displayWebSources(projectData.sources);
+    }
 }
 
 function loadProjectFromUrl() {
@@ -1215,4 +1227,23 @@ async function loadProjectDetails(projectId) {
         console.error('Error loading project details:', error);
         showAccessDenied("Unable to verify access to this project.");
     }
+}
+
+function displayWebSources(sources) {
+    const list = document.getElementById('webSourcesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!sources || sources.length === 0) {
+        list.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
+        return;
+    }
+
+    sources.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'webSourceItem';
+        const title = s.title ? s.title : s.url;
+        const url = s.url ? s.url : '#';
+        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${title}</a>`;
+        list.appendChild(item);
+    });
 }
