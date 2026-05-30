@@ -916,8 +916,8 @@ body.chat-mode .rightPanel {
 }
 
 body.chat-mode .rightPanel .panelCard:first-child {
-    flex: 0 0 22vh;
-    max-height: 22vh;
+    flex: 0 0 48vh;
+    max-height: 48vh;
     min-height: 0;
 }
 
@@ -927,12 +927,12 @@ body.chat-mode .rightPanel .panelCard:nth-child(3) {
 }
 
 body.chat-mode .summarySection {
-    max-height: 16vh;
+    max-height: 42vh;
     overflow-y: auto;
 }
 
 body.chat-mode .summaryList {
-    max-height: 14vh;
+    max-height: 40vh;
     overflow-y: auto;
 }
 
