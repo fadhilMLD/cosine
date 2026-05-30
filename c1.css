@@ -452,6 +452,39 @@ body.chat-mode .header {
     color: var(--text);
 }
 
+.limitSliderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.limitSliderLabel {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+}
+
+.limitSliderValue {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.messageSlider {
+    width: 100%;
+    accent-color: var(--accent);
+}
+
+.limitHint {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text2);
+}
+
 .messageLimit {
     font-size: 12px;
     color: var(--text2);
@@ -749,6 +782,38 @@ display:flex;
     border: 2px solid #00ccff;
     border-radius: 8px;
     padding: 16px;
+
+.summaryEntry {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.summaryEntry:last-child {
+    border-bottom: none;
+}
+
+.summaryEntry .summaryMeta {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 8px;
+}
+
+.summaryEntry .summaryBody {
+    white-space: normal;
+}
+
+.double-strong {
+    display: inline-block;
+    font-size: 1.12em;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.inline-strong {
+    font-weight: 700;
+}
     width: 90%;
     align-self: center;
     margin: 20px 0;

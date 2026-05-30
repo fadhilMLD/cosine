@@ -317,7 +317,7 @@ function addMessage(sender, text) {
         msg.classList.add(`agent-${sender.toLowerCase().replace(/\s+/g, "-")}`);
     }
     
-    msg.innerText = text;
+    msg.innerHTML = formatGeneratedText(text);
     msg.prepend(senderSpan);
 
     // Add typing class if text is just dots
@@ -339,6 +339,84 @@ let currentMessageCount = 0;  // Track messages generated
 let messageLimit = 0;  // Set based on user plan
 let isPaused = false;  // Track pause state
 let currentProjectState = { hasPrompt: false };
+let promptSettingsLocked = false;
+let currentDebateStatus = "Idle";
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text ?? '');
+    return div.innerHTML;
+}
+
+function formatGeneratedText(text) {
+    const escaped = escapeHtml(text);
+    const doubleTokens = [];
+    const withDoubleTokens = escaped.replace(/\*\*([\s\S]+?)\*\*/g, (_, inner) => {
+        const token = `__DOUBLE_TOKEN_${doubleTokens.length}__`;
+        doubleTokens.push(inner);
+        return token;
+    });
+
+    let formatted = withDoubleTokens.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<strong class="inline-strong">$1</strong>');
+
+    doubleTokens.forEach((inner, index) => {
+        formatted = formatted.replace(`__DOUBLE_TOKEN_${index}__`, `<strong class="double-strong">${inner}</strong>`);
+    });
+
+    return formatted.replace(/\n/g, '<br>');
+}
+
+function syncDebateControls(status) {
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+
+    currentDebateStatus = status;
+    isDebateActive = status === 'Running' || status === 'Paused';
+    setDebateStatus(status);
+
+    if (status === 'Paused') {
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (resumeBtn) resumeBtn.classList.remove('hidden');
+        return;
+    }
+
+    if (status === 'Completed' || status === 'Idle' || status === 'Disconnected') {
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (resumeBtn) resumeBtn.classList.add('hidden');
+        return;
+    }
+
+    if (pauseBtn) pauseBtn.classList.remove('hidden');
+    if (resumeBtn) resumeBtn.classList.add('hidden');
+}
+
+function getCurrentMessageLimit() {
+    const messageSlider = document.getElementById('messageSlider');
+    const sliderValue = Number(messageSlider?.value);
+
+    if (Number.isFinite(sliderValue) && sliderValue > 0) {
+        return sliderValue;
+    }
+
+    if (Number.isFinite(messageLimit) && messageLimit > 0) {
+        return messageLimit;
+    }
+
+    return 25;
+}
+
+function destroyPromptSettings() {
+    if (promptSettingsLocked) {
+        return;
+    }
+
+    const generationCard = document.getElementById('generationLimitCard');
+    if (generationCard) {
+        generationCard.remove();
+    }
+
+    promptSettingsLocked = true;
+}
 
 function setDebateStatus(text) {
     const statusEl = document.getElementById('debateStatus');
@@ -443,14 +521,21 @@ function setupWebSocket() {
             }
         } else if (data.type === "summary") {
             // Handle summary message
-            addMessage("📝 Summary", data.message);
             displaySummary(data.message);
         } else if (data.type === "pause") {
             // Handle pause notification
             isPaused = true;
-            document.getElementById('pauseBtn').classList.add('hidden');
-            document.getElementById('resumeBtn').classList.remove('hidden');
+            syncDebateControls("Paused");
             addMessage("System", data.message);
+        } else if (data.type === "status" && data.status) {
+            if (data.message_count !== undefined) {
+                currentMessageCount = data.message_count;
+            }
+            if (data.message_limit !== undefined && data.message_limit !== null) {
+                messageLimit = data.message_limit;
+            }
+            updateMessageLimit();
+            syncDebateControls(data.status);
         } else if (data.type === "error") {
             // Handle error message
             addMessage("⚠️ Error", data.message);
@@ -474,7 +559,9 @@ function setupWebSocket() {
     socket.onclose = (event) => {
         console.log("WebSocket connection closed.", event.code, event.reason);
         socketReady = false;
-        setDebateStatus("Disconnected");
+        if (currentDebateStatus !== "Completed" && currentDebateStatus !== "Paused") {
+            syncDebateControls("Disconnected");
+        }
         
         // Handle different close codes
         let message = "Connection to server lost. Please refresh.";
@@ -520,6 +607,9 @@ async function sendPrompt() {
     }
 
     activateChatUI();
+    if (!currentProjectState.hasPrompt) {
+        messageLimit = getCurrentMessageLimit();
+    }
     addMessage("user", prompt);
     box.value = "";
     box.classList.remove("active");
@@ -532,17 +622,18 @@ async function sendPrompt() {
         currentProjectState.hasPrompt = true;
         document.body.classList.add("project-started");
 
-        setDebateStatus("Running");
+        destroyPromptSettings();
+        syncDebateControls("Running");
 
         // Mark debate as active
         isDebateActive = true;
         currentMessageCount = 0;
         
         // Set message limit based on user plan
-        if (currentUser && currentUser.plan) {
+        if (!messageLimit && currentUser && currentUser.plan) {
             const planLimits = { "Free": 25, "Pro": 40, "Master": 80 };
             messageLimit = planLimits[currentUser.plan] || 25;
-        } else {
+        } else if (!messageLimit) {
             messageLimit = 25; // Default to free plan limit
         }
         
@@ -592,7 +683,13 @@ function displaySummary(summaryText) {
     
     if (summarySection && summaryList) {
         summarySection.classList.remove('hidden');
-        summaryList.textContent = summaryText;
+        const entry = document.createElement('div');
+        entry.className = 'summaryEntry';
+        entry.innerHTML = `
+            <div class="summaryMeta">Summary</div>
+            <div class="summaryBody">${formatGeneratedText(summaryText)}</div>
+        `;
+        summaryList.appendChild(entry);
     }
 }
 
@@ -605,9 +702,7 @@ function setupPauseButton() {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ action: 'pause' }));
                 isPaused = true;
-                pauseBtn.classList.add('hidden');
-                resumeBtn.classList.remove('hidden');
-                setDebateStatus("Paused");
+                syncDebateControls("Paused");
             }
         });
     }
@@ -618,9 +713,7 @@ function setupPauseButton() {
                 socket.send(JSON.stringify({ action: 'change_agents', agents: getSelectedAgents() }));
                 socket.send(JSON.stringify({ action: 'resume' }));
                 isPaused = false;
-                pauseBtn.classList.remove('hidden');
-                resumeBtn.classList.add('hidden');
-                setDebateStatus("Running");
+                syncDebateControls("Running");
             }
         });
     }
@@ -645,6 +738,9 @@ function setupProjectSettings() {
             messageCount.textContent = e.target.value;
             // Save to localStorage for persistence
             localStorage.setItem('messageSliderValue', e.target.value);
+            if (!currentProjectState.hasPrompt) {
+                messageLimit = Number(e.target.value);
+            }
         });
         
         // Load saved value from localStorage
@@ -652,6 +748,7 @@ function setupProjectSettings() {
         if (savedValue) {
             messageSlider.value = savedValue;
             messageCount.textContent = savedValue;
+            messageLimit = Number(savedValue);
         }
     }
     
@@ -674,7 +771,7 @@ function getProjectSettingsPayload() {
     const webSearchCheckbox = document.getElementById('webSearchCheckbox');
 
     return {
-        message_count: messageSlider ? Number(messageSlider.value) : null,
+        message_count: messageSlider ? Number(messageSlider.value) : (messageLimit || null),
         web_search_enabled: webSearchCheckbox ? webSearchCheckbox.checked : false
     };
 }
@@ -854,7 +951,7 @@ function displayDebateMessages(messages, topic) {
         msgEl.className = "debateMessage";
         msgEl.innerHTML = `
             <div class="speaker">${msg.speaker}</div>
-            <div class="content">${escapeHtml(msg.message)}</div>
+            <div class="content">${formatGeneratedText(msg.message)}</div>
             <div class="timestamp">${timeStr}</div>
         `;
         
@@ -935,6 +1032,7 @@ function restoreProjectHistory(projectData) {
     }
 
     const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
+    const storedLimit = Number(projectData.message_limit || projectData?.settings?.message_count || 0);
 
     activateChatUI();
     document.body.classList.add("project-started");
@@ -953,9 +1051,22 @@ function restoreProjectHistory(projectData) {
         addMessage(speaker, entry.message);
     });
 
-    setDebateStatus("Running");
+    if (Number.isFinite(storedLimit) && storedLimit > 0) {
+        messageLimit = storedLimit;
+    }
 
-    if (projectData.summary) {
+    const agentMessages = messages.filter(entry => entry && entry.type === 'message' && entry.speaker !== 'user');
+    const inferredStatus = projectData.debate_status || (messageLimit > 0 && agentMessages.length >= messageLimit ? 'Completed' : 'Running');
+    syncDebateControls(inferredStatus);
+    destroyPromptSettings();
+
+    if (Array.isArray(projectData.summaries) && projectData.summaries.length > 0) {
+        projectData.summaries.forEach(item => {
+            if (item && item.summary) {
+                displaySummary(item.summary);
+            }
+        });
+    } else if (projectData.summary) {
         displaySummary(projectData.summary);
     }
 }
@@ -1084,6 +1195,7 @@ async function loadProjectDetails(projectId) {
             restoreProjectHistory(data);
         } else {
             document.body.classList.remove("project-started");
+            syncDebateControls("Idle");
         }
     } catch (error) {
         console.error('Error loading project details:', error);
