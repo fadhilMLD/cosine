@@ -22,6 +22,30 @@ color:white;
 min-height:100vh;
 }
 
+/* Layout safety: ensure paddings don't add to widths and prevent horizontal scroll */
+html, body, *, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Prevent horizontal scrolling in the main debate layout */
+.debateMainContainer,
+.leftPanel,
+.centerPanel,
+.rightPanel,
+.centerPanel .chatContainer {
+    overflow-x: hidden;
+}
+
+/* Ensure chat messages wrap instead of overflowing */
+.chatContainer,
+.chatContainer .userMsg,
+.chatContainer .botMsg,
+.chatContainer .agentMsg,
+.chatContainer .systemMsg {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
 /* TEXT SELECTION */
 ::selection {
     background: linear-gradient(90deg, #FFD700, #00FFFF, #FF1493);
