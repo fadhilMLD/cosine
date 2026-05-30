@@ -713,6 +713,8 @@ display:flex;
     font-size: 13px;
     font-weight: bold;
     opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 
@@ -729,40 +731,79 @@ display:flex;
 }
 
 .botMsg, .agentMsg {
-    background: #222;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     align-self: flex-start;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+    color: var(--text2);
 }
 
 .agentMsg .senderLabel {
-    color: #a9a9a9; /* Lighter gray for agent names */
+    color: var(--text3);
 }
 
 /* Agent-specific styling */
 .agentMsg.agent-generator {
-    color: #ffffff;
-    font-weight: bold;
+    background: rgba(200, 170, 80, 0.05);
+    border-color: rgba(200, 170, 80, 0.18);
 }
 
 .agentMsg.agent-negator {
-    color: #ffffff;
-    font-style: italic;
+    background: rgba(125, 212, 184, 0.05);
+    border-color: rgba(125, 212, 184, 0.18);
 }
 
 .agentMsg.agent-risk-analyzer {
-    color: #ffffff;
+    background: rgba(200, 180, 240, 0.05);
+    border-color: rgba(200, 180, 240, 0.18);
 }
 
 .agentMsg.agent-constraint-enforcer {
-    color: #ffffff;
+    background: rgba(244, 120, 120, 0.05);
+    border-color: rgba(244, 120, 120, 0.18);
 }
 
 .agentMsg.agent-refiner {
-    color: #ffffff;
+    background: rgba(100, 160, 255, 0.05);
+    border-color: rgba(100, 160, 255, 0.18);
 }
 
 .agentMsg.agent-moderator {
-    color: #ffffff;
-    font-weight: bold;
+    background: rgba(200, 180, 240, 0.05);
+    border-color: rgba(200, 180, 240, 0.18);
+}
+
+.agentMsg.agent-generator .senderLabel {
+    color: #d4aa40;
+}
+
+.agentMsg.agent-negator .senderLabel {
+    color: var(--accent3);
+}
+
+.agentMsg.agent-risk-analyzer .senderLabel {
+    color: var(--accent);
+}
+
+.agentMsg.agent-constraint-enforcer .senderLabel {
+    color: #f47878;
+}
+
+.agentMsg.agent-refiner .senderLabel {
+    color: #80b4ff;
+}
+
+.agentMsg.agent-moderator .senderLabel {
+    color: var(--accent);
+}
+
+.agentMsg {
+    max-width: 100%;
+    width: 100%;
+    padding: 14px 18px 14px;
+    border-radius: 10px;
+    padding-top: 32px;
+    line-height: 1.6;
 }
 
 .systemMsg {
