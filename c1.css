@@ -900,8 +900,13 @@ border-top: 1px solid var(--border);
 body.chat-mode .debateMainContainer {
     height: calc(100vh - 180px);
     min-height: 0;
+    max-width: 1680px;
     padding: 16px 18px 18px;
     overflow: hidden;
+}
+
+body.chat-mode .debateMainContainer {
+    grid-template-columns: minmax(280px, 1.15fr) minmax(520px, 1.8fr) minmax(320px, 1.15fr);
 }
 
 body.chat-mode .leftPanel,
