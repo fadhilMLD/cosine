@@ -436,7 +436,8 @@ body.chat-mode .header {
 .summarySection {
     padding: 14px 16px 18px;
     max-height: calc(100vh - 520px);
-    overflow-y: auto;
+    /* Let the inner list handle scrolling to avoid nested scrollbars */
+    overflow: visible;
 }
 
 .summaryList {
@@ -444,6 +445,11 @@ body.chat-mode .header {
     line-height: 1.6;
     color: var(--text);
     white-space: pre-wrap;
+
+    /* Make the actual list the single scroll container */
+    max-height: calc(100vh - 560px);
+    overflow-y: auto;
+    padding-right: 6px; /* avoid content behind scrollbar */
 }
 
 .agentSelectionPanel {
