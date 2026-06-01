@@ -1203,13 +1203,42 @@ async function loadProjectDetails(projectId) {
             return "Unnamed file";
         };
 
+        const formatTrendItems = (trendText) => {
+            const text = String(trendText || "").trim();
+            if (!text) {
+                return "";
+            }
+
+            const rawItems = text
+                .split(/\n+/)
+                .map(item => item.replace(/^[-•]\s*/, "").trim())
+                .filter(Boolean);
+
+            const sentenceItems = rawItems.length > 0
+                ? rawItems
+                : text.replace(/\n+/g, ". ").split(/[.!?]+\s*/).map(item => item.trim()).filter(Boolean);
+
+            return `
+                <ul class="fileTrendList">
+                    ${sentenceItems.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+                </ul>
+            `;
+        };
+
         // Populate uploaded files list
         const filesList = document.getElementById('uploadedFilesList');
         if (filesList && data.files && Array.isArray(data.files)) {
             if (data.files.length > 0) {
                 filesList.innerHTML = data.files.map(file => {
                     const label = getFileDisplayName(file);
-                    return `<div class="fileItem">📄 ${escapeHtml(String(label))}</div>`;
+                    const trendText = file && typeof file === "object" ? file.trend_text : "";
+                    const trendMarkup = formatTrendItems(trendText);
+                    return `
+                        <div class="fileItem">
+                            <div class="fileName">📄 ${escapeHtml(String(label))}</div>
+                            ${trendMarkup ? `<div class="fileTrendBlock">${trendMarkup}</div>` : ''}
+                        </div>
+                    `;
                 }).join('');
             } else {
                 filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';

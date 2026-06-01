@@ -1878,6 +1878,37 @@ body.project-started .centerPanel {
     gap: 8px;
 }
 
+.fileItem {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fileName {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.fileTrendBlock {
+    width: 100%;
+}
+
+.fileTrendList {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--text2);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.fileTrendList li {
+    word-break: break-word;
+}
+
 .fileItem:hover {
     background: rgba(200, 180, 240, 0.05);
     border-color: var(--accent);
