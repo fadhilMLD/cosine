@@ -535,9 +535,42 @@ function setupWebSocket() {
             } else {
                 updateMessageElement(typingMessages[speaker], speaker, dots, true);
             }
-        } else if (data.type === "summary") {
-            // Handle summary message
-            displaySummary(data.message);
+        } else if (data.type === "summary" || data.type === "final_summary") {
+                // Handle summary message
+                displaySummary(data.message);
+                // If this is the final condensed roll-up, request a brief evaluation and show popup modal
+                if (data.type === "final_summary") {
+                    (async () => {
+                        try {
+                            // Call backend to generate concise evaluation (20-30 words)
+                            let evalText = "";
+                            try {
+                                const resp = await fetch(getApiUrl(`/projects/${currentProjectId}/evaluate_final`), {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${authToken}`,
+                                        'ngrok-skip-browser-warning': 'true'
+                                    }
+                                });
+                                if (resp.ok) {
+                                    const j = await resp.json();
+                                    evalText = j.result || "";
+                                } else {
+                                    console.warn('Evaluation endpoint returned', resp.status);
+                                }
+                            } catch (fetchErr) {
+                                console.error('Failed to fetch evaluation:', fetchErr);
+                            }
+
+                            if (evalText) displayResult(evalText);
+                            showFinalSummary(data.message, evalText);
+                        } catch (e) {
+                            console.error('Failed to show final summary modal', e);
+                            showFinalSummary(data.message);
+                        }
+                    })();
+                }
         } else if (data.type === "web_sources") {
             // Handle web sources list
             displayWebSources(data.sources || []);
@@ -1275,4 +1308,105 @@ function displayWebSources(sources) {
         item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${title}</a>`;
         list.appendChild(item);
     });
+}
+
+// Final summary modal utilities
+function createFinalSummaryModalIfNeeded() {
+    if (document.getElementById('finalSummaryModal')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'finalSummaryModal';
+    overlay.className = 'final-summary-overlay hidden';
+
+    overlay.innerHTML = `
+        <div class="final-summary-dialog">
+            <div class="final-summary-header">
+                <div class="final-summary-title">Final Summary</div>
+                <button class="final-summary-close" aria-label="Close">✕</button>
+            </div>
+            <div class="final-summary-body"></div>
+            <div class="final-summary-result" style="display:none; padding: 12px 18px; border-top:1px solid rgba(255,255,255,0.03);"></div>
+            <div class="final-summary-actions">
+                <button class="final-summary-copy">Copy</button>
+                <button class="final-summary-dismiss">Close</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.final-summary-close').addEventListener('click', hideFinalSummary);
+    overlay.querySelector('.final-summary-dismiss').addEventListener('click', hideFinalSummary);
+    overlay.querySelector('.final-summary-copy').addEventListener('click', () => {
+        const body = overlay.querySelector('.final-summary-body');
+        if (!body) return;
+        const text = body.innerText || body.textContent || '';
+        try {
+            navigator.clipboard.writeText(text);
+        } catch (e) {
+            console.warn('Clipboard write failed', e);
+        }
+    });
+
+    // Close on overlay click outside dialog
+    overlay.addEventListener('click', (ev) => {
+        if (ev.target === overlay) hideFinalSummary();
+    });
+
+    // Close on escape
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+            const modal = document.getElementById('finalSummaryModal');
+            if (modal && !modal.classList.contains('hidden')) hideFinalSummary();
+        }
+    });
+}
+
+function showFinalSummary(summaryText, resultText) {
+    if (!summaryText) return;
+    createFinalSummaryModalIfNeeded();
+    const overlay = document.getElementById('finalSummaryModal');
+    if (!overlay) return;
+    const body = overlay.querySelector('.final-summary-body');
+    const resultEl = overlay.querySelector('.final-summary-result');
+    if (body) {
+        body.innerHTML = `<div class="final-summary-text">${formatGeneratedText(summaryText)}</div>`;
+    }
+    if (resultEl) {
+        if (resultText) {
+            resultEl.style.display = '';
+            resultEl.innerHTML = `<div class="resultMeta">Assessment</div><div class="resultContent">${formatGeneratedText(resultText)}</div>`;
+        } else {
+            resultEl.style.display = 'none';
+            resultEl.innerHTML = '';
+        }
+    }
+    overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
+}
+
+function hideFinalSummary() {
+    const overlay = document.getElementById('finalSummaryModal');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.style.display = 'none';
+}
+
+function displayResult(resultText) {
+    const webList = document.getElementById('webSourcesList');
+    if (!webList) return;
+
+    let container = document.getElementById('resultBox');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'resultBox';
+        container.className = 'fileItem resultItem';
+        // Insert after webSourcesList
+        webList.parentNode.insertBefore(container, webList.nextSibling);
+    }
+
+    container.innerHTML = `
+        <div class="fileName">🔎 Result</div>
+        <div class="fileTrendBlock resultBlock">${formatGeneratedText(resultText)}</div>
+    `;
 }
