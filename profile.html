@@ -390,6 +390,10 @@
                     <option value="Pro">Pro - ₹499/month</option>
                     <option value="Master">Master - ₹1299/month</option>
                 </select>
+                <div class="form-group" style="margin-top: 12px;">
+                    <label for="couponCode">Coupon Code</label>
+                    <input type="text" id="couponCode" placeholder="Optional coupon code">
+                </div>
                 <button class="btn-primary" onclick="upgradePlan()" style="margin-top: 12px;">Update Plan</button>
                 <div class="loading" id="planLoading">
                     <div class="spinner"></div>
@@ -490,6 +494,7 @@
             const token = localStorage.getItem('authToken');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const newPlan = document.getElementById('planSelect').value;
+            const couponCode = document.getElementById('couponCode').value.trim();
 
             if (newPlan === user.plan) {
                 showError('Please select a different plan');
@@ -523,14 +528,14 @@
 
             if (price === 0) {
                 // Free plan - no payment needed
-                await updatePlanDirect(newPlan);
+                await updatePlanDirect(newPlan, couponCode);
             } else {
                 // Paid plan - initiate payment
-                initiatePayment(newPlan, price);
+                initiatePayment(newPlan, couponCode);
             }
         }
 
-        async function initiatePayment(plan, price) {
+        async function initiatePayment(plan, couponCode) {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const token = localStorage.getItem('authToken');
 
@@ -546,7 +551,7 @@
                     },
                     body: JSON.stringify({
                         plan,
-                        amount: price
+                        coupon_code: couponCode || null
                     })
                 });
 
@@ -558,15 +563,22 @@
                     return;
                 }
 
+                if (orderData.requires_payment === false || Number(orderData.amount || 0) <= 0) {
+                    await updatePlanDirect(plan, couponCode);
+                    return;
+                }
+
                 const options = {
                     key: "rzp_test_StFoGX0LfzHlPa",  // Add your Razorpay Key ID here
-                    amount: price,
+                    amount: orderData.amount,
                     currency: "INR",
                     name: "Cosine",
-                    description: `Upgrade to ${plan} Plan`,
+                    description: orderData.coupon?.applied
+                        ? `Upgrade to ${plan} Plan with coupon ${orderData.coupon.code}`
+                        : `Upgrade to ${plan} Plan`,
                     order_id: orderData.order_id,
                     handler: async (response) => {
-                        await verifyPayment(plan, response);
+                        await verifyPayment(plan, response, couponCode);
                     },
                     prefill: {
                         name: user.name || "",
@@ -586,7 +598,7 @@
             }
         }
 
-        async function verifyPayment(plan, paymentResponse) {
+        async function verifyPayment(plan, paymentResponse, couponCode) {
             const token = localStorage.getItem('authToken');
 
             try {
@@ -600,6 +612,7 @@
                     },
                     body: JSON.stringify({
                         plan,
+                        coupon_code: couponCode || null,
                         razorpay_payment_id: paymentResponse.razorpay_payment_id,
                         razorpay_order_id: paymentResponse.razorpay_order_id,
                         razorpay_signature: paymentResponse.razorpay_signature
@@ -618,7 +631,9 @@
                     localStorage.setItem('user', JSON.stringify(user));
                     
                     loadProfile();
-                    showSuccess(`Plan upgraded to ${plan} successfully!`);
+                    showSuccess(data.coupon?.applied
+                        ? `Plan upgraded to ${plan} with coupon ${data.coupon.code} successfully!`
+                        : `Plan upgraded to ${plan} successfully!`);
                 } else {
                     showError(data.detail || 'Payment verification failed');
                 }
@@ -629,7 +644,7 @@
             }
         }
 
-        async function updatePlanDirect(plan) {
+        async function updatePlanDirect(plan, couponCode) {
             const token = localStorage.getItem('authToken');
 
             try {
@@ -642,7 +657,10 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ plan })
+                    body: JSON.stringify({
+                        plan,
+                        coupon_code: couponCode || null
+                    })
                 });
 
                 const data = await response.json();
@@ -656,7 +674,9 @@
                     localStorage.setItem('user', JSON.stringify(user));
                     
                     loadProfile();
-                    showSuccess('Plan updated successfully!');
+                    showSuccess(data.coupon?.applied
+                        ? `Plan updated to ${plan} with coupon ${data.coupon.code} successfully!`
+                        : 'Plan updated successfully!');
                 } else {
                     showError(data.detail || 'Failed to update plan');
                 }
