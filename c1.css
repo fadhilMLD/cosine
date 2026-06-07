@@ -926,6 +926,129 @@ display:flex;
     letter-spacing: 1px;
 }
 
+/* New message type styles for multi-agent workflow */
+
+/* Flaw Finder Messages */
+.flawMsg {
+    background: rgba(244, 120, 120, 0.12);
+    border: 1.5px solid rgba(244, 120, 120, 0.4);
+    color: #ff9a9a;
+    align-self: flex-start;
+    box-shadow: 0 10px 30px rgba(244, 120, 120, 0.12);
+    border-radius: 10px;
+    padding: 14px 18px 14px;
+    padding-top: 32px;
+    max-width: 100%;
+    width: 100%;
+}
+
+.flawMsg .senderLabel {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+/* Validator Messages */
+.validatorMsg {
+    background: rgba(125, 212, 184, 0.12);
+    border: 1.5px solid rgba(125, 212, 184, 0.4);
+    color: #7dd4b8;
+    align-self: flex-start;
+    box-shadow: 0 10px 30px rgba(125, 212, 184, 0.12);
+    border-radius: 10px;
+    padding: 14px 18px 14px;
+    padding-top: 32px;
+    max-width: 100%;
+    width: 100%;
+}
+
+.validatorMsg .senderLabel {
+    color: #5db89f;
+    font-weight: bold;
+}
+
+/* Final Summary Messages */
+.finalSummaryMsg {
+    background: linear-gradient(135deg, #2a3a1a 0%, #1f3a0f 100%);
+    color: #c0e0a0;
+    border: 2px solid #88dd55;
+    border-radius: 10px;
+    padding: 18px;
+    width: 90%;
+    align-self: center;
+    margin: 24px 0;
+    box-shadow: 0 0 20px rgba(136, 221, 85, 0.25);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-weight: 500;
+}
+
+.finalSummaryMsg .senderLabel {
+    color: #88dd55;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+
+/* Status Messages */
+.systemMsg[data-message-type="status"] {
+    background: rgba(100, 150, 200, 0.1);
+    color: #8ba8d0;
+    border: 1px solid rgba(100, 150, 200, 0.3);
+    text-align: left;
+}
+
+/* Sub-Prompt Start Messages */
+.systemMsg[data-message-type="subprompt_start"] {
+    background: linear-gradient(135deg, rgba(200, 180, 240, 0.15), rgba(100, 150, 200, 0.1));
+    color: #d0b5f0;
+    border: 1px solid rgba(200, 180, 240, 0.35);
+    text-align: left;
+    font-weight: 500;
+    margin: 20px 0;
+}
+
+/* Sub-Prompt End Messages */
+.systemMsg[data-message-type="subprompt_end"] {
+    background: rgba(100, 200, 150, 0.1);
+    color: #88dd55;
+    border: 1px solid rgba(100, 200, 150, 0.3);
+    text-align: left;
+    font-style: normal;
+}
+
+/* Search Queries Messages */
+.systemMsg[data-message-type="search_queries"] {
+    background: rgba(255, 180, 100, 0.08);
+    color: #ffb964;
+    border: 1px solid rgba(255, 180, 100, 0.35);
+    text-align: left;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+/* Web Results Messages */
+.systemMsg[data-message-type="web_results"] {
+    background: rgba(150, 200, 255, 0.08);
+    color: #96c8ff;
+    border: 1px solid rgba(150, 200, 255, 0.35);
+    text-align: left;
+    font-size: 13px;
+}
+
+/* Discussion Complete Messages */
+.systemMsg[data-message-type="discussion_complete"],
+.systemMsg[data-message-type="completion"] {
+    background: linear-gradient(135deg, rgba(100, 200, 150, 0.15), rgba(88, 200, 200, 0.1));
+    color: #88ddaa;
+    border: 2px solid rgba(100, 200, 150, 0.5);
+    text-align: center;
+    font-weight: bold;
+    margin: 20px auto;
+    width: 60%;
+}
+
 .summaryEntry {
     padding: 12px 0;
     border-bottom: 1px solid var(--border);

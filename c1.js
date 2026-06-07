@@ -288,29 +288,44 @@ document.body.classList.add("chat-mode")
 chatContainer.classList.remove("hidden")
 }
 
-function addMessage(sender, text) {
+function addMessage(sender, text, messageType = "message") {
     const msg = document.createElement("div");
     const senderSpan = document.createElement("span");
     senderSpan.className = "senderLabel";
     
     let senderClass = "botMsg";
     let senderName = sender;
+    let iconPrefix = "";
 
     if (sender === "user") {
         senderClass = "userMsg";
         senderName = "You";
     } else if (sender === "System") {
         senderClass = "systemMsg";
+        senderName = "📍 System";
     } else if (sender === "Summary") {
         senderClass = "summaryMsg";
         senderName = "📋 Summary";
+    } else if (messageType === "flaw_finder") {
+        senderClass = "flawMsg";
+        iconPrefix = "⚠️ ";
+    } else if (messageType === "validator") {
+        senderClass = "validatorMsg";
+        iconPrefix = "✓ ";
+    } else if (messageType === "final_summary") {
+        senderClass = "finalSummaryMsg";
+        iconPrefix = "📊 ";
+    } else if (messageType === "summary") {
+        senderClass = "summaryMsg";
+        iconPrefix = "📋 ";
     } else {
-        // For agents like Generator, Negator, etc.
+        // For regular agent messages
         senderClass = "agentMsg";
     }
 
-    senderSpan.innerText = senderName;
+    senderSpan.innerText = iconPrefix + senderName;
     msg.className = senderClass;
+    msg.dataset.messageType = messageType;
     
     // Add agent-specific class
     if (sender !== "user" && sender !== "System" && sender !== "Summary") {
@@ -523,83 +538,147 @@ function setupWebSocket() {
             updateMessageLimit();
         }
         
-        // Handle different message types
-        if (data.type === "typing" && data.is_typing) {
-            // Handle typing indicator
-            const speaker = data.speaker;
-            const dots = data.dots || ".";
-            
-            if (!typingMessages[speaker]) {
-                addMessage(speaker, dots);
-                typingMessages[speaker] = chatContainer.lastElementChild;
-            } else {
-                updateMessageElement(typingMessages[speaker], speaker, dots, true);
-            }
-        } else if (data.type === "summary" || data.type === "final_summary") {
-                // Handle summary message
-                displaySummary(data.message);
-                // If this is the final condensed roll-up, request a brief evaluation and show popup modal
-                if (data.type === "final_summary") {
-                    (async () => {
-                        try {
-                            // Call backend to generate concise evaluation (20-30 words)
-                            let evalText = "";
-                            try {
-                                const resp = await fetch(getApiUrl(`/projects/${currentProjectId}/evaluate_final`), {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${authToken}`,
-                                        'ngrok-skip-browser-warning': 'true'
-                                    }
-                                });
-                                if (resp.ok) {
-                                    const j = await resp.json();
-                                    evalText = j.result || "";
-                                } else {
-                                    console.warn('Evaluation endpoint returned', resp.status);
-                                }
-                            } catch (fetchErr) {
-                                console.error('Failed to fetch evaluation:', fetchErr);
-                            }
-
-                            if (evalText) displayResult(evalText);
-                            showFinalSummary(data.message, evalText);
-                        } catch (e) {
-                            console.error('Failed to show final summary modal', e);
-                            showFinalSummary(data.message);
-                        }
-                    })();
+        const eventType = data.type || "message";
+        
+        // Route based on event type
+        switch (eventType) {
+            case "typing":
+                if (data.is_typing) {
+                    const speaker = data.speaker;
+                    const dots = data.dots || ".";
+                    
+                    if (!typingMessages[speaker]) {
+                        addMessage(speaker, dots, "typing");
+                        typingMessages[speaker] = chatContainer.lastElementChild;
+                    } else {
+                        updateMessageElement(typingMessages[speaker], speaker, dots, true);
+                    }
                 }
-        } else if (data.type === "web_sources") {
-            // Handle web sources list
-            displayWebSources(data.sources || []);
-        } else if (data.type === "pause") {
-            // Handle pause notification
-            isPaused = true;
-            syncDebateControls("Paused");
-            addMessage("System", data.message);
-        } else if (data.type === "status" && data.status) {
-            if (data.message_count !== undefined) {
-                currentMessageCount = data.message_count;
-            }
-            if (data.message_limit !== undefined && data.message_limit !== null) {
-                messageLimit = data.message_limit;
-            }
-            updateMessageLimit();
-            syncDebateControls(data.status);
-        } else if (data.type === "error") {
-            // Handle error message
-            addMessage("Error", data.message);
-        } else {
-            // Handle regular message
-            const typingElement = typingMessages[data.speaker];
-            if (typingElement) {
-                updateMessageElement(typingElement, data.speaker, data.message, false);
-                delete typingMessages[data.speaker];
-            } else {
-                addMessage(data.speaker, data.message);
-            }
+                break;
+            
+            case "status":
+                addMessage("System", data.message, "status");
+                syncDebateControls(data.status || "Running");
+                break;
+            
+            case "subprompt_start":
+                addMessage("System", 
+                    `📍 Sub-Prompt ${data.sub_prompt_num}/${data.total_subprompts}:\n${data.message}`, 
+                    "subprompt_start"
+                );
+                break;
+            
+            case "subprompt_end":
+                addMessage("System", 
+                    `✓ Sub-Prompt ${data.sub_prompt_num} completed (${data.messages_used} messages)`, 
+                    "subprompt_end"
+                );
+                break;
+            
+            case "search_queries":
+                const queryText = data.queries && data.queries.length > 0 
+                    ? `Generated ${data.queries.length} search queries:\n• ` + data.queries.slice(0, 3).join("\n• ")
+                    : data.message;
+                addMessage("System", queryText, "search_queries");
+                break;
+            
+            case "web_results":
+                addMessage("System", data.message, "web_results");
+                if (data.results) {
+                    displayWebSources(Object.keys(data.results));
+                }
+                break;
+            
+            case "flaw_finder":
+                const typingElement1 = typingMessages[data.speaker];
+                if (typingElement1) {
+                    updateMessageElement(typingElement1, data.speaker, data.message, false);
+                    delete typingMessages[data.speaker];
+                } else {
+                    addMessage(data.speaker, data.message, "flaw_finder");
+                }
+                break;
+            
+            case "validator":
+                const typingElement2 = typingMessages[data.speaker];
+                if (typingElement2) {
+                    updateMessageElement(typingElement2, data.speaker, data.message, false);
+                    delete typingMessages[data.speaker];
+                } else {
+                    addMessage(data.speaker, data.message, "validator");
+                }
+                break;
+            
+            case "summary":
+                displaySummary(data.message);
+                break;
+            
+            case "final_summary":
+                displaySummary(data.message);
+                (async () => {
+                    try {
+                        let evalText = "";
+                        try {
+                            const resp = await fetch(getApiUrl(`/projects/${currentProjectId}/evaluate_final`), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${authToken}`,
+                                    'ngrok-skip-browser-warning': 'true'
+                                }
+                            });
+                            if (resp.ok) {
+                                const j = await resp.json();
+                                evalText = j.result || "";
+                            }
+                        } catch (fetchErr) {
+                            console.error('Failed to fetch evaluation:', fetchErr);
+                        }
+
+                        if (evalText) displayResult(evalText);
+                        showFinalSummary(data.message, evalText);
+                    } catch (e) {
+                        console.error('Failed to show final summary modal', e);
+                        showFinalSummary(data.message);
+                    }
+                })();
+                break;
+            
+            case "completion":
+                syncDebateControls("Completed");
+                addMessage("System", `✓ Discussion completed: ${data.message_count} messages generated`, "completion");
+                break;
+            
+            case "discussion_complete":
+                syncDebateControls("Completed");
+                addMessage("System", "✓ Analysis complete", "discussion_complete");
+                break;
+            
+            case "web_sources":
+                displayWebSources(data.sources || []);
+                break;
+            
+            case "pause":
+                isPaused = true;
+                syncDebateControls("Paused");
+                addMessage("System", data.message, "pause");
+                break;
+            
+            case "error":
+                addMessage("Error", data.message, "error");
+                break;
+            
+            case "message":
+            default:
+                // Regular agent message
+                const typingElement = typingMessages[data.speaker];
+                if (typingElement) {
+                    updateMessageElement(typingElement, data.speaker, data.message, false);
+                    delete typingMessages[data.speaker];
+                } else {
+                    addMessage(data.speaker, data.message, "message");
+                }
+                break;
         }
     };
 
