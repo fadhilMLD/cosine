@@ -276,11 +276,11 @@
         }
     </style>
 </head>
-<body>
+        body {
     <div class="signin-container">
         <button class="back-button" onclick="goBackToCosine()">← Back</button>
         
-        <div class="signin-header">
+            font-family: 'Manrope', sans-serif;
             <h1>Cosine</h1>
             <p>Sign in to your account</p>
         </div>
@@ -325,9 +325,9 @@
                         <label for="registerPassword">Create Password</label>
                         <input type="password" id="registerPassword" placeholder="••••••••" oninput="checkPasswordStrength()" required>
                         <div class="password-requirements">
-                            <div class="requirement" id="req-length">✓ At least 8 characters</div>
-                            <div class="requirement" id="req-upper">✓ One uppercase letter</div>
-                            <div class="requirement" id="req-number">✓ One number</div>
+                            <div class="requirement" id="req-length">At least 8 characters</div>
+                            <div class="requirement" id="req-upper">One uppercase letter</div>
+                            <div class="requirement" id="req-number">One number</div>
                         </div>
                     </div>
                     <button type="submit" class="btn-primary" id="registerSubmitBtn">Create Account</button>

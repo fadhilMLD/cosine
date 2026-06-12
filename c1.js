@@ -302,22 +302,22 @@ function addMessage(sender, text, messageType = "message") {
         senderName = "You";
     } else if (sender === "System") {
         senderClass = "systemMsg";
-        senderName = "📍 System";
+        senderName = "System";
     } else if (sender === "Summary") {
         senderClass = "summaryMsg";
-        senderName = "📋 Summary";
+        senderName = "Summary";
     } else if (messageType === "flaw_finder") {
         senderClass = "flawMsg";
-        iconPrefix = "⚠️ ";
+        iconPrefix = "";
     } else if (messageType === "validator") {
         senderClass = "validatorMsg";
-        iconPrefix = "✓ ";
+        iconPrefix = "";
     } else if (messageType === "final_summary") {
         senderClass = "finalSummaryMsg";
-        iconPrefix = "📊 ";
+        iconPrefix = "";
     } else if (messageType === "summary") {
         senderClass = "summaryMsg";
-        iconPrefix = "📋 ";
+        iconPrefix = "";
     } else {
         // For regular agent messages
         senderClass = "agentMsg";
@@ -563,14 +563,14 @@ function setupWebSocket() {
             
             case "subprompt_start":
                 addMessage("System", 
-                    `📍 Sub-Prompt ${data.sub_prompt_num}/${data.total_subprompts}:\n${data.message}`, 
+                    `Sub-Prompt ${data.sub_prompt_num}/${data.total_subprompts}:\n${data.message}`, 
                     "subprompt_start"
                 );
                 break;
             
             case "subprompt_end":
                 addMessage("System", 
-                    `✓ Sub-Prompt ${data.sub_prompt_num} completed (${data.messages_used} messages)`, 
+                    `Sub-Prompt ${data.sub_prompt_num} completed (${data.messages_used} messages)`, 
                     "subprompt_end"
                 );
                 break;
@@ -583,9 +583,11 @@ function setupWebSocket() {
                 break;
             
             case "web_results":
-                addMessage("System", data.message, "web_results");
+                // Web results are displayed in the Web Sources panel only
                 if (data.results) {
                     displayWebSources(Object.keys(data.results));
+                } else if (data.sources) {
+                    displayWebSources(data.sources);
                 }
                 break;
             
@@ -646,12 +648,12 @@ function setupWebSocket() {
             
             case "completion":
                 syncDebateControls("Completed");
-                addMessage("System", `✓ Discussion completed: ${data.message_count} messages generated`, "completion");
+                addMessage("System", `Discussion completed: ${data.message_count} messages generated`, "completion");
                 break;
             
             case "discussion_complete":
                 syncDebateControls("Completed");
-                addMessage("System", "✓ Analysis complete", "discussion_complete");
+                addMessage("System", "Analysis complete", "discussion_complete");
                 break;
             
             case "web_sources":
