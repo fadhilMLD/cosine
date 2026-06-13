@@ -557,37 +557,73 @@ function setupWebSocket() {
                 break;
             
             case "status":
-                addMessage("System", data.message, "status");
+                // Update UI controls but do not add a system chat message
                 syncDebateControls(data.status || "Running");
                 break;
             
             case "subprompt_start":
-                addMessage("System", 
-                    `Sub-Prompt ${data.sub_prompt_num}/${data.total_subprompts}:\n${data.message}`, 
-                    "subprompt_start"
-                );
+                // Do not show sub-prompt system messages in the chat stream per user preference
+                // silently ignore
                 break;
-            
+
             case "subprompt_end":
-                addMessage("System", 
-                    `Sub-Prompt ${data.sub_prompt_num} completed (${data.messages_used} messages)`, 
-                    "subprompt_end"
-                );
+                // Do not show sub-prompt end messages in the chat stream
                 break;
             
             case "search_queries":
-                const queryText = data.queries && data.queries.length > 0 
-                    ? `Generated ${data.queries.length} search queries:\n• ` + data.queries.slice(0, 3).join("\n• ")
-                    : data.message;
-                addMessage("System", queryText, "search_queries");
+                // Hide generated search queries from the chat stream
+                // (they are used internally for web lookups)
                 break;
             
             case "web_results":
-                // Web results are displayed in the Web Sources panel only
-                if (data.results) {
-                    displayWebSources(Object.keys(data.results));
-                } else if (data.sources) {
-                    displayWebSources(data.sources);
+                // Extract URLs from the results payload and display them in Web Sources
+                try {
+                    const sources = [];
+                    if (data.results && typeof data.results === 'object') {
+                        // data.results: { query: result_text }
+                        Object.values(data.results).forEach(text => {
+                            if (!text) return;
+                            // Look for lines like 'URL: https://...'
+                            const urlRegex = /URL:\s*(https?:\/\/[^\s]+)/gi;
+                            const titleRegex = /^\s*\d+\.\s*(.+)$/m;
+                            let m;
+                            while ((m = urlRegex.exec(text)) !== null) {
+                                sources.push({ title: m[1] || m[0], url: m[1] });
+                            }
+                            // If no explicit URL lines, try to extract any http link
+                            if (sources.length === 0) {
+                                const anyUrlRegex = /(https?:\/\/[^\s"']+)/gi;
+                                const found = text.match(anyUrlRegex) || [];
+                                found.forEach(u => sources.push({ title: u, url: u }));
+                            }
+                            // Try to find a title from the beginning of the chunk
+                            const tmatch = text.match(titleRegex);
+                            if (tmatch && sources.length > 0) {
+                                sources.forEach(s => { if (!s.title || s.title === s.url) s.title = tmatch[1].trim(); });
+                            }
+                        });
+                    } else if (data.sources && Array.isArray(data.sources)) {
+                        data.sources.forEach(s => {
+                            if (typeof s === 'string') sources.push({ title: s, url: s });
+                            else if (s.url) sources.push({ title: s.title || s.url, url: s.url });
+                        });
+                    }
+
+                    // Deduplicate by url
+                    const seen = new Set();
+                    const unique = [];
+                    sources.forEach(s => {
+                        if (!s || !s.url) return;
+                        const u = s.url.trim();
+                        if (!seen.has(u)) {
+                            seen.add(u);
+                            unique.push(s);
+                        }
+                    });
+
+                    displayWebSources(unique);
+                } catch (e) {
+                    console.error('Failed to parse web_results for sources', e);
                 }
                 break;
             
@@ -648,12 +684,11 @@ function setupWebSocket() {
             
             case "completion":
                 syncDebateControls("Completed");
-                addMessage("System", `Discussion completed: ${data.message_count} messages generated`, "completion");
+                // do not display a chat system message for completion
                 break;
             
             case "discussion_complete":
                 syncDebateControls("Completed");
-                addMessage("System", "Analysis complete", "discussion_complete");
                 break;
             
             case "web_sources":
@@ -663,11 +698,11 @@ function setupWebSocket() {
             case "pause":
                 isPaused = true;
                 syncDebateControls("Paused");
-                addMessage("System", data.message, "pause");
                 break;
             
             case "error":
-                addMessage("Error", data.message, "error");
+                // Log errors but avoid polluting the agent debate chat
+                console.error('Server error:', data.message);
                 break;
             
             case "message":
