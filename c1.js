@@ -457,9 +457,9 @@ function destroyPromptSettings() {
 
 function setDebateStatus(text) {
     const statusEl = document.getElementById('debateStatus');
-    if (statusEl) {
-        statusEl.textContent = text;
-    }
+    const iconEl = document.getElementById('debateStatusIcon');
+    if (statusEl) statusEl.textContent = text;
+    if (iconEl) iconEl.src = text === 'Searching Web' ? 'web.gif' : 'loading.gif';
 }
 
 function getSelectedAgents() {

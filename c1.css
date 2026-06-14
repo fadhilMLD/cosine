@@ -528,6 +528,18 @@ body.chat-mode .header {
     gap: 10px;
 }
 
+.statusRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.statusIcon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
 .statusValue {
     font-size: 13px;
     color: var(--text);
