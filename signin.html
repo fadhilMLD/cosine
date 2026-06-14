@@ -276,18 +276,18 @@
         }
     </style>
 </head>
-        body {
+<body>
     <div class="signin-container">
         <button class="back-button" onclick="goBackToCosine()">← Back</button>
-        
-            font-family: 'Manrope', sans-serif;
+
+        <div class="signin-header">
             <h1>Cosine</h1>
             <p>Sign in to your account</p>
         </div>
 
         <div class="tab-container">
-            <button class="tab-btn active" onclick="switchTab('email')">Email</button>
-            <button class="tab-btn" onclick="switchTab('google')">Google</button>
+            <button class="tab-btn active" onclick="switchTab('email', event)">Email</button>
+            <button class="tab-btn" onclick="switchTab('google', event)">Google</button>
         </div>
 
         <!-- Email Tab -->
@@ -377,11 +377,13 @@
     <script>
         const CLIENT_ID = '1018336234302-vet44fk2n3evrq0c5f496gf7b7udralb.apps.googleusercontent.com';
 
-        function switchTab(tab) {
+        function switchTab(tab, event) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tab + '-tab').classList.add('active');
-            event.target.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
         }
 
         function switchMode(mode) {
