@@ -459,7 +459,11 @@ function setDebateStatus(text) {
     const statusEl = document.getElementById('debateStatus');
     const iconEl = document.getElementById('debateStatusIcon');
     if (statusEl) statusEl.textContent = text;
-    if (iconEl) iconEl.src = text === 'Searching Web' ? 'web.gif' : 'loading.gif';
+    if (iconEl) {
+        const normalized = String(text || '').trim();
+        iconEl.src = normalized === 'Searching Web' ? 'web.gif' : 'loading.gif';
+        iconEl.style.display = normalized === 'Running' || normalized === 'Searching Web' ? 'inline-block' : 'none';
+    }
 }
 
 function getSelectedAgents() {
