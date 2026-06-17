@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="config.js"></script>
     <style>
         :root {
@@ -395,6 +394,7 @@
                     <input type="text" id="couponCode" placeholder="Optional coupon code">
                 </div>
                 <button class="btn-primary" onclick="upgradePlan()" style="margin-top: 12px;">Update Plan</button>
+                <button class="btn-secondary" id="verifyPurchaseBtn" onclick="verifyPendingPurchase()" style="margin-top: 8px; display: none;">Verify Purchase from Gumroad</button>
                 <div class="loading" id="planLoading">
                     <div class="spinner"></div>
                     <div style="margin-top: 8px;">Processing...</div>
@@ -536,13 +536,12 @@
         }
 
         async function initiatePayment(plan, couponCode) {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             const token = localStorage.getItem('authToken');
 
             try {
                 showPlanLoading(true);
                 
-                // Create order on backend
+                // Get Gumroad payment link from backend
                 const orderResponse = await fetch(getApiUrl('/payments/create-order'), {
                     method: 'POST',
                     headers: {
@@ -558,7 +557,7 @@
                 const orderData = await orderResponse.json();
                 
                 if (!orderResponse.ok) {
-                    showError(orderData.detail || 'Failed to create order');
+                    showError(orderData.detail || 'Failed to get payment link');
                     showPlanLoading(false);
                     return;
                 }
@@ -568,42 +567,32 @@
                     return;
                 }
 
-                const options = {
-                    key: "rzp_test_StFoGX0LfzHlPa",  // Add your Razorpay Key ID here
-                    amount: orderData.amount,
-                    currency: "INR",
-                    name: "Cosine",
-                    description: orderData.coupon?.applied
-                        ? `Upgrade to ${plan} Plan with coupon ${orderData.coupon.code}`
-                        : `Upgrade to ${plan} Plan`,
-                    order_id: orderData.order_id,
-                    handler: async (response) => {
-                        await verifyPayment(plan, response, couponCode);
-                    },
-                    prefill: {
-                        name: user.name || "",
-                        email: user.email || "",
-                    },
-                    theme: {
-                        color: "#c8b4f0"
-                    }
-                };
+                // Store plan info in session for verification after redirect
+                sessionStorage.setItem('pendingPlan', plan);
+                sessionStorage.setItem('pendingCoupon', couponCode || '');
 
-                const razorpay = new Razorpay(options);
-                razorpay.open();
+                // Display info about Gumroad purchase
+                showSuccess(`Redirecting to Gumroad to complete your purchase for ${plan} Plan...`);
+                
+                // Open Gumroad link in new window/tab
+                setTimeout(() => {
+                    window.open(orderData.payment_url, '_blank');
+                    showPlanLoading(false);
+                    showInfo('After completing your purchase on Gumroad, click "Verify Purchase" to activate your plan.');
+                }, 1000);
             } catch (error) {
-                showError('Error initializing payment: ' + error.message);
-            } finally {
+                showError('Error initiating payment: ' + error.message);
                 showPlanLoading(false);
             }
         }
 
-        async function verifyPayment(plan, paymentResponse, couponCode) {
+        async function verifyPayment(plan, couponCode) {
             const token = localStorage.getItem('authToken');
 
             try {
                 showPlanLoading(true);
                 
+                // Verify purchase with backend
                 const response = await fetch(getApiUrl('/payments/verify'), {
                     method: 'POST',
                     headers: {
@@ -612,10 +601,7 @@
                     },
                     body: JSON.stringify({
                         plan,
-                        coupon_code: couponCode || null,
-                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                        razorpay_order_id: paymentResponse.razorpay_order_id,
-                        razorpay_signature: paymentResponse.razorpay_signature
+                        coupon_code: couponCode || null
                     })
                 });
 
@@ -630,12 +616,16 @@
                     }
                     localStorage.setItem('user', JSON.stringify(user));
                     
+                    // Clear pending purchase data
+                    sessionStorage.removeItem('pendingPlan');
+                    sessionStorage.removeItem('pendingCoupon');
+                    
                     loadProfile();
                     showSuccess(data.coupon?.applied
                         ? `Plan upgraded to ${plan} with coupon ${data.coupon.code} successfully!`
                         : `Plan upgraded to ${plan} successfully!`);
                 } else {
-                    showError(data.detail || 'Payment verification failed');
+                    showError(data.detail || 'Purchase verification failed');
                 }
             } catch (error) {
                 showError('Network error: ' + error.message);
@@ -708,6 +698,30 @@
             el.classList.add('show');
         }
 
+        function showInfo(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.classList.add('show');
+            // Also show verify button if there's a pending purchase
+            const pendingPlan = sessionStorage.getItem('pendingPlan');
+            if (pendingPlan) {
+                document.getElementById('verifyPurchaseBtn').style.display = 'block';
+            }
+        }
+
+        function verifyPendingPurchase() {
+            const pendingPlan = sessionStorage.getItem('pendingPlan');
+            const pendingCoupon = sessionStorage.getItem('pendingCoupon');
+            
+            if (!pendingPlan) {
+                showError('No pending purchase found. Please start the upgrade process again.');
+                return;
+            }
+            
+            clearMessages();
+            verifyPayment(pendingPlan, pendingCoupon);
+        }
+
         function clearMessages() {
             document.getElementById('successMessage').classList.remove('show');
             document.getElementById('errorMessage').classList.remove('show');
@@ -720,6 +734,15 @@
         function showPlanLoading(show) {
             document.getElementById('planLoading').style.display = show ? 'block' : 'none';
         }
+
+        // Check if there's a pending purchase on page load
+        window.addEventListener('load', () => {
+            const pendingPlan = sessionStorage.getItem('pendingPlan');
+            if (pendingPlan) {
+                document.getElementById('verifyPurchaseBtn').style.display = 'block';
+                showInfo(`You have a pending purchase for ${pendingPlan} plan. Click "Verify Purchase" to activate it after completing the payment on Gumroad.`);
+            }
+        });
     </script>
 </body>
 </html>
