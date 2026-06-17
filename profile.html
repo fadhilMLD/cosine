@@ -564,7 +564,7 @@ async function verifyPendingPurchase() {
         const data = await res.json();
 
         if (res.ok) {
-            // Update local cache
+            // ✅ Update local cache
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             user.plan  = pendingPlan;
             if (data.user?.subscription_end_date) {
@@ -582,9 +582,12 @@ async function verifyPendingPurchase() {
                     : `Plan upgraded to ${pendingPlan} successfully!`;
             showSuccess(msg);
 
+        } else if (res.status === 402) {
+            // ⏳ Payment not yet verified — Gumroad webhook may still be processing
+            showError(`⏳ Payment verification in progress. Gumroad may take a moment to confirm your purchase. Please wait 30 seconds and try again.`);
         } else {
-            // Webhook may not have fired yet — keep banner, show guidance
-            showError((data.detail || 'Verification failed') + ' — if you just paid, please wait a moment and try again.');
+            // ❌ Other errors
+            showError((data.detail || 'Verification failed') + ' — check that you completed the purchase on Gumroad.');
         }
     } catch (e) {
         showError('Network error: ' + e.message);
