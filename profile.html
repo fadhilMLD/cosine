@@ -46,13 +46,8 @@
             backdrop-filter: blur(32px);
         }
 
-        .logo-link {
-            transition: opacity 0.2s;
-        }
-
-        .logo-link:hover {
-            opacity: 0.8;
-        }
+        .logo-link { transition: opacity 0.2s; }
+        .logo-link:hover { opacity: 0.8; }
 
         .logo {
             font-family: 'Instrument Serif', serif;
@@ -77,11 +72,7 @@
             font-size: 13px;
             transition: all 0.2s;
         }
-
-        .logout-btn:hover {
-            border-color: var(--accent2);
-            color: var(--accent2);
-        }
+        .logout-btn:hover { border-color: var(--accent2); color: var(--accent2); }
 
         .back-btn {
             background: none;
@@ -94,11 +85,7 @@
             font-size: 13px;
             transition: all 0.2s;
         }
-
-        .back-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
+        .back-btn:hover { border-color: var(--accent); color: var(--accent); }
 
         .main-content {
             padding: 100px 40px 40px;
@@ -106,21 +93,14 @@
             margin: 0 auto;
         }
 
-        .header {
-            margin-bottom: 40px;
-        }
-
+        .header { margin-bottom: 40px; }
         .header h1 {
             font-family: 'Instrument Serif', serif;
             font-size: 32px;
             font-weight: 400;
             margin-bottom: 8px;
         }
-
-        .header p {
-            color: var(--text2);
-            font-size: 14px;
-        }
+        .header p { color: var(--text2); font-size: 14px; }
 
         .section {
             background: var(--bg2);
@@ -137,9 +117,7 @@
             font-family: 'Instrument Serif', serif;
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
+        .form-group { margin-bottom: 16px; }
 
         label {
             display: block;
@@ -163,25 +141,18 @@
             font-size: 14px;
             transition: all 0.2s;
         }
-
-        input[type="text"]:focus,
-        select:focus {
+        input[type="text"]:focus, select:focus {
             outline: none;
             border-color: var(--accent);
             background: rgba(200, 180, 240, 0.05);
         }
-
         input[type="text"]:disabled {
             background: var(--surface);
             color: var(--text3);
             cursor: not-allowed;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
+        select option { background: #111; color: var(--text); }
 
         .plan-display {
             display: flex;
@@ -190,24 +161,11 @@
             padding: 12px 0;
             border-bottom: 1px solid var(--border);
         }
+        .plan-display:last-child { border-bottom: none; }
 
-        .plan-display:last-child {
-            border-bottom: none;
-        }
-
-        .plan-info {
-            flex: 1;
-        }
-
-        .plan-name {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .plan-price {
-            font-size: 12px;
-            color: var(--text2);
-        }
+        .plan-info { flex: 1; }
+        .plan-name { font-weight: 500; margin-bottom: 4px; }
+        .plan-price { font-size: 12px; color: var(--text2); }
 
         .plan-badge {
             background: rgba(200, 180, 240, 0.1);
@@ -231,12 +189,7 @@
             transition: all 0.2s;
             width: 100%;
         }
-
-        .btn-primary:hover {
-            background: #d4c0f6;
-            transform: translateY(-1px);
-        }
-
+        .btn-primary:hover { background: #d4c0f6; transform: translateY(-1px); }
         .btn-primary:disabled {
             background: var(--surface2);
             color: var(--text3);
@@ -257,492 +210,489 @@
             transition: all 0.2s;
             width: 100%;
         }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        /* ── toast messages ── */
+        .toast {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
         }
+        .toast.show { display: block; }
 
-        .success-message {
+        .toast-success {
             background: rgba(125, 212, 184, 0.1);
             border: 1px solid rgba(125, 212, 184, 0.3);
             color: var(--accent3);
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            display: none;
         }
-
-        .success-message.show {
-            display: block;
-        }
-
-        .error-message {
+        .toast-error {
             background: rgba(244, 168, 199, 0.1);
             border: 1px solid rgba(244, 168, 199, 0.3);
             color: var(--accent2);
-            padding: 12px 16px;
-            border-radius: 8px;
+        }
+        .toast-info {
+            background: rgba(200, 180, 240, 0.08);
+            border: 1px solid rgba(200, 180, 240, 0.2);
+            color: var(--accent);
+        }
+
+        /* ── pending purchase banner ── */
+        #pendingBanner {
+            display: none;
+            background: rgba(200, 180, 240, 0.08);
+            border: 1px solid rgba(200, 180, 240, 0.25);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        #pendingBanner.show { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .pending-text { font-size: 13px; color: var(--accent); line-height: 1.5; }
+        .pending-text strong { display: block; margin-bottom: 2px; font-weight: 500; }
+        #verifyPurchaseBtn {
+            white-space: nowrap;
+            flex-shrink: 0;
+            background: none;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
             font-size: 13px;
-            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #verifyPurchaseBtn:hover { background: rgba(200,180,240,0.1); }
+        #verifyPurchaseBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .subscription-info {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text2);
+            padding: 10px 12px;
+            background: var(--surface);
+            border-radius: 7px;
             display: none;
         }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .button-group button {
-            flex: 1;
-        }
+        .subscription-info.show { display: block; }
 
         .loading {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 16px;
             color: var(--text2);
+            font-size: 13px;
         }
+        .loading.show { display: block; }
 
         .spinner {
             display: inline-block;
-            width: 16px;
-            height: 16px;
+            width: 15px;
+            height: 15px;
             border: 2px solid var(--border2);
             border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <a href="projects.html" class="logo-link" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-            <img src="v1-01.png" alt="Cosine Logo" style="width: 30px; height: 30px; object-fit: contain;">
-            <div class="logo">Cosine</div>
-        </a>
-        <div class="nav-right">
-            <button class="back-btn" onclick="goBack()">← Back</button>
-            <button class="logout-btn" onclick="handleLogout()">Logout</button>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="header">
-            <h1>Profile</h1>
-            <p>Manage your account settings and plan</p>
-        </div>
+<nav>
+    <a href="projects.html" class="logo-link" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+        <img src="v1-01.png" alt="Cosine Logo" style="width:30px;height:30px;object-fit:contain;">
+        <div class="logo">Cosine</div>
+    </a>
+    <div class="nav-right">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+</nav>
 
-        <div class="success-message" id="successMessage"></div>
-        <div class="error-message" id="errorMessage"></div>
-
-        <!-- Profile Section -->
-        <div class="section">
-            <h2 class="section-title">Personal Information</h2>
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="text" id="email" disabled>
-            </div>
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" placeholder="Your name">
-            </div>
-            <button class="btn-primary" onclick="updateName()">Update Name</button>
-            <div class="loading" id="nameLoading">
-                <div class="spinner"></div>
-                <div style="margin-top: 8px;">Updating...</div>
-            </div>
-        </div>
-
-        <!-- Plan Section -->
-        <div class="section">
-            <h2 class="section-title">Billing Plan</h2>
-            <div class="plan-display">
-                <div class="plan-info">
-                    <div class="plan-name">Current Plan</div>
-                    <div class="plan-price" id="currentPlanName">Free Plan</div>
-                </div>
-                <div class="plan-badge" id="currentPlanBadge">Free</div>
-            </div>
-
-            <!-- Subscription Info -->
-            <div id="subscriptionInfo" style="display: none; margin-top: 15px; padding: 12px; background-color: var(--secondary); border-radius: 8px;">
-                <div style="font-size: 13px; color: var(--text-secondary);" id="subscriptionEndDate"></div>
-            </div>
-            
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-                <label for="planSelect">Change Plan</label>
-                <select id="planSelect">
-                    <option value="Free">Free - ₹0/month</option>
-                    <option value="Pro">Pro - ₹499/month</option>
-                    <option value="Master">Master - ₹1299/month</option>
-                </select>
-                <div class="form-group" style="margin-top: 12px;">
-                    <label for="couponCode">Coupon Code</label>
-                    <input type="text" id="couponCode" placeholder="Optional coupon code">
-                </div>
-                <button class="btn-primary" onclick="upgradePlan()" style="margin-top: 12px;">Update Plan</button>
-                <button class="btn-secondary" id="verifyPurchaseBtn" onclick="verifyPendingPurchase()" style="margin-top: 8px; display: none;">Verify Purchase from Gumroad</button>
-                <div class="loading" id="planLoading">
-                    <div class="spinner"></div>
-                    <div style="margin-top: 8px;">Processing...</div>
-                </div>
-            </div>
-        </div>
+<div class="main-content">
+    <div class="header">
+        <h1>Profile</h1>
+        <p>Manage your account settings and plan</p>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
+    <!-- Pending purchase banner (persists across page loads) -->
+    <div id="pendingBanner">
+        <div class="pending-text">
+            <strong>Purchase in progress</strong>
+            Complete your payment on Gumroad, then click Verify to activate your plan.
+        </div>
+        <button id="verifyPurchaseBtn" onclick="verifyPendingPurchase()">Verify Purchase</button>
+    </div>
+
+    <!-- Feedback toasts -->
+    <div class="toast toast-success" id="toastSuccess"></div>
+    <div class="toast toast-error"   id="toastError"></div>
+    <div class="toast toast-info"    id="toastInfo"></div>
+
+    <!-- Personal Information -->
+    <div class="section">
+        <h2 class="section-title">Personal Information</h2>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="text" id="email" disabled>
+        </div>
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Your name">
+        </div>
+        <button class="btn-primary" id="updateNameBtn" onclick="updateName()">Update Name</button>
+        <div class="loading" id="nameLoading"><span class="spinner"></span>Updating...</div>
+    </div>
+
+    <!-- Billing Plan -->
+    <div class="section">
+        <h2 class="section-title">Billing Plan</h2>
+        <div class="plan-display">
+            <div class="plan-info">
+                <div class="plan-name">Current Plan</div>
+                <div class="plan-price" id="currentPlanName">Free Plan</div>
+            </div>
+            <div class="plan-badge" id="currentPlanBadge">Free</div>
+        </div>
+
+        <div class="subscription-info" id="subscriptionInfo" id="subscriptionEndDate"></div>
+
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+            <div class="form-group">
+                <label for="planSelect">Change Plan</label>
+                <select id="planSelect">
+                    <option value="Free">Free — $0 / month</option>
+                    <option value="Pro">Pro — $9 / month</option>
+                    <option value="Master">Master — $19 / month</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="couponCode">Coupon Code</label>
+                <input type="text" id="couponCode" placeholder="Optional coupon code">
+            </div>
+            <button class="btn-primary" id="upgradePlanBtn" onclick="upgradePlan()">Update Plan</button>
+            <div class="loading" id="planLoading"><span class="spinner"></span>Processing...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    loadProfile();
+    checkPendingPurchase();
+});
+
+function checkAuth() {
+    const token = localStorage.getItem('authToken');
+    const user  = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!token || !user.user_id) window.location.href = '/signin.html';
+}
+
+function loadProfile() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    document.getElementById('email').value = user.email || '';
+    document.getElementById('name').value  = user.name  || '';
+
+    const plan = user.plan || 'Free';
+    document.getElementById('currentPlanName').textContent  = plan + ' Plan';
+    document.getElementById('currentPlanBadge').textContent = plan;
+    document.getElementById('planSelect').value = plan;
+
+    const infoEl = document.getElementById('subscriptionInfo');
+    if (user.subscription_end_date && plan !== 'Free') {
+        const formatted = new Date(user.subscription_end_date).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+        infoEl.textContent = `Active until ${formatted}`;
+        infoEl.classList.add('show');
+    } else {
+        infoEl.classList.remove('show');
+    }
+}
+
+// ─────────────────────────────────────────────
+// Pending purchase banner
+// ─────────────────────────────────────────────
+function checkPendingPurchase() {
+    const pendingPlan = sessionStorage.getItem('pendingPlan');
+    if (pendingPlan) {
+        document.getElementById('pendingBanner').classList.add('show');
+    }
+}
+
+function dismissPendingBanner() {
+    sessionStorage.removeItem('pendingPlan');
+    sessionStorage.removeItem('pendingCoupon');
+    document.getElementById('pendingBanner').classList.remove('show');
+}
+
+// ─────────────────────────────────────────────
+// Update name
+// ─────────────────────────────────────────────
+async function updateName() {
+    const token = localStorage.getItem('authToken');
+    const name  = document.getElementById('name').value.trim();
+    if (!name) { showError('Please enter a name'); return; }
+
+    try {
+        setNameLoading(true);
+        clearToasts();
+
+        const res  = await fetch(getApiUrl('/user/update-name'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            user.name = name;
+            localStorage.setItem('user', JSON.stringify(user));
+            showSuccess('Name updated successfully');
+        } else {
+            showError(data.detail || 'Failed to update name');
+        }
+    } catch (e) {
+        showError('Network error: ' + e.message);
+    } finally {
+        setNameLoading(false);
+    }
+}
+
+// ─────────────────────────────────────────────
+// Upgrade plan
+// ─────────────────────────────────────────────
+async function upgradePlan() {
+    const user      = JSON.parse(localStorage.getItem('user') || '{}');
+    const newPlan   = document.getElementById('planSelect').value;
+    const coupon    = document.getElementById('couponCode').value.trim();
+    const hierarchy = { Free: 0, Pro: 1, Master: 2 };
+
+    if (newPlan === (user.plan || 'Free')) {
+        showError('Please select a different plan');
+        return;
+    }
+    if ((hierarchy[newPlan] || 0) < (hierarchy[user.plan] || 0)) {
+        showError(`Cannot downgrade from ${user.plan} to ${newPlan}. Upgrades only.`);
+        return;
+    }
+
+    if (newPlan === 'Free') {
+        await updatePlanDirect('Free', coupon);
+        return;
+    }
+
+    await initiatePayment(newPlan, coupon);
+}
+
+async function initiatePayment(plan, coupon) {
+    const token = localStorage.getItem('authToken');
+
+    try {
+        setPlanLoading(true);
+        clearToasts();
+
+        const res  = await fetch(getApiUrl('/payments/create-order'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ plan, coupon_code: coupon || null })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showError(data.detail || 'Failed to get payment link');
+            return;
+        }
+
+        // Coupon made it free — activate directly
+        if (!data.requires_payment || Number(data.amount || 0) <= 0) {
+            await updatePlanDirect(plan, coupon);
+            return;
+        }
+
+        // Store pending state and open Gumroad
+        sessionStorage.setItem('pendingPlan',   plan);
+        sessionStorage.setItem('pendingCoupon', coupon || '');
+
+        showInfo(`Opening Gumroad checkout for ${plan} Plan. Complete the payment, then click Verify Purchase.`);
+        document.getElementById('pendingBanner').classList.add('show');
+
+        setTimeout(() => window.open(data.payment_url, '_blank'), 800);
+
+    } catch (e) {
+        showError('Error initiating payment: ' + e.message);
+    } finally {
+        setPlanLoading(false);
+    }
+}
+
+// ─────────────────────────────────────────────
+// Verify purchase (called manually by user OR
+// auto-called if webhook already activated it)
+// ─────────────────────────────────────────────
+async function verifyPendingPurchase() {
+    const pendingPlan   = sessionStorage.getItem('pendingPlan');
+    const pendingCoupon = sessionStorage.getItem('pendingCoupon');
+
+    if (!pendingPlan) {
+        showError('No pending purchase found. Please start the upgrade process again.');
+        return;
+    }
+
+    clearToasts();
+    const btn = document.getElementById('verifyPurchaseBtn');
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+
+    try {
+        const token = localStorage.getItem('authToken');
+        const res   = await fetch(getApiUrl('/payments/verify'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ plan: pendingPlan, coupon_code: pendingCoupon || null })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            // Update local cache
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            user.plan  = pendingPlan;
+            if (data.user?.subscription_end_date) {
+                user.subscription_end_date = data.user.subscription_end_date;
+            }
+            localStorage.setItem('user', JSON.stringify(user));
+
+            dismissPendingBanner();
             loadProfile();
+
+            const msg = data.message === 'Plan already active'
+                ? `${pendingPlan} plan is active — you are all set!`
+                : data.coupon?.applied
+                    ? `Plan upgraded to ${pendingPlan} with coupon ${data.coupon.code}!`
+                    : `Plan upgraded to ${pendingPlan} successfully!`;
+            showSuccess(msg);
+
+        } else {
+            // Webhook may not have fired yet — keep banner, show guidance
+            showError((data.detail || 'Verification failed') + ' — if you just paid, please wait a moment and try again.');
+        }
+    } catch (e) {
+        showError('Network error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify Purchase';
+    }
+}
+
+// ─────────────────────────────────────────────
+// Direct plan update (free / coupon-100%)
+// ─────────────────────────────────────────────
+async function updatePlanDirect(plan, coupon) {
+    const token = localStorage.getItem('authToken');
+
+    try {
+        setPlanLoading(true);
+        clearToasts();
+
+        const res  = await fetch(getApiUrl('/user/update-plan'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ plan, coupon_code: coupon || null })
         });
+        const data = await res.json();
 
-        function checkAuth() {
-            const token = localStorage.getItem('authToken');
+        if (res.ok) {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-            if (!token || !user.user_id) {
-                window.location.href = '/signin.html';
-                return;
+            user.plan  = plan;
+            if (data.user?.subscription_end_date) {
+                user.subscription_end_date = data.user.subscription_end_date;
             }
+            localStorage.setItem('user', JSON.stringify(user));
+            loadProfile();
+            showSuccess(data.coupon?.applied
+                ? `Plan updated to ${plan} with coupon ${data.coupon.code}!`
+                : 'Plan updated successfully!');
+        } else {
+            showError(data.detail || 'Failed to update plan');
         }
+    } catch (e) {
+        showError('Network error: ' + e.message);
+    } finally {
+        setPlanLoading(false);
+    }
+}
 
-        function loadProfile() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            
-            document.getElementById('email').value = user.email || '';
-            document.getElementById('name').value = user.name || '';
-            document.getElementById('currentPlanName').textContent = (user.plan || 'Free') + ' Plan';
-            document.getElementById('currentPlanBadge').textContent = user.plan || 'Free';
-            document.getElementById('planSelect').value = user.plan || 'Free';
+// ─────────────────────────────────────────────
+// Auth helpers
+// ─────────────────────────────────────────────
+function clearAuthSession() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('pendingPlan');
+    sessionStorage.removeItem('pendingCoupon');
+}
 
-            // Display subscription end date if available
-            const endDateEl = document.getElementById('subscriptionEndDate');
-            if (endDateEl) {
-                if (user.subscription_end_date) {
-                    const endDate = new Date(user.subscription_end_date);
-                    const formatted = endDate.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
-                    });
-                    endDateEl.textContent = `Renews on ${formatted}`;
-                    document.getElementById('subscriptionInfo').style.display = 'block';
-                } else if (user.plan !== 'Free') {
-                    endDateEl.textContent = 'Loading subscription details...';
-                    document.getElementById('subscriptionInfo').style.display = 'block';
-                } else {
-                    document.getElementById('subscriptionInfo').style.display = 'none';
-                }
-            }
-        }
+function handleLogout() {
+    clearAuthSession();
+    window.location.href = '/signin.html';
+}
 
-        async function updateName() {
-            const token = localStorage.getItem('authToken');
-            const name = document.getElementById('name').value.trim();
+function goBack() {
+    window.location.href = '/projects.html';
+}
 
-            if (!name) {
-                showError('Please enter a name');
-                return;
-            }
+// ─────────────────────────────────────────────
+// Toast helpers
+// ─────────────────────────────────────────────
+function showSuccess(msg) {
+    clearToasts();
+    const el = document.getElementById('toastSuccess');
+    el.textContent = msg;
+    el.classList.add('show');
+}
 
-            try {
-                showNameLoading(true);
-                clearMessages();
+function showError(msg) {
+    clearToasts();
+    const el = document.getElementById('toastError');
+    el.textContent = msg;
+    el.classList.add('show');
+}
 
-                const response = await fetch(getApiUrl('/user/update-name'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name })
-                });
+function showInfo(msg) {
+    clearToasts();
+    const el = document.getElementById('toastInfo');
+    el.textContent = msg;
+    el.classList.add('show');
+}
 
-                const data = await response.json();
+function clearToasts() {
+    ['toastSuccess', 'toastError', 'toastInfo'].forEach(id => {
+        document.getElementById(id).classList.remove('show');
+    });
+}
 
-                if (response.ok) {
-                    // Update local storage
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    user.name = name;
-                    localStorage.setItem('user', JSON.stringify(user));
-                    
-                    showSuccess('Name updated successfully');
-                } else {
-                    showError(data.detail || 'Failed to update name');
-                }
-            } catch (error) {
-                showError('Network error: ' + error.message);
-            } finally {
-                showNameLoading(false);
-            }
-        }
+// ─────────────────────────────────────────────
+// Loading state helpers
+// ─────────────────────────────────────────────
+function setNameLoading(on) {
+    document.getElementById('nameLoading').classList.toggle('show', on);
+    document.getElementById('updateNameBtn').disabled = on;
+}
 
-        async function upgradePlan() {
-            const token = localStorage.getItem('authToken');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const newPlan = document.getElementById('planSelect').value;
-            const couponCode = document.getElementById('couponCode').value.trim();
-
-            if (newPlan === user.plan) {
-                showError('Please select a different plan');
-                return;
-            }
-
-            // Plan hierarchy: Free < Pro < Master
-            const planHierarchy = {
-                'Free': 0,
-                'Pro': 1,
-                'Master': 2
-            };
-
-            const currentPlanLevel = planHierarchy[user.plan] || 0;
-            const newPlanLevel = planHierarchy[newPlan] || 0;
-
-            // Check if attempting to downgrade
-            if (newPlanLevel < currentPlanLevel) {
-                showError(`Cannot downgrade from ${user.plan} to ${newPlan}. Upgrades only allowed.`);
-                return;
-            }
-
-            // Plan prices in paise (multiply by 100)
-            const planPrices = {
-                'Free': 0,
-                'Pro': 49900,  // ₹499
-                'Master': 129900  // ₹1299
-            };
-
-            const price = planPrices[newPlan];
-
-            if (price === 0) {
-                // Free plan - no payment needed
-                await updatePlanDirect(newPlan, couponCode);
-            } else {
-                // Paid plan - initiate payment
-                initiatePayment(newPlan, couponCode);
-            }
-        }
-
-        async function initiatePayment(plan, couponCode) {
-            const token = localStorage.getItem('authToken');
-
-            try {
-                showPlanLoading(true);
-                
-                // Get Gumroad payment link from backend
-                const orderResponse = await fetch(getApiUrl('/payments/create-order'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        plan,
-                        coupon_code: couponCode || null
-                    })
-                });
-
-                const orderData = await orderResponse.json();
-                
-                if (!orderResponse.ok) {
-                    showError(orderData.detail || 'Failed to get payment link');
-                    showPlanLoading(false);
-                    return;
-                }
-
-                if (orderData.requires_payment === false || Number(orderData.amount || 0) <= 0) {
-                    await updatePlanDirect(plan, couponCode);
-                    return;
-                }
-
-                // Store plan info in session for verification after redirect
-                sessionStorage.setItem('pendingPlan', plan);
-                sessionStorage.setItem('pendingCoupon', couponCode || '');
-
-                // Display info about Gumroad purchase
-                showSuccess(`Redirecting to Gumroad to complete your purchase for ${plan} Plan...`);
-                
-                // Open Gumroad link in new window/tab
-                setTimeout(() => {
-                    window.open(orderData.payment_url, '_blank');
-                    showPlanLoading(false);
-                    showInfo('After completing your purchase on Gumroad, click "Verify Purchase" to activate your plan.');
-                }, 1000);
-            } catch (error) {
-                showError('Error initiating payment: ' + error.message);
-                showPlanLoading(false);
-            }
-        }
-
-        async function verifyPayment(plan, couponCode) {
-            const token = localStorage.getItem('authToken');
-
-            try {
-                showPlanLoading(true);
-                
-                // Verify purchase with backend
-                const response = await fetch(getApiUrl('/payments/verify'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        plan,
-                        coupon_code: couponCode || null
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Update local user data with subscription information
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    user.plan = plan;
-                    if (data.user && data.user.subscription_end_date) {
-                        user.subscription_end_date = data.user.subscription_end_date;
-                    }
-                    localStorage.setItem('user', JSON.stringify(user));
-                    
-                    // Clear pending purchase data
-                    sessionStorage.removeItem('pendingPlan');
-                    sessionStorage.removeItem('pendingCoupon');
-                    
-                    loadProfile();
-                    showSuccess(data.coupon?.applied
-                        ? `Plan upgraded to ${plan} with coupon ${data.coupon.code} successfully!`
-                        : `Plan upgraded to ${plan} successfully!`);
-                } else {
-                    showError(data.detail || 'Purchase verification failed');
-                }
-            } catch (error) {
-                showError('Network error: ' + error.message);
-            } finally {
-                showPlanLoading(false);
-            }
-        }
-
-        async function updatePlanDirect(plan, couponCode) {
-            const token = localStorage.getItem('authToken');
-
-            try {
-                showPlanLoading(true);
-                clearMessages();
-
-                const response = await fetch(getApiUrl('/user/update-plan'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        plan,
-                        coupon_code: couponCode || null
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    user.plan = plan;
-                    if (data.user && data.user.subscription_end_date) {
-                        user.subscription_end_date = data.user.subscription_end_date;
-                    }
-                    localStorage.setItem('user', JSON.stringify(user));
-                    
-                    loadProfile();
-                    showSuccess(data.coupon?.applied
-                        ? `Plan updated to ${plan} with coupon ${data.coupon.code} successfully!`
-                        : 'Plan updated successfully!');
-                } else {
-                    showError(data.detail || 'Failed to update plan');
-                }
-            } catch (error) {
-                showError('Network error: ' + error.message);
-            } finally {
-                showPlanLoading(false);
-            }
-        }
-
-        function goBack() {
-            window.location.href = '/projects.html';
-        }
-
-        function handleLogout() {
-            clearAuthSession();
-            window.location.href = '/signin.html';
-        }
-
-        function showSuccess(message) {
-            const el = document.getElementById('successMessage');
-            el.textContent = message;
-            el.classList.add('show');
-        }
-
-        function showError(message) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = message;
-            el.classList.add('show');
-        }
-
-        function showInfo(message) {
-            const el = document.getElementById('successMessage');
-            el.textContent = message;
-            el.classList.add('show');
-            // Also show verify button if there's a pending purchase
-            const pendingPlan = sessionStorage.getItem('pendingPlan');
-            if (pendingPlan) {
-                document.getElementById('verifyPurchaseBtn').style.display = 'block';
-            }
-        }
-
-        function verifyPendingPurchase() {
-            const pendingPlan = sessionStorage.getItem('pendingPlan');
-            const pendingCoupon = sessionStorage.getItem('pendingCoupon');
-            
-            if (!pendingPlan) {
-                showError('No pending purchase found. Please start the upgrade process again.');
-                return;
-            }
-            
-            clearMessages();
-            verifyPayment(pendingPlan, pendingCoupon);
-        }
-
-        function clearMessages() {
-            document.getElementById('successMessage').classList.remove('show');
-            document.getElementById('errorMessage').classList.remove('show');
-        }
-
-        function showNameLoading(show) {
-            document.getElementById('nameLoading').style.display = show ? 'block' : 'none';
-        }
-
-        function showPlanLoading(show) {
-            document.getElementById('planLoading').style.display = show ? 'block' : 'none';
-        }
-
-        // Check if there's a pending purchase on page load
-        window.addEventListener('load', () => {
-            const pendingPlan = sessionStorage.getItem('pendingPlan');
-            if (pendingPlan) {
-                document.getElementById('verifyPurchaseBtn').style.display = 'block';
-                showInfo(`You have a pending purchase for ${pendingPlan} plan. Click "Verify Purchase" to activate it after completing the payment on Gumroad.`);
-            }
-        });
-    </script>
+function setPlanLoading(on) {
+    document.getElementById('planLoading').classList.toggle('show', on);
+    document.getElementById('upgradePlanBtn').disabled = on;
+}
+</script>
 </body>
 </html>
