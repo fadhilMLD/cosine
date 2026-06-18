@@ -319,7 +319,31 @@
         </div>
     </div>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID"></script>
+    <script>
+        // Dynamically load PayPal SDK with correct client ID
+        function loadPayPalSDK() {
+            const clientId = 'AfVpYXeLnq2DP7QmrVpQYATc1iXxfuej_N63H7hgV3Fs--jsPw3VuEFpe-GEbQLIr6A3R1wnaaUZBoaN'; // From .env PAYPAL_CLIENT_ID
+            const script = document.createElement('script');
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`;
+            script.async = true;
+            script.onload = () => {
+                console.log('✓ PayPal SDK loaded successfully');
+            };
+            script.onerror = () => {
+                console.error('✗ Failed to load PayPal SDK');
+                alert('Failed to load PayPal. Please refresh and try again.');
+            };
+            document.body.appendChild(script);
+        }
+
+        // Load PayPal SDK when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadPayPalSDK);
+        } else {
+            loadPayPalSDK();
+        }
+    </script>
+
     <script>
         let selectedPlan = 'Free';
         let paypalInitialized = false;
@@ -430,6 +454,17 @@
         // ─────────────────────────────────────────────
         async function initializePayPal() {
             try {
+                // Wait for PayPal SDK to load
+                let attempts = 0;
+                while (typeof paypal === 'undefined' && attempts < 50) {
+                    await new Promise(r => setTimeout(r, 100));
+                    attempts++;
+                }
+                
+                if (typeof paypal === 'undefined') {
+                    throw new Error('PayPal SDK failed to load');
+                }
+                
                 // Render PayPal buttons
                 paypal.Buttons({
                     createOrder: async (data, actions) => {
@@ -449,6 +484,8 @@
                         alert('Payment cancelled.');
                     }
                 }).render('#paypal-button-container');
+                
+                console.log('✓ PayPal buttons rendered successfully');
             } catch (error) {
                 console.error('PayPal initialization error:', error);
                 alert('Failed to load PayPal. Please refresh and try again.');
