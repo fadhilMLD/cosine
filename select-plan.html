@@ -301,18 +301,37 @@
             </div>
         </div>
 
-        <div class="info-box">
-            💡 Pro and Master plans are currently in demo mode. Payment will be implemented soon. Select any plan to continue.
+        <div class="info-box" id="infoBox" style="display: none;">
+            Complete your payment below. Your plan will be activated automatically once PayPal confirms the transaction.
+        </div>
+
+        <!-- PayPal Buttons Container -->
+        <div id="paypalContainer" style="display: none; max-width: 500px; margin: 40px auto;">
+            <div id="paypal-button-container"></div>
+        </div>
+
+        <!-- Free Plan Direct Access -->
+        <div id="freeConfirm" style="display: none; text-align: center; margin-top: 40px;">
+            <button class="btn-select" style="max-width: 300px; margin: 0 auto; display: block; background: var(--accent); color: #000; border-color: var(--accent);" onclick="activateFreePlan()">Activate Free Plan</button>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <div style="margin-top: 12px;">Processing your selection...</div>
+            <div style="margin-top: 12px;">Processing...</div>
         </div>
     </div>
 
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID"></script>
     <script>
         let selectedPlan = 'Free';
+        let paypalInitialized = false;
+
+        // Plan pricing (must match backend)
+        const PLAN_PRICES = {
+            'Free': 0,
+            'Pro': 9.99,
+            'Master': 29.99
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -334,9 +353,35 @@
             // Add selected class to current card
             cardElement.classList.add('selected');
             selectedPlan = planName;
+
+            // Show appropriate UI based on plan
+            updatePaymentUI(planName);
         }
 
-        async function confirmSelection() {
+        function updatePaymentUI(planName) {
+            const paypalContainer = document.getElementById('paypalContainer');
+            const freeConfirm = document.getElementById('freeConfirm');
+            const infoBox = document.getElementById('infoBox');
+
+            if (planName === 'Free') {
+                paypalContainer.style.display = 'none';
+                freeConfirm.style.display = 'block';
+                infoBox.style.display = 'none';
+            } else {
+                // Pro or Master — show PayPal
+                freeConfirm.style.display = 'none';
+                infoBox.style.display = 'block';
+                paypalContainer.style.display = 'block';
+                
+                // Initialize PayPal buttons if not already done
+                if (!paypalInitialized) {
+                    initializePayPal();
+                    paypalInitialized = true;
+                }
+            }
+        }
+
+        async function activateFreePlan() {
             const token = localStorage.getItem('authToken');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -354,27 +399,26 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ plan: selectedPlan })
+                    body: JSON.stringify({ plan: 'Free' })
                 });
 
                 const data = await response.json();
 
                 if (response.status === 401) {
-                    // Token is invalid or expired
                     clearAuthSession();
                     window.location.href = '/signin.html';
                     return;
                 }
 
                 if (response.ok) {
-                    // Update local user data
-                    user.plan = selectedPlan;
+                    user.plan = 'Free';
+                    if (data.user?.subscription_end_date) {
+                        user.subscription_end_date = data.user.subscription_end_date;
+                    }
                     localStorage.setItem('user', JSON.stringify(user));
-                    
-                    // Redirect to projects page
                     window.location.href = '/projects.html';
                 } else {
-                    alert(data.detail || 'Failed to update plan');
+                    alert(data.detail || 'Failed to activate free plan');
                 }
             } catch (error) {
                 alert('Network error: ' + error.message);
@@ -383,27 +427,109 @@
             }
         }
 
+        // ─────────────────────────────────────────────
+        // PayPal Integration
+        // ─────────────────────────────────────────────
+        async function initializePayPal() {
+            try {
+                // Render PayPal buttons
+                paypal.Buttons({
+                    createOrder: async (data, actions) => {
+                        return createPayPalOrder();
+                    },
+                    onApprove: async (data, actions) => {
+                        // User approved the payment
+                        // Wait for backend webhook to process
+                        await pollForPlanActivation();
+                        window.location.href = '/projects.html';
+                    },
+                    onError: (err) => {
+                        console.error('PayPal error:', err);
+                        alert('Payment failed. Please try again.');
+                    },
+                    onCancel: () => {
+                        alert('Payment cancelled.');
+                    }
+                }).render('#paypal-button-container');
+            } catch (error) {
+                console.error('PayPal initialization error:', error);
+                alert('Failed to load PayPal. Please refresh and try again.');
+            }
+        }
+
+        async function createPayPalOrder() {
+            const token = localStorage.getItem('authToken');
+            const amount = PLAN_PRICES[selectedPlan];
+
+            try {
+                const response = await fetch(getApiUrl('/payments/create-paypal-order'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        plan: selectedPlan,
+                        amount: amount.toFixed(2)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.order_id) {
+                    return data.order_id;
+                } else {
+                    throw new Error(data.detail || 'Failed to create order');
+                }
+            } catch (error) {
+                console.error('Create order error:', error);
+                throw error;
+            }
+        }
+
+        async function pollForPlanActivation(maxAttempts = 12) {
+            // Poll the backend to check if plan was activated (max 60 seconds)
+            const token = localStorage.getItem('authToken');
+            
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                try {
+                    const response = await fetch(getApiUrl('/user/me'), {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok && data.user?.plan === selectedPlan) {
+                        // Plan activated! Update local storage
+                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                        user.plan = data.user.plan;
+                        if (data.user.subscription_end_date) {
+                            user.subscription_end_date = data.user.subscription_end_date;
+                        }
+                        localStorage.setItem('user', JSON.stringify(user));
+                        return true;
+                    }
+                } catch (e) {
+                    console.log('Poll attempt', attempt + 1, 'failed');
+                }
+
+                // Wait 5 seconds before next attempt
+                if (attempt < maxAttempts - 1) {
+                    await new Promise(r => setTimeout(r, 5000));
+                }
+            }
+
+            return true; // Assume success after polling timeout
+        }
+
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('show', show);
         }
 
-        // Auto-submit if button is clicked (if we add a button)
-        // For now, we'll add a hidden button that can be triggered
-        window.confirmPlan = confirmSelection;
-
-        // Auto-confirm after selection (after user clicks a plan)
-        // Or add a "Continue" button that calls confirmSelection()
-        // For demo, let's auto-redirect after 1 second
-        let clickCount = 0;
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-select')) {
-                e.preventDefault();
-                clickCount++;
-                if (clickCount === 1) {
-                    setTimeout(() => confirmSelection(), 500);
-                }
-            }
-        });
+        function clearAuthSession() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+        }
     </script>
 </body>
 </html>

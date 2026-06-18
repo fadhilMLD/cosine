@@ -319,15 +319,6 @@
         <p>Manage your account settings and plan</p>
     </div>
 
-    <!-- Pending purchase banner (persists across page loads) -->
-    <div id="pendingBanner">
-        <div class="pending-text">
-            <strong>Purchase in progress</strong>
-            Complete your payment on Gumroad, then click Verify to activate your plan.
-        </div>
-        <button id="verifyPurchaseBtn" onclick="verifyPendingPurchase()">Verify Purchase</button>
-    </div>
-
     <!-- Feedback toasts -->
     <div class="toast toast-success" id="toastSuccess"></div>
     <div class="toast toast-error"   id="toastError"></div>
@@ -359,23 +350,11 @@
             <div class="plan-badge" id="currentPlanBadge">Free</div>
         </div>
 
-        <div class="subscription-info" id="subscriptionInfo" id="subscriptionEndDate"></div>
+        <div class="subscription-info" id="subscriptionInfo"></div>
 
         <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
-            <div class="form-group">
-                <label for="planSelect">Change Plan</label>
-                <select id="planSelect">
-                    <option value="Free">Free — $0 / month</option>
-                    <option value="Pro">Pro — $9 / month</option>
-                    <option value="Master">Master — $19 / month</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="couponCode">Coupon Code</label>
-                <input type="text" id="couponCode" placeholder="Optional coupon code">
-            </div>
-            <button class="btn-primary" id="upgradePlanBtn" onclick="upgradePlan()">Update Plan</button>
-            <div class="loading" id="planLoading"><span class="spinner"></span>Processing...</div>
+            <button class="btn-primary" id="upgradePlanBtn" onclick="goToSelectPlan()">Upgrade Plan</button>
+            <div class="loading" id="planLoading"><span class="spinner"></span>Loading...</div>
         </div>
     </div>
 </div>
@@ -387,7 +366,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadProfile();
-    checkPendingPurchase();
 });
 
 function checkAuth() {
@@ -405,7 +383,6 @@ function loadProfile() {
     const plan = user.plan || 'Free';
     document.getElementById('currentPlanName').textContent  = plan + ' Plan';
     document.getElementById('currentPlanBadge').textContent = plan;
-    document.getElementById('planSelect').value = plan;
 
     const infoEl = document.getElementById('subscriptionInfo');
     if (user.subscription_end_date && plan !== 'Free') {
@@ -417,22 +394,20 @@ function loadProfile() {
     } else {
         infoEl.classList.remove('show');
     }
-}
-
-// ─────────────────────────────────────────────
-// Pending purchase banner
-// ─────────────────────────────────────────────
-function checkPendingPurchase() {
-    const pendingPlan = sessionStorage.getItem('pendingPlan');
-    if (pendingPlan) {
-        document.getElementById('pendingBanner').classList.add('show');
+    
+    // Hide upgrade button if already on Master plan
+    const upgradePlanBtn = document.getElementById('upgradePlanBtn');
+    if (plan === 'Master') {
+        upgradePlanBtn.disabled = true;
+        upgradePlanBtn.textContent = 'Master Plan Active';
     }
 }
 
-function dismissPendingBanner() {
-    sessionStorage.removeItem('pendingPlan');
-    sessionStorage.removeItem('pendingCoupon');
-    document.getElementById('pendingBanner').classList.remove('show');
+// ─────────────────────────────────────────────
+// Navigation
+// ─────────────────────────────────────────────
+function goToSelectPlan() {
+    window.location.href = '/select-plan.html';
 }
 
 // ─────────────────────────────────────────────
@@ -470,179 +445,11 @@ async function updateName() {
 }
 
 // ─────────────────────────────────────────────
-// Upgrade plan
-// ─────────────────────────────────────────────
-async function upgradePlan() {
-    const user      = JSON.parse(localStorage.getItem('user') || '{}');
-    const newPlan   = document.getElementById('planSelect').value;
-    const coupon    = document.getElementById('couponCode').value.trim();
-    const hierarchy = { Free: 0, Pro: 1, Master: 2 };
-
-    if (newPlan === (user.plan || 'Free')) {
-        showError('Please select a different plan');
-        return;
-    }
-    if ((hierarchy[newPlan] || 0) < (hierarchy[user.plan] || 0)) {
-        showError(`Cannot downgrade from ${user.plan} to ${newPlan}. Upgrades only.`);
-        return;
-    }
-
-    if (newPlan === 'Free') {
-        await updatePlanDirect('Free', coupon);
-        return;
-    }
-
-    await initiatePayment(newPlan, coupon);
-}
-
-async function initiatePayment(plan, coupon) {
-    const token = localStorage.getItem('authToken');
-
-    try {
-        setPlanLoading(true);
-        clearToasts();
-
-        const res  = await fetch(getApiUrl('/payments/create-order'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ plan, coupon_code: coupon || null })
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            showError(data.detail || 'Failed to get payment link');
-            return;
-        }
-
-        // Coupon made it free — activate directly
-        if (!data.requires_payment || Number(data.amount || 0) <= 0) {
-            await updatePlanDirect(plan, coupon);
-            return;
-        }
-
-        // Store pending state and open Gumroad
-        sessionStorage.setItem('pendingPlan',   plan);
-        sessionStorage.setItem('pendingCoupon', coupon || '');
-
-        showInfo(`Opening Gumroad checkout for ${plan} Plan. Complete the payment, then click Verify Purchase.`);
-        document.getElementById('pendingBanner').classList.add('show');
-
-        setTimeout(() => window.open(data.payment_url, '_blank'), 800);
-
-    } catch (e) {
-        showError('Error initiating payment: ' + e.message);
-    } finally {
-        setPlanLoading(false);
-    }
-}
-
-// ─────────────────────────────────────────────
-// Verify purchase (called manually by user OR
-// auto-called if webhook already activated it)
-// ─────────────────────────────────────────────
-async function verifyPendingPurchase() {
-    const pendingPlan   = sessionStorage.getItem('pendingPlan');
-    const pendingCoupon = sessionStorage.getItem('pendingCoupon');
-
-    if (!pendingPlan) {
-        showError('No pending purchase found. Please start the upgrade process again.');
-        return;
-    }
-
-    clearToasts();
-    const btn = document.getElementById('verifyPurchaseBtn');
-    btn.disabled = true;
-    btn.textContent = 'Checking…';
-
-    try {
-        const token = localStorage.getItem('authToken');
-        const res   = await fetch(getApiUrl('/payments/verify'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ plan: pendingPlan, coupon_code: pendingCoupon || null })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            // ✅ Update local cache
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            user.plan  = pendingPlan;
-            if (data.user?.subscription_end_date) {
-                user.subscription_end_date = data.user.subscription_end_date;
-            }
-            localStorage.setItem('user', JSON.stringify(user));
-
-            dismissPendingBanner();
-            loadProfile();
-
-            const msg = data.message === 'Plan already active'
-                ? `${pendingPlan} plan is active — you are all set!`
-                : data.coupon?.applied
-                    ? `Plan upgraded to ${pendingPlan} with coupon ${data.coupon.code}!`
-                    : `Plan upgraded to ${pendingPlan} successfully!`;
-            showSuccess(msg);
-
-        } else if (res.status === 402) {
-            // ⏳ Payment not yet verified — Gumroad webhook may still be processing
-            showError(`⏳ Payment verification in progress. Gumroad may take a moment to confirm your purchase. Please wait 30 seconds and try again.`);
-        } else {
-            // ❌ Other errors
-            showError((data.detail || 'Verification failed') + ' — check that you completed the purchase on Gumroad.');
-        }
-    } catch (e) {
-        showError('Network error: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Verify Purchase';
-    }
-}
-
-// ─────────────────────────────────────────────
-// Direct plan update (free / coupon-100%)
-// ─────────────────────────────────────────────
-async function updatePlanDirect(plan, coupon) {
-    const token = localStorage.getItem('authToken');
-
-    try {
-        setPlanLoading(true);
-        clearToasts();
-
-        const res  = await fetch(getApiUrl('/user/update-plan'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ plan, coupon_code: coupon || null })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            user.plan  = plan;
-            if (data.user?.subscription_end_date) {
-                user.subscription_end_date = data.user.subscription_end_date;
-            }
-            localStorage.setItem('user', JSON.stringify(user));
-            loadProfile();
-            showSuccess(data.coupon?.applied
-                ? `Plan updated to ${plan} with coupon ${data.coupon.code}!`
-                : 'Plan updated successfully!');
-        } else {
-            showError(data.detail || 'Failed to update plan');
-        }
-    } catch (e) {
-        showError('Network error: ' + e.message);
-    } finally {
-        setPlanLoading(false);
-    }
-}
-
-// ─────────────────────────────────────────────
 // Auth helpers
 // ─────────────────────────────────────────────
 function clearAuthSession() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    sessionStorage.removeItem('pendingPlan');
-    sessionStorage.removeItem('pendingCoupon');
 }
 
 function handleLogout() {
@@ -690,11 +497,6 @@ function clearToasts() {
 function setNameLoading(on) {
     document.getElementById('nameLoading').classList.toggle('show', on);
     document.getElementById('updateNameBtn').disabled = on;
-}
-
-function setPlanLoading(on) {
-    document.getElementById('planLoading').classList.toggle('show', on);
-    document.getElementById('upgradePlanBtn').disabled = on;
 }
 </script>
 </body>
