@@ -348,14 +348,43 @@
         let selectedPlan = 'Free';
         let paypalInitialized = false;
 
-        // Plan pricing (must match backend)
-        const PLAN_PRICES = {
-            'Free': 0,
-            'Pro': 9.99,
-            'Master': 29.99
-        };
+        // Plan pricing (loaded from server)
+        let PLAN_PRICES = {};
+
+        async function loadPlanPrices() {
+            try {
+                const response = await fetch(getApiUrl('/api/plan-prices'));
+                const data = await response.json();
+                if (data.success && data.prices) {
+                    PLAN_PRICES = data.prices;
+                    console.log('✓ Plan prices loaded from server:', PLAN_PRICES);
+                    // Update price displays in cards
+                    updatePriceDisplays(data.prices, data.plans);
+                } else {
+                    // Fallback defaults
+                    PLAN_PRICES = { 'Free': 0, 'Pro': 32, 'Master': 92 };
+                    console.log('Using fallback plan prices');
+                }
+            } catch (error) {
+                console.error('Failed to load plan prices, using defaults:', error);
+                PLAN_PRICES = { 'Free': 0, 'Pro': 32, 'Master': 92 };
+            }
+        }
+
+        function updatePriceDisplays(prices, plans) {
+            // Update the prices shown in the HTML cards
+            const proPrice = document.querySelector('#proCard .plan-price');
+            const masterPrice = document.querySelector('#masterCard .plan-price');
+            if (proPrice && prices['Pro']) {
+                proPrice.textContent = '$' + Math.floor(prices['Pro']);
+            }
+            if (masterPrice && prices['Master']) {
+                masterPrice.textContent = '$' + Math.floor(prices['Master']);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadPlanPrices();
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!user.user_id) {
                 window.location.href = '/signin.html';

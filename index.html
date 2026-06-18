@@ -893,6 +893,64 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </section>
 
+<script>
+// Load plan prices from server for dynamic pricing display
+let SERVER_PLAN_PRICES = {};
+
+async function loadServerPlanPrices() {
+    try {
+        const response = await fetch(getApiUrl('/api/plan-prices'));
+        const data = await response.json();
+        if (data.success && data.prices) {
+            SERVER_PLAN_PRICES = data.prices;
+            updatePlanPriceDisplay();
+        }
+    } catch (error) {
+        console.warn('Could not load plan prices from server:', error);
+    }
+}
+
+function updatePlanPriceDisplay() {
+    // Update the pricing section with server prices
+    const priceElements = document.querySelectorAll('.pricing-grid .pp-num, .pricing-grid .pp-free-text');
+    if (priceElements.length === 0) return;
+    
+    // Free plan
+    const freePrice = document.querySelector('.pp-free-text');
+    if (freePrice && SERVER_PLAN_PRICES['Free'] !== undefined) {
+        freePrice.textContent = '$' + Math.floor(SERVER_PLAN_PRICES['Free']);
+    }
+    
+    // Pro plan
+    const proPrice = document.querySelector('.pricing-grid .plan-card.featured .pp-num');
+    if (proPrice && SERVER_PLAN_PRICES['Pro'] !== undefined) {
+        proPrice.textContent = Math.floor(SERVER_PLAN_PRICES['Pro']);
+        proPrice.style.background = 'linear-gradient(135deg,var(--accent),var(--accent2))';
+        proPrice.style.webkitBackgroundClip = 'text';
+        proPrice.style.webkitTextFillColor = 'transparent';
+        proPrice.style.backgroundClip = 'text';
+    }
+    
+    // Master plan
+    const masterPrice = document.querySelectorAll('.pricing-grid .plan-card:not(.featured) .pp-num');
+    if (masterPrice.length > 0 && SERVER_PLAN_PRICES['Master'] !== undefined) {
+        masterPrice.forEach(el => {
+            const card = el.closest('.plan-card');
+            if (card && !card.classList.contains('featured')) {
+                el.textContent = Math.floor(SERVER_PLAN_PRICES['Master']);
+            }
+        });
+    }
+}
+
+// Call on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadServerPlanPrices);
+} else {
+    loadServerPlanPrices();
+}
+</script>
+
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">
   <div class="section-inner">
