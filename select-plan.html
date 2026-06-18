@@ -468,19 +468,51 @@
                 // Render PayPal buttons
                 paypal.Buttons({
                     createOrder: async (data, actions) => {
-                        return createPayPalOrder();
+                        try {
+                            const orderId = await createPayPalOrder();
+                            console.log('✓ PayPal order created:', orderId);
+                            return orderId;
+                        } catch (error) {
+                            console.error('✗ Order creation failed:', error.message);
+                            throw error;
+                        }
                     },
                     onApprove: async (data, actions) => {
-                        // User approved the payment
-                        // Wait for backend webhook to process
-                        await pollForPlanActivation();
-                        window.location.href = '/projects.html';
+                        try {
+                            // User approved the payment - capture the order
+                            console.log('✓ Payment approved for order:', data.orderID);
+                            const result = await capturePayPalOrder(data.orderID);
+                            console.log('✓ Capture result:', result);
+                            
+                            if (result.status === 'COMPLETED') {
+                                // Plan activated directly from capture response
+                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                user.plan = result.plan || selectedPlan;
+                                if (result.subscription_end_date) {
+                                    user.subscription_end_date = result.subscription_end_date;
+                                }
+                                localStorage.setItem('user', JSON.stringify(user));
+                                window.location.href = '/projects.html';
+                            } else if (result.status === 'PENDING') {
+                                // Payment is pending, poll for activation
+                                await pollForPlanActivation();
+                                window.location.href = '/projects.html';
+                            } else {
+                                // Fallback: poll for plan activation
+                                await pollForPlanActivation();
+                                window.location.href = '/projects.html';
+                            }
+                        } catch (error) {
+                            console.error('✗ Payment capture failed:', error.message);
+                            alert('Payment processing error. Please contact support.');
+                        }
                     },
                     onError: (err) => {
-                        console.error('PayPal error:', err);
-                        alert('Payment failed. Please try again.');
+                        console.error('✗ PayPal error:', err);
+                        alert(`Payment failed: ${err.message || 'Please try again.'}`);
                     },
                     onCancel: () => {
+                        console.log('Payment cancelled by user');
                         alert('Payment cancelled.');
                     }
                 }).render('#paypal-button-container');
@@ -497,6 +529,8 @@
             const amount = PLAN_PRICES[selectedPlan];
 
             try {
+                console.log(`Creating PayPal order for ${selectedPlan} ($${amount})`);
+                
                 const response = await fetch(getApiUrl('/payments/create-paypal-order'), {
                     method: 'POST',
                     headers: {
@@ -510,14 +544,56 @@
                 });
 
                 const data = await response.json();
+                
+                console.log('Backend response:', { status: response.status, data });
 
                 if (response.ok && data.order_id) {
+                    console.log('✓ Order ID received:', data.order_id);
                     return data.order_id;
                 } else {
-                    throw new Error(data.detail || 'Failed to create order');
+                    const errorMsg = data.detail || data.error || 'Failed to create order';
+                    console.error('Backend error:', errorMsg);
+                    throw new Error(errorMsg);
                 }
             } catch (error) {
-                console.error('Create order error:', error);
+                console.error('Create order error:', error.message);
+                throw error;
+            }
+        }
+
+        async function capturePayPalOrder(orderId) {
+            const token = localStorage.getItem('authToken');
+
+            try {
+                console.log('Capturing PayPal order:', orderId);
+
+                const response = await fetch(getApiUrl('/payments/capture-paypal-order'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ order_id: orderId })
+                });
+
+                const data = await response.json();
+                console.log('Capture response:', { status: response.status, data });
+
+                if (response.ok && data.success) {
+                    if (data.plan && data.status === 'COMPLETED') {
+                        // Plan was activated directly
+                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                        user.plan = data.plan;
+                        localStorage.setItem('user', JSON.stringify(user));
+                    }
+                    return data;
+                } else {
+                    const errorMsg = data.detail || data.error || 'Failed to capture payment';
+                    console.error('Capture error:', errorMsg);
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error('Capture request error:', error.message);
                 throw error;
             }
         }
