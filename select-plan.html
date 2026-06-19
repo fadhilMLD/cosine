@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
     <script>
         // Redirect to signin only if NOT logged in
-        // Allow logged-in users to upgrade their plan
         if (!localStorage.getItem('authToken')) {
             window.location.href = 'signin.html';
         }
@@ -37,13 +36,12 @@
         body {
             background: #000000;
             color: var(--text);
-            font-family: 'Manrope', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-weight: 300;
             line-height: 1.6;
             overflow-x: hidden;
             min-height: 100vh;
             padding: 40px 20px;
-            font-style: normal;
         }
 
         .plan-container {
@@ -86,6 +84,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            cursor: pointer;
         }
 
         .plan-card:hover {
@@ -98,6 +97,11 @@
             border-color: var(--accent);
             background: rgba(200, 180, 240, 0.05);
             transform: scale(1.02);
+        }
+
+        .plan-card.selected {
+            border-color: var(--accent3);
+            background: rgba(125, 212, 184, 0.05);
         }
 
         .plan-badge {
@@ -124,7 +128,7 @@
 
         .plan-price {
             font-size: 32px;
-            font-weight: 300;
+            font-weight: 500;
             margin-bottom: 4px;
         }
 
@@ -185,6 +189,12 @@
             color: var(--accent);
         }
 
+        .plan-card.selected .btn-select {
+            background: var(--accent3);
+            color: #000;
+            border-color: var(--accent3);
+        }
+
         .plan-card.recommended .btn-select {
             background: var(--accent);
             color: #000;
@@ -195,21 +205,12 @@
             transform: translateY(-1px);
         }
 
-        .plan-card.recommended .btn-select:hover {
-            background: #d4c0f6;
-        }
-
-        .plan-card.selected .btn-select {
-            background: var(--accent3);
-            color: #000;
-            border-color: var(--accent3);
-        }
-
         .loading {
             display: none;
             text-align: center;
             color: var(--text2);
             font-size: 14px;
+            padding: 20px;
         }
 
         .loading.show {
@@ -240,6 +241,22 @@
             color: var(--text2);
             margin-top: 40px;
         }
+
+        .error-message {
+            background: rgba(244, 120, 120, 0.1);
+            border: 1px solid rgba(244, 120, 120, 0.3);
+            padding: 16px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: #f47878;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -249,55 +266,11 @@
             <p>Select the perfect plan to unlock Cosine's full potential. You can upgrade or downgrade anytime.</p>
         </div>
 
-        <div class="plans-grid">
-            <!-- Free Plan -->
-            <div class="plan-card" id="freeCard" onclick="selectPlan('Free', this)">
-                <div class="plan-name">Free</div>
-                <div class="plan-price">$0</div>
-                <div class="plan-price-period">Forever Free</div>
-                <div class="plan-description">Get started with Cosine's core features</div>
-                <ul class="plan-features">
-                    <li>Up to 3 Projects</li>
-                    <li>Basic AI Features</li>
-                    <li>Limited Debates</li>
-                    <li>Email Support</li>
-                </ul>
-                <button type="button" class="btn-select">Select Free</button>
-            </div>
-
-            <!-- Pro Plan (Recommended) -->
-            <div class="plan-card recommended" id="proCard" onclick="selectPlan('Pro', this)">
-                <div class="plan-badge">Recommended</div>
-                <div class="plan-name">Pro</div>
-                <div class="plan-price">$9</div>
-                <div class="plan-price-period">Per Month</div>
-                <div class="plan-description">For power users who want more</div>
-                <ul class="plan-features">
-                    <li>Unlimited Projects</li>
-                    <li>Advanced AI Features</li>
-                    <li>Unlimited Debates</li>
-                    <li>Priority Support</li>
-                    <li>Export Features</li>
-                </ul>
-                <button type="button" class="btn-select">Select Pro</button>
-            </div>
-
-            <!-- Master Plan -->
-            <div class="plan-card" id="masterCard" onclick="selectPlan('Master', this)">
-                <div class="plan-name">Master</div>
-                <div class="plan-price">$29</div>
-                <div class="plan-price-period">Per Month</div>
-                <div class="plan-description">For teams and enterprises</div>
-                <ul class="plan-features">
-                    <li>Everything in Pro</li>
-                    <li>Team Collaboration</li>
-                    <li>Advanced Analytics</li>
-                    <li>Custom Integrations</li>
-                    <li>Dedicated Support</li>
-                </ul>
-                <button type="button" class="btn-select">Select Master</button>
-            </div>
+        <div class="plans-grid" id="plansGrid">
+            <!-- Plans will be dynamically rendered here -->
         </div>
+
+        <div id="errorMessage" class="error-message"></div>
 
         <div class="info-box" id="infoBox" style="display: none;">
             Complete your payment below. Your plan will be activated automatically once PayPal confirms the transaction.
@@ -322,16 +295,16 @@
     <script>
         // Dynamically load PayPal SDK with correct client ID
         function loadPayPalSDK() {
-            const clientId = 'AfVpYXeLnq2DP7QmrVpQYATc1iXxfuej_N63H7hgV3Fs--jsPw3VuEFpe-GEbQLIr6A3R1wnaaUZBoaN'; // From .env PAYPAL_CLIENT_ID
+            const clientId = 'AfVpYXeLnq2DP7QmrVpQYATc1iXxfuej_N63H7hgV3Fs--jsPw3VuEFpe-GEbQLIr6A3R1wnaaUZBoaN';
             const script = document.createElement('script');
-            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`;
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD`;
             script.async = true;
             script.onload = () => {
                 console.log('✓ PayPal SDK loaded successfully');
             };
             script.onerror = () => {
                 console.error('✗ Failed to load PayPal SDK');
-                alert('Failed to load PayPal. Please refresh and try again.');
+                showError('Failed to load PayPal. Please refresh and try again.');
             };
             document.body.appendChild(script);
         }
@@ -347,54 +320,103 @@
     <script>
         let selectedPlan = 'Free';
         let paypalInitialized = false;
-
-        // Plan pricing (loaded from server)
+        let PLAN_DATA = {};
         let PLAN_PRICES = {};
 
-        async function loadPlanPrices() {
+        // ─────────────────────────────────────────────
+        // Load Plans from Server
+        // ─────────────────────────────────────────────
+        async function loadPlansFromServer() {
             try {
-                const response = await fetch(getApiUrl('/api/plan-prices'));
+                const response = await fetch(getApiUrl('/api/plan-prices'), {
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                
                 const data = await response.json();
-                if (data.success && data.prices) {
+                
+                if (data.success && data.plans) {
+                    PLAN_DATA = data;
                     PLAN_PRICES = data.prices;
-                    console.log('✓ Plan prices loaded from server:', PLAN_PRICES);
-                    // Update price displays in cards
-                    updatePriceDisplays(data.prices, data.plans);
+                    console.log('✓ Plans loaded from server:', PLAN_DATA);
+                    renderPlans(data.plans);
                 } else {
-                    // Fallback defaults
-                    PLAN_PRICES = { 'Free': 0, 'Pro': 32, 'Master': 92 };
-                    console.log('Using fallback plan prices');
+                    throw new Error('Invalid response format');
                 }
             } catch (error) {
-                console.error('Failed to load plan prices, using defaults:', error);
-                PLAN_PRICES = { 'Free': 0, 'Pro': 32, 'Master': 92 };
+                console.error('Failed to load plans:', error);
+                showError('Could not load plan prices. Please refresh the page.');
+                // Render with hardcoded fallback
+                renderFallbackPlans();
             }
         }
 
-        function updatePriceDisplays(prices, plans) {
-            // Update the prices shown in the HTML cards
-            const proPrice = document.querySelector('#proCard .plan-price');
-            const masterPrice = document.querySelector('#masterCard .plan-price');
-            if (proPrice && prices['Pro']) {
-                proPrice.textContent = '$' + Math.floor(prices['Pro']);
-            }
-            if (masterPrice && prices['Master']) {
-                masterPrice.textContent = '$' + Math.floor(prices['Master']);
+        // ─────────────────────────────────────────────
+        // Render Plans
+        // ─────────────────────────────────────────────
+        function renderPlans(plans) {
+            const grid = document.getElementById('plansGrid');
+            grid.innerHTML = '';
+            
+            const featuresMap = {
+                'Free': ['Up to 3 Projects', 'Basic AI Features', 'Limited Debates', 'Email Support'],
+                'Pro': ['Unlimited Projects', 'Advanced AI Features', 'Unlimited Debates', 'Priority Support', 'Export Features'],
+                'Master': ['Everything in Pro', 'Team Collaboration', 'Advanced Analytics', 'Custom Integrations', 'Dedicated Support']
+            };
+
+            plans.forEach((plan, index) => {
+                const isRecommended = plan.plan_name === 'Pro';
+                const isSelected = plan.plan_name === 'Free';
+                const price = plan.price_usd || 0;
+                const features = featuresMap[plan.plan_name] || ['Coming soon...'];
+
+                const card = document.createElement('div');
+                card.className = `plan-card${isRecommended ? ' recommended' : ''}${isSelected ? ' selected' : ''}`;
+                card.id = `${plan.plan_name.toLowerCase()}Card`;
+                card.dataset.plan = plan.plan_name;
+                card.onclick = () => selectPlan(plan.plan_name, card);
+
+                card.innerHTML = `
+                    ${isRecommended ? '<div class="plan-badge">Recommended</div>' : ''}
+                    <div class="plan-name">${plan.plan_name}</div>
+                    <div class="plan-price">${price === 0 ? 'Free' : '$' + Math.floor(price)}</div>
+                    <div class="plan-price-period">${price === 0 ? 'Forever Free' : 'Per Month'}</div>
+                    <div class="plan-description">${plan.description || ''}</div>
+                    <ul class="plan-features">
+                        ${features.map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                    <button type="button" class="btn-select" onclick="event.stopPropagation(); selectPlan('${plan.plan_name}', this.closest('.plan-card'))">
+                        ${isSelected ? 'Selected' : `Select ${plan.plan_name}`}
+                    </button>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            // Select Free plan by default
+            const freeCard = document.getElementById('freeCard');
+            if (freeCard) {
+                selectPlan('Free', freeCard);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPlanPrices();
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user.user_id) {
-                window.location.href = '/signin.html';
-                return;
-            }
+        function renderFallbackPlans() {
+            const fallbackPlans = [
+                { plan_name: 'Free', price_usd: 0, description: 'Forever Free' },
+                { plan_name: 'Pro', price_usd: 32, description: 'For power users who want more' },
+                { plan_name: 'Master', price_usd: 92, description: 'For teams and enterprises' }
+            ];
+            renderPlans(fallbackPlans);
+        }
 
-            // Select Free by default
-            selectPlan('Free', document.getElementById('freeCard'));
-        });
-
+        // ─────────────────────────────────────────────
+        // Plan Selection
+        // ─────────────────────────────────────────────
         function selectPlan(planName, cardElement) {
             // Remove selected class from all cards
             document.querySelectorAll('.plan-card.selected').forEach(card => {
@@ -402,8 +424,20 @@
             });
 
             // Add selected class to current card
-            cardElement.classList.add('selected');
+            if (cardElement) {
+                cardElement.classList.add('selected');
+            }
             selectedPlan = planName;
+
+            // Update button text
+            document.querySelectorAll('.plan-card .btn-select').forEach(btn => {
+                const card = btn.closest('.plan-card');
+                if (card && card.dataset.plan === planName) {
+                    btn.textContent = 'Selected';
+                } else if (card) {
+                    btn.textContent = `Select ${card.dataset.plan}`;
+                }
+            });
 
             // Show appropriate UI based on plan
             updatePaymentUI(planName);
@@ -413,13 +447,16 @@
             const paypalContainer = document.getElementById('paypalContainer');
             const freeConfirm = document.getElementById('freeConfirm');
             const infoBox = document.getElementById('infoBox');
+            const errorMsg = document.getElementById('errorMessage');
+
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
 
             if (planName === 'Free') {
                 paypalContainer.style.display = 'none';
                 freeConfirm.style.display = 'block';
                 infoBox.style.display = 'none';
             } else {
-                // Pro or Master — show PayPal
                 freeConfirm.style.display = 'none';
                 infoBox.style.display = 'block';
                 paypalContainer.style.display = 'block';
@@ -432,6 +469,9 @@
             }
         }
 
+        // ─────────────────────────────────────────────
+        // Free Plan Activation
+        // ─────────────────────────────────────────────
         async function activateFreePlan() {
             const token = localStorage.getItem('authToken');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -443,12 +483,14 @@
 
             try {
                 showLoading(true);
+                hideError();
 
                 const response = await fetch(getApiUrl('/user/update-plan'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({ plan: 'Free' })
                 });
@@ -469,10 +511,10 @@
                     localStorage.setItem('user', JSON.stringify(user));
                     window.location.href = '/projects.html';
                 } else {
-                    alert(data.detail || 'Failed to activate free plan');
+                    showError(data.detail || 'Failed to activate free plan');
                 }
             } catch (error) {
-                alert('Network error: ' + error.message);
+                showError('Network error: ' + error.message);
             } finally {
                 showLoading(false);
             }
@@ -503,18 +545,20 @@
                             return orderId;
                         } catch (error) {
                             console.error('✗ Order creation failed:', error.message);
+                            showError(error.message);
                             throw error;
                         }
                     },
                     onApprove: async (data, actions) => {
                         try {
-                            // User approved the payment - capture the order
+                            showLoading(true);
+                            hideError();
+                            
                             console.log('✓ Payment approved for order:', data.orderID);
                             const result = await capturePayPalOrder(data.orderID);
                             console.log('✓ Capture result:', result);
                             
                             if (result.status === 'COMPLETED') {
-                                // Plan activated directly from capture response
                                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                                 user.plan = result.plan || selectedPlan;
                                 if (result.subscription_end_date) {
@@ -523,39 +567,42 @@
                                 localStorage.setItem('user', JSON.stringify(user));
                                 window.location.href = '/projects.html';
                             } else if (result.status === 'PENDING') {
-                                // Payment is pending, poll for activation
                                 await pollForPlanActivation();
                                 window.location.href = '/projects.html';
                             } else {
-                                // Fallback: poll for plan activation
                                 await pollForPlanActivation();
                                 window.location.href = '/projects.html';
                             }
                         } catch (error) {
                             console.error('✗ Payment capture failed:', error.message);
-                            alert('Payment processing error. Please contact support.');
+                            showError('Payment processing error: ' + error.message);
+                        } finally {
+                            showLoading(false);
                         }
                     },
                     onError: (err) => {
                         console.error('✗ PayPal error:', err);
-                        alert(`Payment failed: ${err.message || 'Please try again.'}`);
+                        showError(`Payment failed: ${err.message || 'Please try again.'}`);
                     },
                     onCancel: () => {
                         console.log('Payment cancelled by user');
-                        alert('Payment cancelled.');
                     }
                 }).render('#paypal-button-container');
                 
                 console.log('✓ PayPal buttons rendered successfully');
             } catch (error) {
                 console.error('PayPal initialization error:', error);
-                alert('Failed to load PayPal. Please refresh and try again.');
+                showError('Failed to load PayPal. Please refresh and try again.');
             }
         }
 
         async function createPayPalOrder() {
             const token = localStorage.getItem('authToken');
-            const amount = PLAN_PRICES[selectedPlan];
+            const amount = PLAN_PRICES[selectedPlan] || 0;
+
+            if (amount <= 0) {
+                throw new Error('Invalid plan price');
+            }
 
             try {
                 console.log(`Creating PayPal order for ${selectedPlan} ($${amount})`);
@@ -564,7 +611,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({ 
                         plan: selectedPlan,
@@ -600,7 +648,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({ order_id: orderId })
                 });
@@ -610,7 +659,6 @@
 
                 if (response.ok && data.success) {
                     if (data.plan && data.status === 'COMPLETED') {
-                        // Plan was activated directly
                         const user = JSON.parse(localStorage.getItem('user') || '{}');
                         user.plan = data.plan;
                         localStorage.setItem('user', JSON.stringify(user));
@@ -628,19 +676,20 @@
         }
 
         async function pollForPlanActivation(maxAttempts = 12) {
-            // Poll the backend to check if plan was activated (max 60 seconds)
             const token = localStorage.getItem('authToken');
             
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 try {
                     const response = await fetch(getApiUrl('/user/me'), {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'ngrok-skip-browser-warning': 'true'
+                        }
                     });
 
                     const data = await response.json();
                     
                     if (response.ok && data.user?.plan === selectedPlan) {
-                        // Plan activated! Update local storage
                         const user = JSON.parse(localStorage.getItem('user') || '{}');
                         user.plan = data.user.plan;
                         if (data.user.subscription_end_date) {
@@ -653,23 +702,49 @@
                     console.log('Poll attempt', attempt + 1, 'failed');
                 }
 
-                // Wait 5 seconds before next attempt
                 if (attempt < maxAttempts - 1) {
                     await new Promise(r => setTimeout(r, 5000));
                 }
             }
 
-            return true; // Assume success after polling timeout
+            return true;
         }
 
+        // ─────────────────────────────────────────────
+        // UI Helpers
+        // ─────────────────────────────────────────────
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.classList.add('show');
+        }
+
+        function hideError() {
+            const el = document.getElementById('errorMessage');
+            el.classList.remove('show');
+            el.textContent = '';
         }
 
         function clearAuthSession() {
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
         }
+
+        // ─────────────────────────────────────────────
+        // Initialize
+        // ─────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!user.user_id) {
+                window.location.href = '/signin.html';
+                return;
+            }
+            loadPlansFromServer();
+        });
     </script>
 </body>
 </html>
