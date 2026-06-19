@@ -893,12 +893,8 @@ document.addEventListener('DOMContentLoaded', function() {
 let SERVER_PLAN_PRICES = {};
 
 async function loadServerPlanPrices() {
-    // Change from '/api/plan-prices' to '/plan-prices'
-    const response = await fetch(getApiUrl('/plan-prices'), {
-        headers: {
-            'ngrok-skip-browser-warning': 'true'
-        }
-    });
+    // Use ngrokFetch instead of fetch
+    const response = await ngrokFetch('/api/plan-prices');
     
     if (!response.ok) {
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
@@ -913,6 +909,7 @@ async function loadServerPlanPrices() {
     updatePlanPriceDisplay();
     console.log('✅ Plan prices loaded:', SERVER_PLAN_PRICES);
 }
+
 
 function updatePlanPriceDisplay() {
     // Update Free plan

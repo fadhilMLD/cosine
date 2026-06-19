@@ -29,6 +29,21 @@ function clearAuthSession() {
     localStorage.removeItem('registeredEmail');
 }
 
+function ngrokFetch(path, options = {}) {
+    const url = getApiUrl(path);
+    
+    // Merge headers with the ngrok bypass header
+    const headers = {
+        'ngrok-skip-browser-warning': 'true',
+        ...(options.headers || {})
+    };
+    
+    return fetch(url, {
+        ...options,
+        headers
+    });
+}
+
 /**
  * Set new auth session data
  * @param {string} token - JWT access token
