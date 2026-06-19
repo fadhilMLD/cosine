@@ -893,6 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
 let SERVER_PLAN_PRICES = {};
 
 async function loadServerPlanPrices() {
+    // Change from '/api/plan-prices' to '/plan-prices'
     const response = await fetch(getApiUrl('/plan-prices'), {
         headers: {
             'ngrok-skip-browser-warning': 'true'
