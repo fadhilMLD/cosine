@@ -91,6 +91,31 @@
             color: var(--accent);
         }
 
+        /* Profile button - user name as rounded button */
+        .profile-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s;
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(200, 180, 240, 0.05);
+            transform: translateY(-1px);
+        }
+
         .logout-btn {
             background: none;
             border: 1px solid var(--border2);
@@ -414,6 +439,27 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 16px 20px;
+            }
+            .user-info {
+                padding: 0 8px;
+                gap: 8px;
+            }
+            .profile-btn {
+                max-width: 100px;
+                font-size: 12px;
+                padding: 6px 14px;
+            }
+            .main-content {
+                padding: 80px 16px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -425,10 +471,10 @@
         </a>
         <div class="nav-right">
             <div class="user-info">
-                <span id="userName">User</span>
+                <!-- User name as a clickable button -->
+                <button class="profile-btn" id="userNameBtn" onclick="goToProfile()">User</button>
                 <span class="plan-badge" id="planBadge">Free</span>
             </div>
-            <button class="logout-btn" onclick="goToProfile()" style="cursor: pointer; border: none; background: none; padding: 0; color: var(--text2); font-size: 20px; transition: color 0.2s;">⚙️</button>
             <button class="logout-btn" onclick="handleLogout()">Logout</button>
         </div>
     </nav>
@@ -538,7 +584,11 @@
                 return;
             }
 
-            document.getElementById('userName').textContent = user.name || 'User';
+            // Update user name button
+            const userNameBtn = document.getElementById('userNameBtn');
+            const displayName = user.name || 'User';
+            userNameBtn.textContent = displayName;
+            
             document.getElementById('planBadge').textContent = user.plan || 'Free';
             
             // Store current user ID for validation
