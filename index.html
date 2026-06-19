@@ -890,46 +890,37 @@ document.addEventListener('DOMContentLoaded', function() {
 </section>
 
 <script>
-// Load plan prices from server for dynamic pricing display
 let SERVER_PLAN_PRICES = {};
 
 async function loadServerPlanPrices() {
-    try {
-        // Use the same getApiUrl pattern that works for projects page
-        const response = await fetch(getApiUrl('/plan-prices'), {
-            headers: {
-                'ngrok-skip-browser-warning': 'true'
-            }
-        });
-        const data = await response.json();
-        if (data.success && data.prices) {
-            SERVER_PLAN_PRICES = data.prices;
-            updatePlanPriceDisplay();
+    const response = await fetch(getApiUrl('/plan-prices'), {
+        headers: {
+            'ngrok-skip-browser-warning': 'true'
         }
-    } catch (error) {
-        console.warn('Could not load plan prices from server:', error);
-        // Fallback to hardcoded prices
-        SERVER_PLAN_PRICES = {
-            'Free': 0,
-            'Pro': 499,
-            'Master': 1299
-        };
-        updatePlanPriceDisplay();
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
     }
+    
+    const data = await response.json();
+    if (!data.success || !data.prices) {
+        throw new Error('Invalid response format from server');
+    }
+    
+    SERVER_PLAN_PRICES = data.prices;
+    updatePlanPriceDisplay();
+    console.log('✅ Plan prices loaded:', SERVER_PLAN_PRICES);
 }
 
 function updatePlanPriceDisplay() {
-    // Update the pricing section with server prices
-    const priceElements = document.querySelectorAll('.pricing-grid .pp-num, .pricing-grid .pp-free-text');
-    if (priceElements.length === 0) return;
-    
-    // Free plan
+    // Update Free plan
     const freePrice = document.querySelector('.pp-free-text');
     if (freePrice && SERVER_PLAN_PRICES['Free'] !== undefined) {
         freePrice.textContent = '$' + Math.floor(SERVER_PLAN_PRICES['Free']);
     }
     
-    // Pro plan
+    // Update Pro plan
     const proPrice = document.querySelector('.pricing-grid .plan-card.featured .pp-num');
     if (proPrice && SERVER_PLAN_PRICES['Pro'] !== undefined) {
         proPrice.textContent = Math.floor(SERVER_PLAN_PRICES['Pro']);
@@ -939,7 +930,7 @@ function updatePlanPriceDisplay() {
         proPrice.style.backgroundClip = 'text';
     }
     
-    // Master plan
+    // Update Master plan
     const masterPrice = document.querySelectorAll('.pricing-grid .plan-card:not(.featured) .pp-num');
     if (masterPrice.length > 0 && SERVER_PLAN_PRICES['Master'] !== undefined) {
         masterPrice.forEach(el => {
@@ -957,6 +948,8 @@ if (document.readyState === 'loading') {
 } else {
     loadServerPlanPrices();
 }
+
+
 </script>
 
 <!-- PRICING -->
