@@ -907,7 +907,6 @@ async function loadServerPlanPrices() {
     
     SERVER_PLAN_PRICES = data.prices;
     updatePlanPriceDisplay();
-    console.log('✅ Plan prices loaded:', SERVER_PLAN_PRICES);
 }
 
 
@@ -962,7 +961,7 @@ if (document.readyState === 'loading') {
         <div class="plan-badge pb-free">Free forever</div>
         <div class="plan-name">Free</div>
         <div class="plan-desc">Get started with Cosine.</div>
-        <div class="plan-price"><span class="pp-free-text">₹0</span></div>
+        <div class="plan-price"><span class="pp-free-text">$0</span></div>
         <ul class="plan-features">
           <li><span class="feat-check">&#10003;</span> 3 challenge sessions per month</li>
           <li><span class="feat-check">&#10003;</span> All 5 agents included</li>
@@ -979,7 +978,7 @@ if (document.readyState === 'loading') {
         <div class="plan-name">Pro</div>
         <div class="plan-desc">For independent consultants who bill by the hour.</div>
         <div class="plan-price">
-          <span class="pp-sym">₹</span>
+          <span class="pp-sym">$</span>
           <span class="pp-num" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">499</span>
           <span class="pp-period">/ month</span>
         </div>
@@ -991,7 +990,7 @@ if (document.readyState === 'loading') {
           <li><span class="feat-check">&#10003;</span> PDF pre-submission report</li>
           <li><span class="feat-check">&#10003;</span> Custom industry specialist prompt</li>
         </ul>
-        <button class="plan-btn pb-accent" onclick="window.location.href='signin.html'">Start Pro &mdash; ₹499/mo</button>
+        <button class="plan-btn pb-accent" onclick="window.location.href='signin.html'">Start Pro</button>
       </div>
 
       <div class="plan-card">
@@ -999,7 +998,7 @@ if (document.readyState === 'loading') {
         <div class="plan-name">Master</div>
         <div class="plan-desc">For firms and advanced users.</div>
         <div class="plan-price">
-          <span class="pp-sym">₹</span>
+          <span class="pp-sym">$</span>
           <span class="pp-num" style="color:#d4aa40;">1299</span>
           <span class="pp-period">/ month</span>
         </div>
@@ -1011,7 +1010,7 @@ if (document.readyState === 'loading') {
           <li><span class="feat-check">&#10003;</span> White-label reports with your logo</li>
           <li><span class="feat-check">&#10003;</span> Priority 24/7 support</li>
         </ul>
-        <button class="plan-btn pb-gold" onclick="window.location.href='signin.html'">Start Master &mdash; ₹1299/mo</button>
+        <button class="plan-btn pb-gold" onclick="window.location.href='signin.html'">Start Master</button>
       </div>
     </div>
 
