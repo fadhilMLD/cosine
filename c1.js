@@ -511,15 +511,18 @@ function setupWebSocket() {
         return;
     }
 
-    // Build WebSocket URL with token and project_id
-    let wsUrl = getWsUrl("/ws");
+    // Build WebSocket URL with project_id in the path and token as query parameter
+    // Correct format: /ws/{project_id}?token=xxx
+    let wsUrl = getWsUrl("/ws/" + encodeURIComponent(currentProjectId));
     if (authToken) {
-        wsUrl += "?token=" + authToken + "&project_id=" + encodeURIComponent(currentProjectId);
+        wsUrl += "?token=" + encodeURIComponent(authToken);
     } else {
         console.error("Cannot establish WebSocket: User not authenticated");
         alert("Please log in first");
         return;
     }
+
+    console.log("Connecting to WebSocket:", wsUrl);
 
     socket = new WebSocket(wsUrl);
 
@@ -561,22 +564,19 @@ function setupWebSocket() {
                 break;
             
             case "status":
-                // Update UI controls but do not add a system chat message
                 syncDebateControls(data.status || "Running");
                 break;
             
             case "subprompt_start":
-                // Do not show sub-prompt system messages in the chat stream per user preference
                 // silently ignore
                 break;
 
             case "subprompt_end":
-                // Do not show sub-prompt end messages in the chat stream
+                // silently ignore
                 break;
             
             case "search_queries":
                 // Hide generated search queries from the chat stream
-                // (they are used internally for web lookups)
                 break;
             
             case "web_results":
@@ -584,23 +584,19 @@ function setupWebSocket() {
                 try {
                     const sources = [];
                     if (data.results && typeof data.results === 'object') {
-                        // data.results: { query: result_text }
                         Object.values(data.results).forEach(text => {
                             if (!text) return;
-                            // Look for lines like 'URL: https://...'
                             const urlRegex = /URL:\s*(https?:\/\/[^\s]+)/gi;
                             const titleRegex = /^\s*\d+\.\s*(.+)$/m;
                             let m;
                             while ((m = urlRegex.exec(text)) !== null) {
                                 sources.push({ title: m[1] || m[0], url: m[1] });
                             }
-                            // If no explicit URL lines, try to extract any http link
                             if (sources.length === 0) {
                                 const anyUrlRegex = /(https?:\/\/[^\s"']+)/gi;
                                 const found = text.match(anyUrlRegex) || [];
                                 found.forEach(u => sources.push({ title: u, url: u }));
                             }
-                            // Try to find a title from the beginning of the chunk
                             const tmatch = text.match(titleRegex);
                             if (tmatch && sources.length > 0) {
                                 sources.forEach(s => { if (!s.title || s.title === s.url) s.title = tmatch[1].trim(); });
@@ -613,7 +609,6 @@ function setupWebSocket() {
                         });
                     }
 
-                    // Deduplicate by url
                     const seen = new Set();
                     const unique = [];
                     sources.forEach(s => {
@@ -688,7 +683,6 @@ function setupWebSocket() {
             
             case "completion":
                 syncDebateControls("Completed");
-                // do not display a chat system message for completion
                 break;
             
             case "discussion_complete":
@@ -705,13 +699,12 @@ function setupWebSocket() {
                 break;
             
             case "error":
-                // Log errors but avoid polluting the agent debate chat
                 console.error('Server error:', data.message);
+                addMessage("System", "Error: " + data.message);
                 break;
             
             case "message":
             default:
-                // Regular agent message
                 const typingElement = typingMessages[data.speaker];
                 if (typingElement) {
                     updateMessageElement(typingElement, data.speaker, data.message, false);
@@ -730,10 +723,8 @@ function setupWebSocket() {
             syncDebateControls("Disconnected");
         }
         
-        // Handle different close codes
         let message = "Connection to server lost. Please refresh.";
         if (event.code === 1008) {
-            // Policy violation - authentication or project validation failed
             if (event.reason === "Project ID required") {
                 message = "No project selected. Please select a project first.";
                 setTimeout(() => window.location.href = 'projects.html', 2000);
