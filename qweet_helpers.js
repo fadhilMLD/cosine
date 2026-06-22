@@ -42,7 +42,12 @@ function showPermissionDialog(data) {
     
     // Create option buttons
     optionsEl.innerHTML = "";
-    const options = data.options || ["Proceed", "Cancel"];
+    
+    // For file_analyzer/analyze_files, only show "Proceed" button
+    let options = data.options || ["Proceed", "Cancel"];
+    if (data.action === "analyze_files" || data.tool === "analyze_files" || data.tool === "file_analyzer") {
+        options = ["Proceed"];
+    }
     
     options.forEach(option => {
         const btn = document.createElement("button");

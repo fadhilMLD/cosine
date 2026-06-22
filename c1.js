@@ -171,6 +171,112 @@ const loginPageBtn = document.querySelector(".loginPage button#sendBtn");
 const mainAppBtn = document.querySelector(".main button#sendBtn");
 const chatContainer = document.getElementById("chatContainer");
 
+// ============================================
+// MESSAGE PERSISTENCE - Save/Load chat history
+// ============================================
+
+function getChatStorageKey() {
+    // Use project ID if available, otherwise use a default key
+    const projectId = currentProjectId || "default_project";
+    return `chat_history_${projectId}`;
+}
+
+function saveMessageToStorage(sender, text, messageType = "message") {
+    try {
+        const storageKey = getChatStorageKey();
+        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        
+        // Add new message with timestamp
+        messages.push({
+            sender: sender,
+            text: text,
+            messageType: messageType,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Keep only last 500 messages to prevent storage overflow
+        if (messages.length > 500) {
+            messages.splice(0, messages.length - 500);
+        }
+        
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (e) {
+        console.error("Failed to save message to storage:", e);
+    }
+}
+
+function loadMessagesFromStorage() {
+    try {
+        const storageKey = getChatStorageKey();
+        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        
+        // Clear chat container
+        chatContainer.innerHTML = "";
+        
+        // Restore all messages
+        messages.forEach(msg => {
+            const msg_elem = document.createElement("div");
+            const senderSpan = document.createElement("span");
+            senderSpan.className = "senderLabel";
+            
+            let senderClass = "botMsg";
+            let senderName = msg.sender;
+
+            if (msg.sender === "user") {
+                senderClass = "userMsg";
+                senderName = "You";
+            } else if (msg.sender === "System") {
+                senderClass = "systemMsg";
+                senderName = "System";
+            } else if (msg.sender === "Summary") {
+                senderClass = "summaryMsg";
+                senderName = "Summary";
+            } else if (msg.messageType === "flaw_finder") {
+                senderClass = "flawMsg";
+            } else if (msg.messageType === "validator") {
+                senderClass = "validatorMsg";
+            } else if (msg.messageType === "final_summary") {
+                senderClass = "finalSummaryMsg";
+            } else if (msg.messageType === "summary") {
+                senderClass = "summaryMsg";
+            } else {
+                senderClass = "agentMsg";
+            }
+
+            senderSpan.innerText = senderName;
+            msg_elem.className = senderClass;
+            msg_elem.dataset.messageType = msg.messageType;
+            msg_elem.dataset.speaker = msg.sender;
+            msg_elem.innerHTML = formatGeneratedText(msg.text);
+            msg_elem.prepend(senderSpan);
+
+            if (msg.text && msg.text.match(/^\.+$/)) {
+                msg_elem.classList.add("typing");
+            }
+
+            chatContainer.appendChild(msg_elem);
+        });
+        
+        // Scroll to bottom
+        window.scrollTo(0, document.body.scrollHeight);
+        
+        return messages.length > 0;
+    } catch (e) {
+        console.error("Failed to load messages from storage:", e);
+        return false;
+    }
+}
+
+function clearChatHistory() {
+    try {
+        const storageKey = getChatStorageKey();
+        localStorage.removeItem(storageKey);
+        chatContainer.innerHTML = "";
+    } catch (e) {
+        console.error("Failed to clear chat history:", e);
+    }
+}
+
 // Use a getter to always get the visible textarea
 function getActiveBox() {
     return loginPageBox.offsetParent !== null ? loginPageBox : mainAppBox;
@@ -286,6 +392,12 @@ loginPage.classList.add("hidden")
 mainApp.classList.remove("hidden")
 document.body.classList.add("chat-mode")
 chatContainer.classList.remove("hidden")
+
+// Load previous messages from storage
+const hasMessages = loadMessagesFromStorage();
+if (hasMessages) {
+    console.log("Loaded previous chat history from storage");
+}
 }
 
 function addMessage(sender, text, messageType = "message") {
@@ -344,6 +456,9 @@ function addMessage(sender, text, messageType = "message") {
     chatContainer.appendChild(msg);
     // Scroll the window to the bottom to show new messages
     window.scrollTo(0, document.body.scrollHeight);
+    
+    // Save message to localStorage
+    saveMessageToStorage(sender, text, messageType);
 }
 
 function updateMessageElement(element, sender, text, typing = false) {
@@ -1256,37 +1371,47 @@ function restoreProjectHistory(projectData) {
         return;
     }
 
-    const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
-    const storedLimit = Number(projectData.message_limit || projectData?.settings?.message_count || 0);
-
     activateChatUI();
     document.body.classList.add("project-started");
-    chatContainer.innerHTML = "";
+    
+    // First, try to load messages from localStorage
+    const hasLocalMessages = loadMessagesFromStorage();
+    
+    if (hasLocalMessages) {
+        // Messages were loaded from localStorage, just restore other settings
+        console.log("Restored chat from localStorage");
+    } else {
+        // No local messages, restore from server data
+        const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
+        
+        messages.forEach(entry => {
+            if (!entry || !entry.message) {
+                return;
+            }
+            if (entry.type === 'summary' || entry.speaker === 'Summary') {
+                return;
+            }
+            const speaker = entry.speaker || "System";
+            addMessage(speaker, entry.message);
+        });
+    }
 
-    const summaryList = document.getElementById('summaryList');
-    const summarySection = document.getElementById('summarySection');
-    if (summaryList) summaryList.innerHTML = '';
-    if (summarySection) summarySection.classList.add('hidden');
-
-    messages.forEach(entry => {
-        if (!entry || !entry.message) {
-            return;
-        }
-        if (entry.type === 'summary' || entry.speaker === 'Summary') {
-            return;
-        }
-        const speaker = entry.speaker || "System";
-        addMessage(speaker, entry.message);
-    });
-
+    const storedLimit = Number(projectData.message_limit || projectData?.settings?.message_count || 0);
     if (Number.isFinite(storedLimit) && storedLimit > 0) {
         messageLimit = storedLimit;
     }
 
+    const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
     const agentMessages = messages.filter(entry => entry && entry.type === 'message' && entry.speaker !== 'user');
     const inferredStatus = projectData.debate_status || (messageLimit > 0 && agentMessages.length >= messageLimit ? 'Completed' : 'Running');
     syncDebateControls(inferredStatus);
     destroyPromptSettings();
+
+    // Restore summary
+    const summaryList = document.getElementById('summaryList');
+    const summarySection = document.getElementById('summarySection');
+    if (summaryList) summaryList.innerHTML = '';
+    if (summarySection) summarySection.classList.add('hidden');
 
     if (Array.isArray(projectData.summaries) && projectData.summaries.length > 0) {
         projectData.summaries.forEach(item => {
@@ -1297,6 +1422,7 @@ function restoreProjectHistory(projectData) {
     } else if (projectData.summary) {
         displaySummary(projectData.summary);
     }
+    
     // Restore saved web sources if present
     if (Array.isArray(projectData.web_sources) && projectData.web_sources.length > 0) {
         displayWebSources(projectData.web_sources);
