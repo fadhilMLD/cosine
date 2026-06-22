@@ -704,7 +704,7 @@ function setupWebSocket() {
             
             case "qweet_thinking":
                 // Display Qweet's thinking process
-                addMessage("Qweet", data.message, "qweet_thinking");
+                addQweetMessage("Qweet", data.message, "qweet_thinking");
                 syncDebateControls(data.action || "Analyzing");
                 break;
             
@@ -720,7 +720,7 @@ function setupWebSocket() {
             
             case "tool_execution":
                 // Show tool execution feedback
-                addMessage("Qweet", data.message, "tool_execution");
+                addQweetMessage("Qweet", data.message, "tool_execution");
                 syncDebateControls(data.action || "Executing");
                 break;
             
@@ -756,7 +756,7 @@ function setupWebSocket() {
                     });
                     
                     displayWebSources(unique);
-                    addMessage("Qweet", `Found ${data.query_count || unique.length} relevant web sources`, "web_results");
+                    addQweetMessage("Qweet", `Found ${data.query_count || unique.length} relevant web sources`, "web_results");
                 } catch (e) {
                     console.error('Failed to parse web_results', e);
                 }

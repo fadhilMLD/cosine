@@ -122,8 +122,7 @@ function answerClarification(question) {
 /**
  * Update addMessage to handle Qweet-specific styling
  */
-const originalAddMessage = addMessage;
-function addMessage(sender, text, messageType = "message") {
+function addQweetMessage(sender, text, messageType = "message") {
     // Handle Qweet-specific message types
     if (messageType === "qweet_thinking") {
         const msg = document.createElement("div");
@@ -155,8 +154,8 @@ function addMessage(sender, text, messageType = "message") {
         return msg;
     }
     
-    // Fall back to original implementation for other message types
-    return originalAddMessage.call(this, sender, text, messageType);
+    // For other types, return null (let original addMessage handle)
+    return null;
 }
 
 /**
