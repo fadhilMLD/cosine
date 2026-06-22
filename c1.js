@@ -698,6 +698,70 @@ function setupWebSocket() {
                 syncDebateControls("Paused");
                 break;
             
+            // ═══════════════════════════════════════════════════════════
+            // QWEET AGENT MESSAGE HANDLERS
+            // ═══════════════════════════════════════════════════════════
+            
+            case "qweet_thinking":
+                // Display Qweet's thinking process
+                addMessage("Qweet", data.message, "qweet_thinking");
+                syncDebateControls(data.action || "Analyzing");
+                break;
+            
+            case "permission_request":
+                // Show permission dialog for user confirmation
+                showPermissionDialog(data);
+                break;
+            
+            case "clarification_needed":
+                // Show clarifying questions
+                displayClarificationQuestions(data);
+                break;
+            
+            case "tool_execution":
+                // Show tool execution feedback
+                addMessage("Qweet", data.message, "tool_execution");
+                syncDebateControls(data.action || "Executing");
+                break;
+            
+            case "web_results":
+                // Display web search results
+                try {
+                    const sources = [];
+                    if (data.results && typeof data.results === 'object') {
+                        Object.values(data.results).forEach(text => {
+                            if (!text) return;
+                            const urlRegex = /URL:\s*(https?:\/\/[^\s]+)/gi;
+                            let m;
+                            while ((m = urlRegex.exec(text)) !== null) {
+                                sources.push({ title: m[1] || m[0], url: m[1] });
+                            }
+                        });
+                    } else if (data.sources && Array.isArray(data.sources)) {
+                        data.sources.forEach(s => {
+                            if (typeof s === 'string') sources.push({ title: s, url: s });
+                            else if (s.url) sources.push({ title: s.title || s.url, url: s.url });
+                        });
+                    }
+                    
+                    const seen = new Set();
+                    const unique = [];
+                    sources.forEach(s => {
+                        if (!s || !s.url) return;
+                        const u = s.url.trim();
+                        if (!seen.has(u)) {
+                            seen.add(u);
+                            unique.push(s);
+                        }
+                    });
+                    
+                    displayWebSources(unique);
+                    addMessage("Qweet", `Found ${data.query_count || unique.length} relevant web sources`, "web_results");
+                } catch (e) {
+                    console.error('Failed to parse web_results', e);
+                }
+                break;
+            
             case "error":
                 console.error('Server error:', data.message);
                 addMessage("System", "Error: " + data.message);

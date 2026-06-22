@@ -1924,6 +1924,222 @@ body.chat-mode .centerPanel .chatContainer {
     font-weight: 600;
 }
 
+/* ═══════════════════════════════════════════════════════════════ */
+/* QWEET AGENT STYLES                                              */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Qweet Thinking Display */
+.qweet-thinking {
+    background: linear-gradient(135deg, rgba(200, 180, 240, 0.1), rgba(244, 168, 199, 0.1));
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 14px;
+    color: var(--text);
+    animation: fadeIn 0.3s ease-in;
+}
+
+.qweet-thinking::before {
+    content: "🤖 ";
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Permission Request Dialog */
+.permission-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.permission-modal-overlay.active {
+    display: flex;
+}
+
+.permission-modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.permission-header {
+    margin-bottom: 20px;
+}
+
+.permission-header h3 {
+    color: var(--accent);
+    font-size: 18px;
+    margin: 0 0 8px 0;
+}
+
+.permission-reason {
+    color: var(--text2);
+    font-size: 13px;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.permission-details {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0;
+    font-size: 12px;
+    color: var(--text3);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.permission-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.permission-btn {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.permission-btn:hover {
+    background: var(--surface2);
+    border-color: var(--border2);
+}
+
+.permission-btn.primary {
+    grid-column: 1 / -1;
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+}
+
+.permission-btn.primary:hover {
+    background: #dcc4ff;
+}
+
+/* Tool Execution Feedback */
+.tool-execution {
+    background: rgba(125, 212, 184, 0.1);
+    border-left: 3px solid var(--accent3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.tool-execution::before {
+    content: "⚙️ ";
+    margin-right: 8px;
+}
+
+/* Qweet Message */
+.qweet-message {
+    background: linear-gradient(135deg, rgba(200, 180, 240, 0.1), rgba(244, 168, 199, 0.05));
+    border: 1px solid rgba(200, 180, 240, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.qweet-message::before {
+    content: "✨ ";
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+/* Progress Indicator */
+.progress-bar {
+    height: 2px;
+    background: rgba(200, 180, 240, 0.2);
+    border-radius: 1px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Clarification Questions */
+.clarification-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+}
+
+.clarification-title {
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.clarification-question {
+    background: var(--bg);
+    border-left: 2px solid var(--accent2);
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clarification-question:hover {
+    background: var(--surface);
+    border-left-color: var(--accent);
+}
+
 .summaryList {
     color: var(--text2);
     font-size: 13px;

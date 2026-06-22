@@ -62,6 +62,18 @@
 <!-- MAIN APP -->
 <div class="main">
 
+<!-- QWEET PERMISSION DIALOG -->
+<div id="permissionModal" class="permission-modal-overlay">
+    <div class="permission-modal">
+        <div class="permission-header">
+            <h3 id="permissionTitle">Qweet wants to analyze files</h3>
+            <p class="permission-reason" id="permissionReason">This will help provide better insights for your request.</p>
+        </div>
+        <div class="permission-details" id="permissionDetails"></div>
+        <div class="permission-options" id="permissionOptions"></div>
+    </div>
+</div>
+
 <nav class="navbar">
 <div class="navContainer">
 <div class="navLinks">
@@ -195,6 +207,7 @@
 </div>
 
 <script src="c1.js"></script>
+<script src="qweet_helpers.js"></script>
 
 </body>
 </html>
