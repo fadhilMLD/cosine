@@ -1,208 +1,155 @@
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// QWEET AGENT HELPER FUNCTIONS
+// QWEET AGENT HELPER FUNCTIONS - Simplified
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Show permission dialog for tool confirmation
+ * Display web search results in the chat
  */
-function showPermissionDialog(data) {
-    const modal = document.getElementById("permissionModal");
-    const titleEl = document.getElementById("permissionTitle");
-    const reasonEl = document.getElementById("permissionReason");
-    const detailsEl = document.getElementById("permissionDetails");
-    const optionsEl = document.getElementById("permissionOptions");
+function displayWebResults(data) {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
+
+    let html = '<div class="web-results-container">';
+    html += '<div class="web-results-header">🌐 Web Search Results</div>';
     
-    // Set title and reason
-    const toolName = data.tool || data.action || "Tool";
-    titleEl.textContent = `Qweet wants to ${toolName}`;
-    reasonEl.textContent = data.reasoning || data.description || "This will help provide better analysis.";
-    
-    // Display parameters
-    let paramHTML = "";
-    if (data.parameters) {
-        if (typeof data.parameters === "string") {
-            paramHTML = data.parameters;
-        } else if (typeof data.parameters === "object") {
-            for (const [key, value] of Object.entries(data.parameters)) {
-                if (Array.isArray(value)) {
-                    paramHTML += `<strong>${key}:</strong><br>`;
-                    value.forEach(item => {
-                        paramHTML += `• ${typeof item === "string" ? item : JSON.stringify(item)}<br>`;
-                    });
-                } else if (typeof value === "object") {
-                    paramHTML += `<strong>${key}:</strong> ${JSON.stringify(value)}<br>`;
-                } else {
-                    paramHTML += `<strong>${key}:</strong> ${value}<br>`;
-                }
-            }
+    if (data.results) {
+        if (typeof data.results === 'object') {
+            Object.entries(data.results).forEach(([query, content]) => {
+                html += `<div class="web-result-item">`;
+                html += `<div class="web-result-query">🔍 "${query}"</div>`;
+                html += `<div class="web-result-content">${formatGeneratedText(content)}</div>`;
+                html += `</div>`;
+            });
+        } else {
+            html += `<div class="web-result-content">${formatGeneratedText(data.results)}</div>`;
         }
     }
-    detailsEl.innerHTML = paramHTML || "No additional parameters";
     
-    // Create option buttons
-    optionsEl.innerHTML = "";
-    
-    // For file_analyzer/analyze_files, only show "Proceed" button
-    let options = data.options || ["Proceed", "Cancel"];
-    if (data.action === "analyze_files" || data.tool === "analyze_files" || data.tool === "file_analyzer") {
-        options = ["Proceed"];
-    }
-    
-    options.forEach(option => {
-        const btn = document.createElement("button");
-        btn.className = "permission-btn";
-        if (option.toLowerCase() === "proceed" || option.toLowerCase().includes("start") || option.toLowerCase().includes("search")) {
-            btn.classList.add("primary");
-        }
-        btn.textContent = option;
-        btn.addEventListener("click", () => {
-            modal.classList.remove("active");
-            sendPermissionChoice(data.tool, option, data.parameters);
+    // Add sources if available
+    if (data.sources && data.sources.length > 0) {
+        html += '<div class="web-sources-list">';
+        html += '<div class="web-sources-header">📚 Sources:</div>';
+        data.sources.forEach(source => {
+            const title = source.title || source.url || 'Source';
+            const url = source.url || '#';
+            html += `<div class="web-source-item"><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a></div>`;
         });
-        optionsEl.appendChild(btn);
-    });
-    
-    // Show modal
-    modal.classList.add("active");
-}
-
-/**
- * Send tool permission choice back to server
- */
-function sendPermissionChoice(tool, choice, parameters) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        console.error("WebSocket not connected");
-        return;
-    }
-    
-    socket.send(JSON.stringify({
-        action: "tool_confirmed",
-        tool: tool,
-        choice: choice,
-        parameters: parameters
-    }));
-}
-
-/**
- * Display clarification questions
- */
-function displayClarificationQuestions(data) {
-    const questions = data.questions || [];
-    if (!questions.length) return;
-    
-    let html = '<div class="clarification-container">';
-    html += '<div class="clarification-title">❓ Qweet needs clarification:</div>';
-    
-    questions.forEach(question => {
-        html += `<div class="clarification-question" onclick="answerClarification('${question.replace(/'/g, "\\'")}')">`;
-        html += question;
         html += '</div>';
-    });
+    }
     
     html += '</div>';
     
     const msg = document.createElement("div");
-    msg.className = "chatMessage";
+    msg.className = "chatMessage web-results-message";
     msg.innerHTML = html;
-    chatContainer.appendChild(msg);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
 }
 
 /**
- * Handle clarification answer
+ * Display file data preview
  */
-function answerClarification(question) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        console.error("WebSocket not connected");
-        return;
-    }
-    
-    socket.send(JSON.stringify({
-        action: "user_message",
-        message: question
-    }));
-}
+function displayFileData(data) {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
 
-/**
- * Update addMessage to handle Qweet-specific styling
- */
-function addQweetMessage(sender, text, messageType = "message") {
-    // Handle Qweet-specific message types
-    if (messageType === "qweet_thinking") {
-        const msg = document.createElement("div");
-        msg.className = "chatMessage";
-        msg.innerHTML = `<div class="qweet-thinking">${text}</div>`;
-        chatContainer.appendChild(msg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        return msg;
-    } else if (messageType === "tool_execution") {
-        const msg = document.createElement("div");
-        msg.className = "chatMessage";
-        msg.innerHTML = `<div class="tool-execution">${text}</div>`;
-        chatContainer.appendChild(msg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        return msg;
-    } else if (messageType === "web_results") {
-        const msg = document.createElement("div");
-        msg.className = "chatMessage";
-        msg.innerHTML = `<div class="tool-execution">🌐 ${text}</div>`;
-        chatContainer.appendChild(msg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        return msg;
-    } else if (messageType === "qweet_message") {
-        const msg = document.createElement("div");
-        msg.className = "chatMessage";
-        msg.innerHTML = `<div class="qweet-message">${text}</div>`;
-        chatContainer.appendChild(msg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        return msg;
-    }
+    let html = '<div class="file-data-container">';
+    html += '<div class="file-data-header">📁 File Data</div>';
     
-    // For other types, return null (let original addMessage handle)
-    return null;
-}
-
-/**
- * Update message in place (used for typing indicators)
- */
-function updateMessageElement(element, sender, newText, isTyping = false) {
-    if (!element) return;
-    
-    const messageContent = element.querySelector(".messageContent") || element;
-    
-    if (isTyping) {
-        messageContent.textContent = newText;
-    } else {
-        // Replace with completed message
-        element.innerHTML = newText;
-        if (sender) {
-            const senderSpan = document.createElement("span");
-            senderSpan.className = "messageSender";
-            senderSpan.textContent = sender;
-            element.prepend(senderSpan);
-        }
-    }
-}
-
-/**
- * Close permission dialog
- */
-function closePermissionDialog() {
-    const modal = document.getElementById("permissionModal");
-    if (modal) {
-        modal.classList.remove("active");
-    }
-}
-
-// Close dialog when clicking outside
-document.addEventListener("DOMContentLoaded", function() {
-    const modal = document.getElementById("permissionModal");
-    if (modal) {
-        modal.addEventListener("click", function(e) {
-            if (e.target === modal) {
-                closePermissionDialog();
+    try {
+        const jsonData = JSON.parse(data);
+        if (jsonData.dataset) {
+            html += `<div class="file-data-info">`;
+            html += `<span>📊 ${jsonData.dataset.rows || 0} rows</span>`;
+            html += `<span>📋 ${jsonData.dataset.columns || 0} columns</span>`;
+            if (jsonData.dataset.column_names) {
+                html += `<div class="file-data-columns">Columns: ${jsonData.dataset.column_names.join(', ')}</div>`;
             }
-        });
+            html += `</div>`;
+        }
+        if (jsonData.metrics) {
+            html += '<div class="file-data-metrics">';
+            Object.entries(jsonData.metrics).forEach(([name, stats]) => {
+                if (stats.type === 'numeric') {
+                    html += `<div class="metric-item">`;
+                    html += `<span class="metric-name">${escapeHtml(name)}</span>`;
+                    html += `<span class="metric-stats">Min: ${stats.min} | Max: ${stats.max} | Mean: ${stats.mean.toFixed(2)}</span>`;
+                    html += `</div>`;
+                }
+            });
+            html += '</div>';
+        }
+    } catch (e) {
+        // Not JSON, show raw data preview
+        html += `<div class="file-data-raw">${escapeHtml(data.substring(0, 500))}${data.length > 500 ? '...' : ''}</div>`;
     }
-});
+    
+    html += '</div>';
+    
+    const msg = document.createElement("div");
+    msg.className = "chatMessage file-data-message";
+    msg.innerHTML = html;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+/**
+ * Escape HTML for safe display
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text ?? '');
+    return div.innerHTML;
+}
+
+/**
+ * Format generated text with markdown-like formatting
+ */
+function formatGeneratedText(text) {
+    const escaped = escapeHtml(text);
+    const doubleTokens = [];
+    const withDoubleTokens = escaped.replace(/\*\*([\s\S]+?)\*\*/g, (_, inner) => {
+        const token = `__DOUBLE_TOKEN_${doubleTokens.length}__`;
+        doubleTokens.push(inner);
+        return token;
+    });
+
+    let formatted = withDoubleTokens.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<strong class="inline-strong">$1</strong>');
+
+    doubleTokens.forEach((inner, index) => {
+        formatted = formatted.replace(`__DOUBLE_TOKEN_${index}__`, `<strong class="double-strong">${inner}</strong>`);
+    });
+
+    return formatted.replace(/\n/g, '<br>');
+}
+
+/**
+ * Send a message to the WebSocket
+ */
+function sendWebSocketMessage(message) {
+    if (!window.socket || window.socket.readyState !== WebSocket.OPEN) {
+        console.error("WebSocket not connected");
+        return false;
+    }
+    
+    window.socket.send(JSON.stringify(message));
+    return true;
+}
+
+/**
+ * Request file context from server
+ */
+function requestFileContext() {
+    return sendWebSocketMessage({
+        type: "get_file_context"
+    });
+}
+
+/**
+ * Refresh file context
+ */
+function refreshFileContext() {
+    return sendWebSocketMessage({
+        type: "refresh_file_context"
+    });
+}

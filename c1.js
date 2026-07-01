@@ -55,7 +55,6 @@ function initializeAuth() {
     }
 }
 
-
 function showLoginPage() {
     hideAccessDenied();
     loginPage.classList.remove("hidden");
@@ -98,10 +97,8 @@ function hideAccessDenied() {
 }
 
 function handleCredentialResponse(response) {
-    // The ID token is in response.credential
     const token = response.credential;
     
-    // Validate token exists
     if (!token) {
         console.error("No credential received from Google");
         alert("Failed to get credentials from Google. Please try again.");
@@ -109,9 +106,7 @@ function handleCredentialResponse(response) {
     }
     
     console.log("Google token received, sending to server...");
-    console.log("Token length:", token.length);
     
-    // Send token to backend for verification and JWT creation
     fetch(getApiUrl("/auth/google"), {
         method: "POST",
         headers: {
@@ -121,17 +116,14 @@ function handleCredentialResponse(response) {
         body: JSON.stringify({ token })
     })
     .then(res => {
-        console.log("Response status:", res.status);
         if (!res.ok) {
             return res.text().then(text => {
-                console.error("Error response:", text);
                 throw new Error(`HTTP ${res.status}: ${text}`);
             });
         }
         return res.json();
     })
     .then(data => {
-        console.log("Auth response data:", data);
         if (data.access_token) {
             authToken = data.access_token;
             currentUser = data.user;
@@ -139,7 +131,6 @@ function handleCredentialResponse(response) {
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
             showMainApp();
         } else {
-            console.error("No access token in response:", data);
             alert("Authentication failed: No token in response");
         }
     })
@@ -164,7 +155,6 @@ logoutBtn.addEventListener("click", logout);
 // CHAT APPLICATION
 // ============================================
 
-// Get both textareas and buttons (one on login page, one on main app)
 const loginPageBox = document.querySelector(".loginPage textarea#promptBox");
 const mainAppBox = document.querySelector(".main textarea#promptBox");
 const loginPageBtn = document.querySelector(".loginPage button#sendBtn");
@@ -172,11 +162,10 @@ const mainAppBtn = document.querySelector(".main button#sendBtn");
 const chatContainer = document.getElementById("chatContainer");
 
 // ============================================
-// MESSAGE PERSISTENCE - Save/Load chat history
+// MESSAGE PERSISTENCE
 // ============================================
 
 function getChatStorageKey() {
-    // Use project ID if available, otherwise use a default key
     const projectId = currentProjectId || "default_project";
     return `chat_history_${projectId}`;
 }
@@ -186,7 +175,6 @@ function saveMessageToStorage(sender, text, messageType = "message") {
         const storageKey = getChatStorageKey();
         const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
         
-        // Add new message with timestamp
         messages.push({
             sender: sender,
             text: text,
@@ -194,7 +182,6 @@ function saveMessageToStorage(sender, text, messageType = "message") {
             timestamp: new Date().toISOString()
         });
         
-        // Keep only last 500 messages to prevent storage overflow
         if (messages.length > 500) {
             messages.splice(0, messages.length - 500);
         }
@@ -210,10 +197,8 @@ function loadMessagesFromStorage() {
         const storageKey = getChatStorageKey();
         const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
         
-        // Clear chat container
         chatContainer.innerHTML = "";
         
-        // Restore all messages
         messages.forEach(msg => {
             const msg_elem = document.createElement("div");
             const senderSpan = document.createElement("span");
@@ -228,19 +213,9 @@ function loadMessagesFromStorage() {
             } else if (msg.sender === "System") {
                 senderClass = "systemMsg";
                 senderName = "System";
-            } else if (msg.sender === "Summary") {
-                senderClass = "summaryMsg";
-                senderName = "Summary";
-            } else if (msg.messageType === "flaw_finder") {
-                senderClass = "flawMsg";
-            } else if (msg.messageType === "validator") {
-                senderClass = "validatorMsg";
-            } else if (msg.messageType === "final_summary") {
-                senderClass = "finalSummaryMsg";
-            } else if (msg.messageType === "summary") {
-                senderClass = "summaryMsg";
             } else {
                 senderClass = "agentMsg";
+                senderName = msg.sender || "Qweet";
             }
 
             senderSpan.innerText = senderName;
@@ -257,7 +232,6 @@ function loadMessagesFromStorage() {
             chatContainer.appendChild(msg_elem);
         });
         
-        // Scroll to bottom
         window.scrollTo(0, document.body.scrollHeight);
         
         return messages.length > 0;
@@ -277,7 +251,6 @@ function clearChatHistory() {
     }
 }
 
-// Use a getter to always get the visible textarea
 function getActiveBox() {
     return loginPageBox.offsetParent !== null ? loginPageBox : mainAppBox;
 }
@@ -370,7 +343,6 @@ function queueBoxLayout(box) {
     });
 }
 
-// Setup event listeners for both textareas
 [loginPageBox, mainAppBox].forEach(box => {
     box.addEventListener("input", () => {
         queueBoxLayout(box);
@@ -384,20 +356,18 @@ function queueBoxLayout(box) {
     });
 });
 
-function activateChatUI(){
-if(chatStarted) return
-chatStarted=true
-// Show main app and hide login page
-loginPage.classList.add("hidden")
-mainApp.classList.remove("hidden")
-document.body.classList.add("chat-mode")
-chatContainer.classList.remove("hidden")
+function activateChatUI() {
+    if (chatStarted) return;
+    chatStarted = true;
+    loginPage.classList.add("hidden");
+    mainApp.classList.remove("hidden");
+    document.body.classList.add("chat-mode");
+    chatContainer.classList.remove("hidden");
 
-// Load previous messages from storage
-const hasMessages = loadMessagesFromStorage();
-if (hasMessages) {
-    console.log("Loaded previous chat history from storage");
-}
+    const hasMessages = loadMessagesFromStorage();
+    if (hasMessages) {
+        console.log("Loaded previous chat history from storage");
+    }
 }
 
 function addMessage(sender, text, messageType = "message") {
@@ -407,7 +377,6 @@ function addMessage(sender, text, messageType = "message") {
     
     let senderClass = "botMsg";
     let senderName = sender;
-    let iconPrefix = "";
 
     if (sender === "user") {
         senderClass = "userMsg";
@@ -418,46 +387,28 @@ function addMessage(sender, text, messageType = "message") {
     } else if (sender === "Summary") {
         senderClass = "summaryMsg";
         senderName = "Summary";
-    } else if (messageType === "flaw_finder") {
-        senderClass = "flawMsg";
-        iconPrefix = "";
-    } else if (messageType === "validator") {
-        senderClass = "validatorMsg";
-        iconPrefix = "";
-    } else if (messageType === "final_summary") {
-        senderClass = "finalSummaryMsg";
-        iconPrefix = "";
-    } else if (messageType === "summary") {
-        senderClass = "summaryMsg";
-        iconPrefix = "";
+    } else if (sender === "Qweet" || sender === "QWEET") {
+        senderClass = "qweetMsg";
+        senderName = "Qweet";
     } else {
-        // For regular agent messages
         senderClass = "agentMsg";
+        senderName = sender || "Agent";
     }
 
-    senderSpan.innerText = iconPrefix + senderName;
+    senderSpan.innerText = senderName;
     msg.className = senderClass;
     msg.dataset.messageType = messageType;
-    
-    // Add agent-specific class
-    if (sender !== "user" && sender !== "System" && sender !== "Summary") {
-        msg.classList.add(`agent-${sender.toLowerCase().replace(/\s+/g, "-")}`);
-    }
-    
     msg.dataset.speaker = sender;
     msg.innerHTML = formatGeneratedText(text);
     msg.prepend(senderSpan);
 
-    // Add typing class if text is just dots
     if (text.match(/^\.+$/)) {
         msg.classList.add("typing");
     }
 
     chatContainer.appendChild(msg);
-    // Scroll the window to the bottom to show new messages
     window.scrollTo(0, document.body.scrollHeight);
     
-    // Save message to localStorage
     saveMessageToStorage(sender, text, messageType);
 }
 
@@ -473,23 +424,27 @@ function updateMessageElement(element, sender, text, typing = false) {
     } else {
         const newSenderSpan = document.createElement('span');
         newSenderSpan.className = 'senderLabel';
-        newSenderSpan.innerText = sender;
+        newSenderSpan.innerText = sender || 'Qweet';
         element.appendChild(newSenderSpan);
     }
 
-    element.dataset.speaker = sender;
+    element.dataset.speaker = sender || 'Qweet';
     element.insertAdjacentHTML('beforeend', formatGeneratedText(text));
     element.classList.toggle('typing', typing);
 }
 
+// ============================================
+// WEBSOCKET HANDLING
+// ============================================
+
 let socket;
 let socketReady = false;
 let pendingPrompt = null;
-let typingMessages = {};  // Track typing messages by speaker
-let isDebateActive = false;  // Track if debate is running
-let currentMessageCount = 0;  // Track messages generated
-let messageLimit = 0;  // Set based on user plan
-let isPaused = false;  // Track pause state
+let typingMessages = {};
+let isDebateActive = false;
+let currentMessageCount = 0;
+let messageLimit = 0;
+let isPaused = false;
 let currentProjectState = { hasPrompt: false };
 let promptSettingsLocked = false;
 let currentDebateStatus = "Idle";
@@ -542,42 +497,24 @@ function syncDebateControls(status) {
     if (resumeBtn) resumeBtn.classList.add('hidden');
 }
 
-function getCurrentMessageLimit() {
-    const messageSlider = document.getElementById('messageSlider');
-    const sliderValue = Number(messageSlider?.value);
-
-    if (Number.isFinite(sliderValue) && sliderValue > 0) {
-        return sliderValue;
-    }
-
-    if (Number.isFinite(messageLimit) && messageLimit > 0) {
-        return messageLimit;
-    }
-
-    return 25;
-}
-
-function destroyPromptSettings() {
-    if (promptSettingsLocked) {
-        return;
-    }
-
-    const generationCard = document.getElementById('generationLimitCard');
-    if (generationCard) {
-        generationCard.remove();
-    }
-
-    promptSettingsLocked = true;
-}
-
 function setDebateStatus(text) {
     const statusEl = document.getElementById('debateStatus');
     const iconEl = document.getElementById('debateStatusIcon');
     if (statusEl) statusEl.textContent = text;
     if (iconEl) {
         const normalized = String(text || '').trim();
-        iconEl.src = normalized === 'Searching Web' ? 'web.gif' : 'loading.gif';
-        iconEl.style.display = normalized === 'Running' || normalized === 'Searching Web' ? 'inline-block' : 'none';
+        if (normalized === 'searching' || normalized === 'Searching Web' || normalized === 'Searching') {
+            iconEl.src = 'web.gif';
+            iconEl.style.display = 'inline-block';
+        } else if (normalized === 'thinking' || normalized === 'Thinking') {
+            iconEl.src = 'loading.gif';
+            iconEl.style.display = 'inline-block';
+        } else if (normalized === 'debating' || normalized === 'Debating') {
+            iconEl.src = 'debate.gif';
+            iconEl.style.display = 'inline-block';
+        } else {
+            iconEl.style.display = 'none';
+        }
     }
 }
 
@@ -592,33 +529,11 @@ function getSelectedAgents() {
     return Array.from(activeAgents).map(key => mapping[key]).filter(Boolean);
 }
 
-function updateMessageLimit() {
-    const limitEl = document.getElementById('messageLimit');
-    if (!limitEl || !isDebateActive) return;
-    
-    if (currentMessageCount >= messageLimit) {
-        limitEl.textContent = ` Message limit reached (${currentMessageCount}/${messageLimit})`;
-        limitEl.classList.add('warning');
-    } else if (currentMessageCount >= messageLimit * 0.8) {
-        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit} (Approaching limit)`;
-        limitEl.classList.remove('warning');
-        limitEl.classList.add('warning');
-    } else {
-        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit}`;
-        limitEl.classList.remove('warning');
-    }
-    
-    if (isDebateActive) {
-        limitEl.classList.remove('hidden');
-    }
-}
-
 function setupWebSocket() {
     if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) {
         return;
     }
 
-    // Validate project_id is available
     if (!currentProjectId) {
         console.error("Cannot establish WebSocket: No project selected");
         alert("Please select a project first");
@@ -626,8 +541,6 @@ function setupWebSocket() {
         return;
     }
 
-    // Build WebSocket URL with project_id in the path and token as query parameter
-    // Correct format: /ws/{project_id}?token=xxx
     let wsUrl = getWsUrl("/ws/" + encodeURIComponent(currentProjectId));
     if (authToken) {
         wsUrl += "?token=" + encodeURIComponent(authToken);
@@ -653,7 +566,6 @@ function setupWebSocket() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
-        // Update message count if provided
         if (data.message_count !== undefined) {
             currentMessageCount = data.message_count;
             messageLimit = data.message_limit || messageLimit;
@@ -662,11 +574,35 @@ function setupWebSocket() {
         
         const eventType = data.type || "message";
         
-        // Route based on event type
         switch (eventType) {
+            case "connected":
+                // Connection established with file info
+                syncDebateControls("Idle");
+                if (data.has_file) {
+                    addMessage("System", "📁 File data loaded. You can ask questions about your data.");
+                }
+                break;
+
+            case "status":
+                syncDebateControls(data.status || "Running");
+                break;
+            
+            case "web_results":
+                // Display web search results
+                displayWebResults(data);
+                break;
+            
+            case "tool_executing":
+                // Show tool execution status
+                const toolName = data.tool || "tool";
+                const toolStatus = data.status || "executing";
+                addMessage("System", `🔧 ${toolName}: ${toolStatus}`);
+                syncDebateControls(toolStatus);
+                break;
+            
             case "typing":
                 if (data.is_typing) {
-                    const speaker = data.speaker;
+                    const speaker = data.speaker || "Qweet";
                     const dots = data.dots || ".";
                     
                     if (!typingMessages[speaker]) {
@@ -678,218 +614,44 @@ function setupWebSocket() {
                 }
                 break;
             
-            case "status":
-                syncDebateControls(data.status || "Running");
-                break;
-            
-            case "subprompt_start":
-                // silently ignore
-                break;
-
-            case "subprompt_end":
-                // silently ignore
-                break;
-            
-            case "search_queries":
-                // Hide generated search queries from the chat stream
-                break;
-            
-            case "web_results":
-                // Extract URLs from the results payload and display them in Web Sources
-                try {
-                    const sources = [];
-                    if (data.results && typeof data.results === 'object') {
-                        Object.values(data.results).forEach(text => {
-                            if (!text) return;
-                            const urlRegex = /URL:\s*(https?:\/\/[^\s]+)/gi;
-                            const titleRegex = /^\s*\d+\.\s*(.+)$/m;
-                            let m;
-                            while ((m = urlRegex.exec(text)) !== null) {
-                                sources.push({ title: m[1] || m[0], url: m[1] });
-                            }
-                            if (sources.length === 0) {
-                                const anyUrlRegex = /(https?:\/\/[^\s"']+)/gi;
-                                const found = text.match(anyUrlRegex) || [];
-                                found.forEach(u => sources.push({ title: u, url: u }));
-                            }
-                            const tmatch = text.match(titleRegex);
-                            if (tmatch && sources.length > 0) {
-                                sources.forEach(s => { if (!s.title || s.title === s.url) s.title = tmatch[1].trim(); });
-                            }
-                        });
-                    } else if (data.sources && Array.isArray(data.sources)) {
-                        data.sources.forEach(s => {
-                            if (typeof s === 'string') sources.push({ title: s, url: s });
-                            else if (s.url) sources.push({ title: s.title || s.url, url: s.url });
-                        });
-                    }
-
-                    const seen = new Set();
-                    const unique = [];
-                    sources.forEach(s => {
-                        if (!s || !s.url) return;
-                        const u = s.url.trim();
-                        if (!seen.has(u)) {
-                            seen.add(u);
-                            unique.push(s);
-                        }
-                    });
-
-                    displayWebSources(unique);
-                } catch (e) {
-                    console.error('Failed to parse web_results for sources', e);
-                }
-                break;
-            
-            case "flaw_finder":
-                const typingElement1 = typingMessages[data.speaker];
-                if (typingElement1) {
-                    updateMessageElement(typingElement1, data.speaker, data.message, false);
-                    delete typingMessages[data.speaker];
-                } else {
-                    addMessage(data.speaker, data.message, "flaw_finder");
-                }
-                break;
-            
-            case "validator":
-                const typingElement2 = typingMessages[data.speaker];
-                if (typingElement2) {
-                    updateMessageElement(typingElement2, data.speaker, data.message, false);
-                    delete typingMessages[data.speaker];
-                } else {
-                    addMessage(data.speaker, data.message, "validator");
-                }
-                break;
-            
-            case "summary":
-                displaySummary(data.message);
-                break;
-            
-            case "final_summary":
-                displaySummary(data.message);
-                (async () => {
-                    try {
-                        let evalText = "";
-                        try {
-                            const resp = await fetch(getApiUrl(`/projects/${currentProjectId}/evaluate_final`), {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${authToken}`,
-                                    'ngrok-skip-browser-warning': 'true'
-                                }
-                            });
-                            if (resp.ok) {
-                                const j = await resp.json();
-                                evalText = j.result || "";
-                            }
-                        } catch (fetchErr) {
-                            console.error('Failed to fetch evaluation:', fetchErr);
-                        }
-
-                        if (evalText) displayResult(evalText);
-                        showFinalSummary(data.message, evalText);
-                    } catch (e) {
-                        console.error('Failed to show final summary modal', e);
-                        showFinalSummary(data.message);
-                    }
-                })();
-                break;
-            
-            case "completion":
-                syncDebateControls("Completed");
-                break;
-            
-            case "discussion_complete":
-                syncDebateControls("Completed");
-                break;
-            
-            case "web_sources":
-                displayWebSources(data.sources || []);
-                break;
-            
-            case "pause":
-                isPaused = true;
-                syncDebateControls("Paused");
-                break;
-            
-            // ═══════════════════════════════════════════════════════════
-            // QWEET AGENT MESSAGE HANDLERS
-            // ═══════════════════════════════════════════════════════════
-            
-            case "qweet_thinking":
-                // Display Qweet's thinking process
-                addQweetMessage("Qweet", data.message, "qweet_thinking");
-                syncDebateControls(data.action || "Analyzing");
-                break;
-            
-            case "permission_request":
-                // Show permission dialog for user confirmation
-                showPermissionDialog(data);
-                break;
-            
-            case "clarification_needed":
-                // Show clarifying questions
-                displayClarificationQuestions(data);
-                break;
-            
-            case "tool_execution":
-                // Show tool execution feedback
-                addQweetMessage("Qweet", data.message, "tool_execution");
-                syncDebateControls(data.action || "Executing");
-                break;
-            
-            case "web_results":
-                // Display web search results
-                try {
-                    const sources = [];
-                    if (data.results && typeof data.results === 'object') {
-                        Object.values(data.results).forEach(text => {
-                            if (!text) return;
-                            const urlRegex = /URL:\s*(https?:\/\/[^\s]+)/gi;
-                            let m;
-                            while ((m = urlRegex.exec(text)) !== null) {
-                                sources.push({ title: m[1] || m[0], url: m[1] });
-                            }
-                        });
-                    } else if (data.sources && Array.isArray(data.sources)) {
-                        data.sources.forEach(s => {
-                            if (typeof s === 'string') sources.push({ title: s, url: s });
-                            else if (s.url) sources.push({ title: s.title || s.url, url: s.url });
-                        });
-                    }
-                    
-                    const seen = new Set();
-                    const unique = [];
-                    sources.forEach(s => {
-                        if (!s || !s.url) return;
-                        const u = s.url.trim();
-                        if (!seen.has(u)) {
-                            seen.add(u);
-                            unique.push(s);
-                        }
-                    });
-                    
-                    displayWebSources(unique);
-                    addQweetMessage("Qweet", `Found ${data.query_count || unique.length} relevant web sources`, "web_results");
-                } catch (e) {
-                    console.error('Failed to parse web_results', e);
-                }
-                break;
-            
-            case "error":
-                console.error('Server error:', data.message);
-                addMessage("System", "Error: " + data.message);
-                break;
-            
             case "message":
-            default:
                 const typingElement = typingMessages[data.speaker];
                 if (typingElement) {
                     updateMessageElement(typingElement, data.speaker, data.message, false);
                     delete typingMessages[data.speaker];
                 } else {
-                    addMessage(data.speaker, data.message, "message");
+                    addMessage(data.speaker || "Qweet", data.message, "message");
+                }
+                break;
+
+            case "reasoning":
+                // Show reasoning in a collapsible format
+                addMessage("Qweet (thinking)", data.message || "", "reasoning");
+                break;
+            
+            case "file_context":
+                // Display file data
+                displayFileContext(data);
+                break;
+            
+            case "file_refreshed":
+                addMessage("System", `📁 File context ${data.has_file ? 'loaded' : 'not available'}`);
+                break;
+            
+            case "discussion_complete":
+                syncDebateControls("Completed");
+                addMessage("System", "✅ Discussion complete");
+                break;
+            
+            case "error":
+                console.error('Server error:', data.message);
+                addMessage("System", "❌ Error: " + data.message);
+                break;
+            
+            default:
+                // Unknown message type - try to display as message
+                if (data.message) {
+                    addMessage(data.speaker || "Qweet", data.message, "message");
                 }
                 break;
         }
@@ -927,6 +689,71 @@ function setupWebSocket() {
     };
 }
 
+function displayWebResults(data) {
+    // Show web results in the chat
+    if (data.results) {
+        let resultText = "🌐 Web Search Results:\n\n";
+        if (typeof data.results === 'object') {
+            Object.entries(data.results).forEach(([query, content]) => {
+                resultText += `Query: "${query}"\n${content}\n\n`;
+            });
+        } else {
+            resultText += data.results;
+        }
+        addMessage("Qweet", resultText, "web_results");
+    }
+    
+    // Update web sources panel
+    if (data.sources) {
+        displayWebSources(data.sources);
+    }
+}
+
+function displayFileContext(data) {
+    if (data.data && data.data !== "No file data") {
+        addMessage("System", "📁 File data loaded successfully");
+        // Show a preview of the data
+        try {
+            const jsonData = JSON.parse(data.data);
+            if (jsonData.dataset) {
+                const preview = `📊 File contains ${jsonData.dataset.rows || 0} rows and ${jsonData.dataset.columns || 0} columns`;
+                addMessage("Qweet", preview, "file_preview");
+            }
+        } catch (e) {
+            // Not JSON, just show raw preview
+            const preview = data.data.substring(0, 200) + "...";
+            addMessage("Qweet", `📁 File data: ${preview}`, "file_preview");
+        }
+    } else {
+        addMessage("System", "📁 No file data available");
+    }
+}
+
+function updateMessageLimit() {
+    const limitEl = document.getElementById('messageLimit');
+    if (!limitEl || !isDebateActive) return;
+    
+    if (currentMessageCount >= messageLimit) {
+        limitEl.textContent = ` ⚠️ Limit reached (${currentMessageCount}/${messageLimit})`;
+        limitEl.classList.add('warning');
+    } else if (currentMessageCount >= messageLimit * 0.8) {
+        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit} (Approaching limit)`;
+        limitEl.classList.remove('warning');
+        limitEl.classList.add('warning');
+    } else {
+        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit}`;
+        limitEl.classList.remove('warning');
+    }
+    
+    if (isDebateActive) {
+        limitEl.classList.remove('hidden');
+    }
+}
+
+// ============================================
+// SEND PROMPT
+// ============================================
+
 async function sendPrompt() {
     const box = getActiveBox();
     const prompt = box.value.trim();
@@ -935,8 +762,6 @@ async function sendPrompt() {
         return;
     }
 
-
-    // If user is not authenticated, set them as guest
     if (!authToken) {
         isGuest = true;
         activateChatUI();
@@ -944,94 +769,29 @@ async function sendPrompt() {
     }
 
     activateChatUI();
-    if (!currentProjectState.hasPrompt) {
-        messageLimit = getCurrentMessageLimit();
-    }
     addMessage("user", prompt);
     box.value = "";
     box.classList.remove("active");
     resetBoxSize(box);
 
-    // Get selected agents
-    const selectedAgents = getSelectedAgents();
-    
-    if (!currentProjectState.hasPrompt) {
-        currentProjectState.hasPrompt = true;
-        document.body.classList.add("project-started");
-
-        destroyPromptSettings();
-        syncDebateControls("Running");
-
-        // Mark debate as active
-        isDebateActive = true;
-        currentMessageCount = 0;
-        
-        // Set message limit based on user plan
-        if (!messageLimit && currentUser && currentUser.plan) {
-            const planLimits = { "Free": 25, "Pro": 40, "Master": 80 };
-            messageLimit = planLimits[currentUser.plan] || 25;
-        } else if (!messageLimit) {
-            messageLimit = 25; // Default to free plan limit
-        }
-        
-        const pauseBtn = document.getElementById('pauseBtn');
-        if (pauseBtn) pauseBtn.classList.remove('hidden');
-        
-        const resumeBtn = document.getElementById('resumeBtn');
-        if (resumeBtn) resumeBtn.classList.add('hidden');
-        
-        // Clear previous summaries
-        const summaryList = document.getElementById('summaryList');
-        if (summaryList) summaryList.innerHTML = '';
-        // Clear previous web sources
-        const webSourcesList = document.getElementById('webSourcesList');
-        if (webSourcesList) webSourcesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
-        const summarySection = document.getElementById('summarySection');
-        if (summarySection) summarySection.classList.add('hidden');
-
-        // Prepare message data with agents
+    if (!socketReady) {
         const messageData = JSON.stringify({
-            topic: prompt,
-            agents: selectedAgents,
-            settings: getProjectSettingsPayload()
-        });
-
-        if (!socketReady) {
-            pendingPrompt = messageData;
-            setupWebSocket();
-        } else {
-            socket.send(messageData);
-        }
-    } else {
-        const messageData = JSON.stringify({
-            action: "user_message",
+            type: "user_message",
             message: prompt
         });
-
-        if (!socketReady) {
-            pendingPrompt = messageData;
-            setupWebSocket();
-        } else {
-            socket.send(messageData);
-        }
+        pendingPrompt = messageData;
+        setupWebSocket();
+    } else {
+        socket.send(JSON.stringify({
+            type: "user_message",
+            message: prompt
+        }));
     }
 }
 
-function displaySummary(summaryText) {
-    const summarySection = document.getElementById('summarySection');
-    const summaryList = document.getElementById('summaryList');
-    
-    if (summarySection && summaryList) {
-        summarySection.classList.remove('hidden');
-        const entry = document.createElement('div');
-        entry.className = 'summaryEntry';
-        entry.innerHTML = `
-            <div class="summaryMeta">Summary</div>
-            <div class="summaryBody">${formatGeneratedText(summaryText)}</div>
-        `;
-        summaryList.appendChild(entry);
-    }
-}
+// ============================================
+// UI SETUP
+// ============================================
 
 function setupPauseButton() {
     const pauseBtn = document.getElementById('pauseBtn');
@@ -1040,7 +800,7 @@ function setupPauseButton() {
     if (pauseBtn) {
         pauseBtn.addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ action: 'pause' }));
+                socket.send(JSON.stringify({ type: 'pause' }));
                 isPaused = true;
                 syncDebateControls("Paused");
             }
@@ -1050,273 +810,11 @@ function setupPauseButton() {
     if (resumeBtn) {
         resumeBtn.addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ action: 'change_agents', agents: getSelectedAgents() }));
-                socket.send(JSON.stringify({ action: 'resume' }));
+                socket.send(JSON.stringify({ type: 'resume' }));
                 isPaused = false;
                 syncDebateControls("Running");
             }
         });
-    }
-}
-
-// Setup button event listener for both buttons
-[loginPageBtn, mainAppBtn].forEach(btn => {
-    btn.addEventListener("click", sendPrompt);
-});
-// ============================================
-// PROJECT SETTINGS
-// ============================================
-
-function setupProjectSettings() {
-    const messageSlider = document.getElementById('messageSlider');
-    const messageCount = document.getElementById('messageCount');
-    const webSearchCheckbox = document.getElementById('webSearchCheckbox');
-    
-    if (messageSlider && messageCount) {
-        // Update the message count display when slider changes
-        messageSlider.addEventListener('input', (e) => {
-            messageCount.textContent = e.target.value;
-            // Save to localStorage for persistence
-            localStorage.setItem('messageSliderValue', e.target.value);
-            if (!currentProjectState.hasPrompt) {
-                messageLimit = Number(e.target.value);
-            }
-        });
-        
-        // Load saved value from localStorage
-        const savedValue = localStorage.getItem('messageSliderValue');
-        if (savedValue) {
-            messageSlider.value = savedValue;
-            messageCount.textContent = savedValue;
-            messageLimit = Number(savedValue);
-        }
-    }
-    
-    if (webSearchCheckbox) {
-        // Load saved state from localStorage
-        const savedState = localStorage.getItem('webSearchEnabled');
-        if (savedState !== null) {
-            webSearchCheckbox.checked = savedState === 'true';
-        }
-        
-        // Save state when checkbox changes
-        webSearchCheckbox.addEventListener('change', (e) => {
-            localStorage.setItem('webSearchEnabled', e.target.checked);
-        });
-    }
-}
-
-function getProjectSettingsPayload() {
-    const messageSlider = document.getElementById('messageSlider');
-    const webSearchCheckbox = document.getElementById('webSearchCheckbox');
-
-    return {
-        message_count: messageSlider ? Number(messageSlider.value) : (messageLimit || null),
-        web_search_enabled: webSearchCheckbox ? webSearchCheckbox.checked : false
-    };
-}
-
-// Setup button event listener for both buttons
-// Initialize authentication on page load
-// ============================================
-// HISTORY PAGE
-// ============================================
-
-const debatePage = document.getElementById("debatePage");
-const historyPage = document.getElementById("historyPage");
-const debateDetailPage = document.getElementById("debateDetailPage");
-const historyList = document.getElementById("historyList");
-const debateDetail = document.getElementById("debateDetail");
-
-console.log("Page elements:", { debatePage, historyPage, debateDetailPage });
-
-function showDebatePage(e) {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    console.log("showDebatePage called");
-    
-    // Remove active from all pages
-    debatePage.classList.remove("active");
-    historyPage.classList.remove("active");
-    debateDetailPage.classList.remove("active");
-    
-    // Add active to debate page
-    debatePage.classList.add("active");
-    
-    // Show chat if in chat mode
-    if (chatStarted) {
-        chatContainer.classList.remove("hidden");
-    }
-    
-    console.log("Debate page active:", debatePage.classList.contains("active"));
-}
-
-function showHistoryPage(e) {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    console.log("showHistoryPage called");
-    
-    // Remove active from all pages
-    debatePage.classList.remove("active");
-    historyPage.classList.remove("active");
-    debateDetailPage.classList.remove("active");
-    
-    // Add active to history page
-    historyPage.classList.add("active");
-    
-    // Hide chat container
-    chatContainer.classList.add("hidden");
-    
-    // Load and display history
-    loadDebateHistory();
-    
-    console.log("History page active:", historyPage.classList.contains("active"));
-}
-
-function loadDebateHistory() {
-    if (!authToken) {
-        historyList.innerHTML = '<div class="noHistoryMsg">Please log in to view your history</div>';
-        return;
-    }
-
-    fetch(getApiUrl("/debates/history"), {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`,
-            "ngrok-skip-browser-warning": "true"
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        displayDebateHistory(data.debates || []);
-    })
-    .catch(error => {
-        console.error("Error loading debate history:", error);
-        historyList.innerHTML = '<div class="noHistoryMsg">Error loading history. Please try again.</div>';
-    });
-}
-
-function displayDebateHistory(debates) {
-    if (!debates || debates.length === 0) {
-        historyList.innerHTML = '<div class="noHistoryMsg">No debates yet. Start one to see it here!</div>';
-        return;
-    }
-
-    historyList.innerHTML = "";
-    
-    debates.forEach(debate => {
-        const debateId = debate._id;
-        const topic = debate.topic;
-        const created = new Date(debate.created_at);
-        const dateStr = created.toLocaleDateString() + " " + created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        const item = document.createElement("div");
-        item.className = "historyItem";
-        item.innerHTML = `
-            <h3>${topic}</h3>
-            <p>${dateStr}</p>
-        `;
-        
-        item.addEventListener("click", () => {
-            showDebateDetail(debateId, topic);
-        });
-        
-        historyList.appendChild(item);
-    });
-}
-
-function showDebateDetail(debateSessionId, topic) {
-    debatePage.classList.remove("active");
-    historyPage.classList.remove("active");
-    debateDetailPage.classList.add("active");
-    chatContainer.classList.add("hidden");
-    
-    loadDebateMessages(debateSessionId, topic);
-}
-
-function loadDebateMessages(debateSessionId, topic) {
-    if (!authToken) {
-        debateDetail.innerHTML = '<div class="noHistoryMsg">Please log in to view debate details</div>';
-        return;
-    }
-
-    fetch(getApiUrl(`/debates/${debateSessionId}/messages`), {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`,
-            "ngrok-skip-browser-warning": "true"
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        displayDebateMessages(data.messages || [], topic);
-    })
-    .catch(error => {
-        console.error("Error loading debate messages:", error);
-        debateDetail.innerHTML = '<div class="noHistoryMsg">Error loading debate. Please try again.</div>';
-    });
-}
-
-function displayDebateMessages(messages, topic) {
-    debateDetail.innerHTML = `<h2>${topic}</h2>`;
-    
-    if (!messages || messages.length === 0) {
-        debateDetail.innerHTML += '<div class="noHistoryMsg">No messages in this debate</div>';
-        return;
-    }
-
-    messages.forEach(msg => {
-        const timestamp = new Date(msg.timestamp);
-        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        const msgEl = document.createElement("div");
-        msgEl.className = "debateMessage";
-        msgEl.innerHTML = `
-            <div class="speaker">${msg.speaker}</div>
-            <div class="content">${formatGeneratedText(msg.message)}</div>
-            <div class="timestamp">${timeStr}</div>
-        `;
-        
-        debateDetail.appendChild(msgEl);
-    });
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Initialize the debate page as active on load
-var activeAgents = new Set(['cfo', 'ops', 'mkt', 'dev']);
-
-function toggleAgent(btn) {
-    const agent = btn.dataset.agent;
-    if (activeAgents.has(agent)) {
-        if (activeAgents.size === 1) return;  // Must keep at least one agent
-        activeAgents.delete(agent);
-        btn.className = 'agent-toggle';
-    } else {
-        activeAgents.add(agent);
-        btn.className = `agent-toggle active-${agent}`;
     }
 }
 
@@ -1329,127 +827,40 @@ function setupAgentToggles() {
     });
 }
 
-function initializePage() {
-    console.log("Initializing page");
-    console.log("debatePage element:", debatePage);
-    
-    // Make sure debate page is shown by default
-    if (debatePage) {
-        debatePage.classList.add("active");
-        console.log("Debate page classList:", debatePage.classList);
-        console.log("Debate page display check:", window.getComputedStyle(debatePage).display);
-    }
-    
-    if (historyPage) {
-        historyPage.classList.remove("active");
-    }
-    
-    if (debateDetailPage) {
-        debateDetailPage.classList.remove("active");
+var activeAgents = new Set(['cfo', 'ops', 'mkt', 'dev']);
+
+function toggleAgent(btn) {
+    const agent = btn.dataset.agent;
+    if (activeAgents.has(agent)) {
+        if (activeAgents.size === 1) return;
+        activeAgents.delete(agent);
+        btn.className = 'agent-toggle';
+    } else {
+        activeAgents.add(agent);
+        btn.className = `agent-toggle active-${agent}`;
     }
 }
 
-// Run on load
-document.addEventListener("DOMContentLoaded", function() {
-    console.log("DOM Content Loaded");
-    initializeAuth();
-    initializePage();
-    loadProjectFromUrl();
-    setupAgentToggles();  // Setup agent toggle button handlers
-    setupPauseButton();  // Setup pause/resume button handlers
-    setupProjectSettings();  // Setup message slider and web search checkbox
-});
-
 // ============================================
-// PROJECT INITIALIZATION FROM URL
+// PROJECT INITIALIZATION
 // ============================================
 
 let currentProjectId = null;
 
-function restoreProjectHistory(projectData) {
-    if (!projectData) {
-        return;
-    }
-
-    activateChatUI();
-    document.body.classList.add("project-started");
-    
-    // First, try to load messages from localStorage
-    const hasLocalMessages = loadMessagesFromStorage();
-    
-    if (hasLocalMessages) {
-        // Messages were loaded from localStorage, just restore other settings
-        console.log("Restored chat from localStorage");
-    } else {
-        // No local messages, restore from server data
-        const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
-        
-        messages.forEach(entry => {
-            if (!entry || !entry.message) {
-                return;
-            }
-            if (entry.type === 'summary' || entry.speaker === 'Summary') {
-                return;
-            }
-            const speaker = entry.speaker || "System";
-            addMessage(speaker, entry.message);
-        });
-    }
-
-    const storedLimit = Number(projectData.message_limit || projectData?.settings?.message_count || 0);
-    if (Number.isFinite(storedLimit) && storedLimit > 0) {
-        messageLimit = storedLimit;
-    }
-
-    const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
-    const agentMessages = messages.filter(entry => entry && entry.type === 'message' && entry.speaker !== 'user');
-    const inferredStatus = projectData.debate_status || (messageLimit > 0 && agentMessages.length >= messageLimit ? 'Completed' : 'Running');
-    syncDebateControls(inferredStatus);
-    destroyPromptSettings();
-
-    // Restore summary
-    const summaryList = document.getElementById('summaryList');
-    const summarySection = document.getElementById('summarySection');
-    if (summaryList) summaryList.innerHTML = '';
-    if (summarySection) summarySection.classList.add('hidden');
-
-    if (Array.isArray(projectData.summaries) && projectData.summaries.length > 0) {
-        projectData.summaries.forEach(item => {
-            if (item && item.summary) {
-                displaySummary(item.summary);
-            }
-        });
-    } else if (projectData.summary) {
-        displaySummary(projectData.summary);
-    }
-    
-    // Restore saved web sources if present
-    if (Array.isArray(projectData.web_sources) && projectData.web_sources.length > 0) {
-        displayWebSources(projectData.web_sources);
-    } else if (Array.isArray(projectData.sources) && projectData.sources.length > 0) {
-        displayWebSources(projectData.sources);
-    }
-}
-
 function loadProjectFromUrl() {
-    // Extract projectId from hash (e.g., #/project/[projectId])
     const hash = window.location.hash;
     console.log("Current hash:", hash);
     const match = hash.match(/#\/project\/(.+)$/);
-    
-    console.log("Match result:", match);
     
     if (match && match[1]) {
         currentProjectId = match[1];
         console.log("Project ID found:", currentProjectId);
         loadProjectDetails(currentProjectId);
     } else if (localStorage.getItem('currentProjectId')) {
-        // Fallback to localStorage for backward compatibility
         currentProjectId = localStorage.getItem('currentProjectId');
         console.log("Project ID from localStorage:", currentProjectId);
         loadProjectDetails(currentProjectId);
     } else {
-        // No project selected - redirect to projects page
         console.log("No project ID found, redirecting to projects page");
         window.location.href = 'projects.html';
     }
@@ -1465,7 +876,6 @@ async function loadProjectDetails(projectId) {
     }
 
     try {
-        console.log("Attempting to fetch project details for:", projectId);
         const response = await fetch(getApiUrl(`/projects/${projectId}`), {
             method: 'GET',
             headers: {
@@ -1475,8 +885,6 @@ async function loadProjectDetails(projectId) {
             }
         });
 
-        console.log("Fetch response status:", response.status);
-        
         if (response.status === 401) {
             clearAuthSession();
             showAccessDenied("Your session expired. Please sign in again.");
@@ -1500,77 +908,21 @@ async function loadProjectDetails(projectId) {
 
         const data = await response.json();
         console.log("Project data received:", data);
-        const projectNameEl = document.getElementById('projectName');
         
+        const projectNameEl = document.getElementById('projectName');
         if (projectNameEl && data.name) {
             projectNameEl.textContent = `Project: ${data.name}`;
         }
-        
-        const getFileExtension = (value) => {
-            const text = String(value || "");
-            const dotIndex = text.lastIndexOf(".");
-            if (dotIndex > 0 && dotIndex < text.length - 1) {
-                return text.slice(dotIndex + 1);
-            }
-            return "";
-        };
-
-        const getFileDisplayName = (file) => {
-            if (typeof file === "string") {
-                return file;
-            }
-
-            if (!file || typeof file !== "object") {
-                return "Unnamed file";
-            }
-
-            const rawName = file.original_name || file.name || file.stored_name || "";
-            if (rawName) {
-                return rawName;
-            }
-
-            const ext = file.extension || file.ext || getFileExtension(rawName);
-            if (ext) {
-                return `.${ext}`;
-            }
-
-            return "Unnamed file";
-        };
-
-        const formatTrendItems = (trendText) => {
-            const text = String(trendText || "").trim();
-            if (!text) {
-                return "";
-            }
-
-            const rawItems = text
-                .split(/\n+/)
-                .map(item => item.replace(/^[-•]\s*/, "").trim())
-                .filter(Boolean);
-
-            const sentenceItems = rawItems.length > 0
-                ? rawItems
-                : text.replace(/\n+/g, ". ").split(/[.!?]+\s*/).map(item => item.trim()).filter(Boolean);
-
-            return `
-                <ul class="fileTrendList">
-                    ${sentenceItems.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-                </ul>
-            `;
-        };
 
         // Populate uploaded files list
         const filesList = document.getElementById('uploadedFilesList');
         if (filesList && data.files && Array.isArray(data.files)) {
             if (data.files.length > 0) {
                 filesList.innerHTML = data.files.map(file => {
-                    const label = getFileDisplayName(file);
-                    const trendText = file && typeof file === "object" ? file.trend_text : "";
-                    const trendMarkup = formatTrendItems(trendText);
+                    const label = file.original_name || file.name || "Unnamed file";
                     return `
                         <div class="fileItem">
                             <div class="fileName">📄 ${escapeHtml(String(label))}</div>
-                            ${trendMarkup ? `<div class="fileTrendBlock">${trendMarkup}</div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -1592,6 +944,33 @@ async function loadProjectDetails(projectId) {
     }
 }
 
+function restoreProjectHistory(projectData) {
+    if (!projectData) {
+        return;
+    }
+
+    activateChatUI();
+    document.body.classList.add("project-started");
+    
+    const hasLocalMessages = loadMessagesFromStorage();
+    
+    if (!hasLocalMessages) {
+        const messages = Array.isArray(projectData.messages) ? projectData.messages : [];
+        messages.forEach(entry => {
+            if (!entry || !entry.message) return;
+            const speaker = entry.speaker || "System";
+            addMessage(speaker, entry.message);
+        });
+    }
+
+    syncDebateControls("Completed");
+    destroyPromptSettings();
+}
+
+// ============================================
+// DISPLAY HELPERS
+// ============================================
+
 function displayWebSources(sources) {
     const list = document.getElementById('webSourcesList');
     if (!list) return;
@@ -1604,110 +983,34 @@ function displayWebSources(sources) {
     sources.forEach(s => {
         const item = document.createElement('div');
         item.className = 'webSourceItem';
-        const title = s.title ? s.title : s.url;
-        const url = s.url ? s.url : '#';
-        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${title}</a>`;
+        const title = s.title || s.url || 'Source';
+        const url = s.url || '#';
+        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${escapeHtml(title)}</a>`;
         list.appendChild(item);
     });
 }
 
-// Final summary modal utilities
-function createFinalSummaryModalIfNeeded() {
-    if (document.getElementById('finalSummaryModal')) return;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'finalSummaryModal';
-    overlay.className = 'final-summary-overlay hidden';
-
-    overlay.innerHTML = `
-        <div class="final-summary-dialog">
-            <div class="final-summary-header">
-                <div class="final-summary-title">Final Summary</div>
-                <button class="final-summary-close" aria-label="Close">✕</button>
-            </div>
-            <div class="final-summary-body"></div>
-            <div class="final-summary-result" style="display:none; padding: 12px 18px; border-top:1px solid rgba(255,255,255,0.03);"></div>
-            <div class="final-summary-actions">
-                <button class="final-summary-copy">Copy</button>
-                <button class="final-summary-dismiss">Close</button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    overlay.querySelector('.final-summary-close').addEventListener('click', hideFinalSummary);
-    overlay.querySelector('.final-summary-dismiss').addEventListener('click', hideFinalSummary);
-    overlay.querySelector('.final-summary-copy').addEventListener('click', () => {
-        const body = overlay.querySelector('.final-summary-body');
-        if (!body) return;
-        const text = body.innerText || body.textContent || '';
-        try {
-            navigator.clipboard.writeText(text);
-        } catch (e) {
-            console.warn('Clipboard write failed', e);
-        }
-    });
-
-    // Close on overlay click outside dialog
-    overlay.addEventListener('click', (ev) => {
-        if (ev.target === overlay) hideFinalSummary();
-    });
-
-    // Close on escape
-    document.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') {
-            const modal = document.getElementById('finalSummaryModal');
-            if (modal && !modal.classList.contains('hidden')) hideFinalSummary();
-        }
-    });
-}
-
-function showFinalSummary(summaryText, resultText) {
-    if (!summaryText) return;
-    createFinalSummaryModalIfNeeded();
-    const overlay = document.getElementById('finalSummaryModal');
-    if (!overlay) return;
-    const body = overlay.querySelector('.final-summary-body');
-    const resultEl = overlay.querySelector('.final-summary-result');
-    if (body) {
-        body.innerHTML = `<div class="final-summary-text">${formatGeneratedText(summaryText)}</div>`;
+function destroyPromptSettings() {
+    if (promptSettingsLocked) return;
+    const generationCard = document.getElementById('generationLimitCard');
+    if (generationCard) {
+        generationCard.remove();
     }
-    if (resultEl) {
-        if (resultText) {
-            resultEl.style.display = '';
-            resultEl.innerHTML = `<div class="resultMeta">Assessment</div><div class="resultContent">${formatGeneratedText(resultText)}</div>`;
-        } else {
-            resultEl.style.display = 'none';
-            resultEl.innerHTML = '';
-        }
-    }
-    overlay.classList.remove('hidden');
-    overlay.style.display = 'flex';
+    promptSettingsLocked = true;
 }
 
-function hideFinalSummary() {
-    const overlay = document.getElementById('finalSummaryModal');
-    if (!overlay) return;
-    overlay.classList.add('hidden');
-    overlay.style.display = 'none';
-}
+// ============================================
+// INITIALIZATION
+// ============================================
 
-function displayResult(resultText) {
-    const webList = document.getElementById('webSourcesList');
-    if (!webList) return;
+[loginPageBtn, mainAppBtn].forEach(btn => {
+    btn.addEventListener("click", sendPrompt);
+});
 
-    let container = document.getElementById('resultBox');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'resultBox';
-        container.className = 'fileItem resultItem';
-        // Insert after webSourcesList
-        webList.parentNode.insertBefore(container, webList.nextSibling);
-    }
-
-    container.innerHTML = `
-        <div class="fileName">🔎 Result</div>
-        <div class="fileTrendBlock resultBlock">${formatGeneratedText(resultText)}</div>
-    `;
-}
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM Content Loaded");
+    initializeAuth();
+    loadProjectFromUrl();
+    setupAgentToggles();
+    setupPauseButton();
+});
