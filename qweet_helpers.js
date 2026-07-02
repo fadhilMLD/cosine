@@ -3,50 +3,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Display web search results in the chat
- */
-function displayWebResults(data) {
-    const container = document.getElementById('chatContainer');
-    if (!container) return;
-
-    let html = '<div class="web-results-container">';
-    html += '<div class="web-results-header">🌐 Web Search Results</div>';
-    
-    if (data.results) {
-        if (typeof data.results === 'object') {
-            Object.entries(data.results).forEach(([query, content]) => {
-                html += `<div class="web-result-item">`;
-                html += `<div class="web-result-query">🔍 "${query}"</div>`;
-                html += `<div class="web-result-content">${formatGeneratedText(content)}</div>`;
-                html += `</div>`;
-            });
-        } else {
-            html += `<div class="web-result-content">${formatGeneratedText(data.results)}</div>`;
-        }
-    }
-    
-    // Add sources if available
-    if (data.sources && data.sources.length > 0) {
-        html += '<div class="web-sources-list">';
-        html += '<div class="web-sources-header">📚 Sources:</div>';
-        data.sources.forEach(source => {
-            const title = source.title || source.url || 'Source';
-            const url = source.url || '#';
-            html += `<div class="web-source-item"><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a></div>`;
-        });
-        html += '</div>';
-    }
-    
-    html += '</div>';
-    
-    const msg = document.createElement("div");
-    msg.className = "chatMessage web-results-message";
-    msg.innerHTML = html;
-    container.appendChild(msg);
-    container.scrollTop = container.scrollHeight;
-}
-
-/**
  * Display file data preview
  */
 function displayFileData(data) {

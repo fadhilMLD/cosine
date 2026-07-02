@@ -364,7 +364,7 @@ function addMessage(sender, text, messageType = "message") {
     // Check plan limit
     if (sender !== "user" && sender !== "System") {
         if (totalMessagesUsed >= planMessageLimit) {
-            addMessage("System", `⚠️ You've reached your plan limit of ${planMessageLimit} messages. Please upgrade to continue.`);
+            addMessage("System", `You've reached your plan limit of ${planMessageLimit} messages. Please upgrade to continue.`);
             return;
         }
         totalMessagesUsed++;
@@ -557,7 +557,7 @@ function setupWebSocket() {
             case "connected":
                 syncDebateControls("Idle");
                 if (data.has_file) {
-                    addMessage("System", "📁 File data loaded.");
+                    addMessage("System", "File data loaded.");
                 }
                 if (data.message_limit) {
                     planMessageLimit = data.message_limit;
@@ -568,21 +568,18 @@ function setupWebSocket() {
             case "context_restored":
                 contextRestored = true;
                 console.log(`[Qweet] Context restored with ${data.message_count || 0} messages`);
-                if (data.message_count > 0) {
-                    addMessage("System", `🔄 Conversation context restored (${data.message_count} messages)`);
-                }
+                // if (data.message_count > 0) {
+                //     addMessage("System", `🔄 Conversation context restored (${data.message_count} messages)`);
+                // }
                 break;
 
             case "status":
                 syncDebateControls(data.status || "Running");
                 break;
             
-            case "web_results":
-                displayWebResults(data);
-                break;
             
             case "tool_executing":
-                addMessage("System", `🔧 ${data.tool || 'tool'}: executing`);
+                // addMessage("System", `🔧 ${data.tool || 'tool'}: executing`);
                 break;
             
             case "debate_permission":
@@ -618,19 +615,19 @@ function setupWebSocket() {
             
             case "file_context":
                 if (data.data && data.data !== "No file data") {
-                    addMessage("System", "📁 File data loaded");
+                    addMessage("System", "File data loaded");
                 }
                 break;
             
             case "discussion_complete":
                 syncDebateControls("Completed");
                 isDebateActive = false;
-                addMessage("System", "✅ Debate complete");
+                addMessage("System", "Debate complete");
                 break;
             
             case "error":
                 console.error('Server error:', data.message);
-                addMessage("System", "❌ Error: " + data.message);
+                addMessage("System", "Something bad happened... idk what tho??: " + data.message);
                 break;
             
             default:
@@ -651,46 +648,10 @@ function setupWebSocket() {
 
     socket.onerror = (error) => {
         console.error("WebSocket error:", error);
-        addMessage("System", "Connection error occurred.");
+        addMessage("System", "Dammit! couldnt connect to the server..");
     };
 }
 
-function displayWebResults(data) {
-    if (data.results) {
-        let resultText = "🌐 Web Search Results:\n\n";
-        if (typeof data.results === 'object') {
-            Object.entries(data.results).forEach(([query, content]) => {
-                resultText += `Query: "${query}"\n${content}\n\n`;
-            });
-        } else {
-            resultText += data.results;
-        }
-        addMessage("Qweet", resultText, "web_results");
-    }
-    
-    if (data.sources) {
-        displayWebSources(data.sources);
-    }
-}
-
-function displayWebSources(sources) {
-    const list = document.getElementById('webSourcesList');
-    if (!list) return;
-    list.innerHTML = '';
-    if (!sources || sources.length === 0) {
-        list.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
-        return;
-    }
-
-    sources.forEach(s => {
-        const item = document.createElement('div');
-        item.className = 'webSourceItem';
-        const title = s.title || s.url || 'Source';
-        const url = s.url || '#';
-        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${escapeHtml(title)}</a>`;
-        list.appendChild(item);
-    });
-}
 
 // ============================================
 // SEND PROMPT
