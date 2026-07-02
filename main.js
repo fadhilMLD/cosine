@@ -457,8 +457,8 @@ animate();
 
 // Resize
 window.addEventListener("resize", () => {
-    const width = Math.max(canvasContainer.clientWidth, 800);
-    const height = Math.max(canvasContainer.clientHeight, 600);
+    const width = Math.max(canvasContainer.clientWidth, 1200);
+    const height = Math.max(canvasContainer.clientHeight, 1200);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
