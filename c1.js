@@ -112,7 +112,7 @@ function startDebate() {
     // Start the debate
     if (pendingDebateRequest && socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
-            type: "user_message",
+            type: "start_debate",
             message: pendingDebateRequest,
             debate_limit: debateMessageLimit
         }));
