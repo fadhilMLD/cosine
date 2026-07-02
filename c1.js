@@ -9,19 +9,18 @@ const userNameEl = document.getElementById("userName");
 
 let authToken = null;
 let currentUser = null;
+let isGuest = false;
 let currentProjectId = null;
+let currentDebateId = null;
 
 // ============================================
-// TWO COUNTERS
+// MESSAGE TRACKING
 // ============================================
 
-// Counter 1: Main - counts ALL messages (plan limit)
 let totalMessagesUsed = 0;
 let planMessageLimit = 25;
-
-// Counter 2: Debate - counts ONLY debate agent messages (user sets limit)
-let debateMessagesUsed = 0;
 let debateMessageLimit = 12;
+let debateMessagesUsed = 0;
 let isDebateActive = false;
 let pendingDebateRequest = null;
 
@@ -32,20 +31,27 @@ const planLimits = {
 };
 
 function getUserPlan() {
-    return (currentUser && currentUser.plan) || "Free";
+    if (currentUser && currentUser.plan) {
+        return currentUser.plan;
+    }
+    return "Free";
 }
 
 function getPlanLimit() {
-    return planLimits[getUserPlan()] || 25;
+    const plan = getUserPlan();
+    return planLimits[plan] || 25;
 }
 
-function updateMessageDisplay() {
+function updateMessageUsage() {
     const usageEl = document.getElementById('messageUsage');
     if (usageEl) {
         const remaining = planMessageLimit - totalMessagesUsed;
-        usageEl.textContent = `Messages: ${totalMessagesUsed} / ${planMessageLimit}`;
+        usageEl.textContent = `Messages: ${totalMessagesUsed} / ${planMessageLimit} (${remaining} remaining)`;
+        
         if (totalMessagesUsed >= planMessageLimit) {
             usageEl.style.color = '#ff6b6b';
+        } else if (totalMessagesUsed >= planMessageLimit * 0.8) {
+            usageEl.style.color = '#f4a8c7';
         } else {
             usageEl.style.color = '';
         }
@@ -53,41 +59,61 @@ function updateMessageDisplay() {
 }
 
 // ============================================
-// PERMISSION MODAL - Only for debate
+// PERMISSION/DEBATE MODAL
 // ============================================
 
-function showDebatePermission() {
+function showDebatePermission(promptText) {
     const modal = document.getElementById('permissionModal');
     const details = document.getElementById('permissionDetails');
     const planLimitDisplay = document.getElementById('planLimitDisplay');
     
     planLimitDisplay.textContent = planMessageLimit;
     
-    const input = document.getElementById('debateMessageCount');
-    input.value = 12;
-    input.max = 80;
+    // Store the prompt for when user confirms
+    pendingDebateRequest = promptText;
     
+    // Show modal
     modal.classList.add('active');
+    
+    // Set default value
+    const input = document.getElementById('debateMessageCount');
+    input.value = Math.min(12, planMessageLimit - totalMessagesUsed);
+    input.max = Math.min(80, planMessageLimit - totalMessagesUsed);
+    
+    input.addEventListener('change', function() {
+        const maxAllowed = planMessageLimit - totalMessagesUsed;
+        if (parseInt(this.value) > maxAllowed) {
+            this.value = maxAllowed;
+        }
+    });
 }
 
 function cancelDebate() {
     document.getElementById('permissionModal').classList.remove('active');
     pendingDebateRequest = null;
-    addMessage("System", "Debate cancelled.");
+    addMessage("System", "Debate cancelled by user.");
 }
 
 function startDebate() {
     const input = document.getElementById('debateMessageCount');
     debateMessageLimit = parseInt(input.value) || 12;
     
+    // Check against plan limit
+    const maxAllowed = planMessageLimit - totalMessagesUsed;
+    if (debateMessageLimit > maxAllowed) {
+        debateMessageLimit = maxAllowed;
+        input.value = maxAllowed;
+        alert(`Maximum debate messages limited to ${maxAllowed} based on your plan.`);
+    }
+    
     document.getElementById('permissionModal').classList.remove('active');
     
+    // Start the debate
     if (pendingDebateRequest && socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
-            type: "debate_permission_response",
-            allow: true,
-            debate_limit: debateMessageLimit,
-            message: pendingDebateRequest
+            type: "user_message",
+            message: pendingDebateRequest,
+            debate_limit: debateMessageLimit
         }));
         pendingDebateRequest = null;
         isDebateActive = true;
@@ -97,7 +123,7 @@ function startDebate() {
 }
 
 // ============================================
-// CHAT FUNCTIONS
+// CHAT APPLICATION
 // ============================================
 
 const loginPageBox = document.querySelector(".loginPage textarea#promptBox");
@@ -106,31 +132,54 @@ const loginPageBtn = document.querySelector(".loginPage button#sendBtn");
 const mainAppBtn = document.querySelector(".main button#sendBtn");
 const chatContainer = document.getElementById("chatContainer");
 
-let chatStarted = false;
-let resizeFrame = 0;
-
 function getChatStorageKey() {
-    return `chat_${currentProjectId || "default"}`;
+    return `chat_history_${currentProjectId || "default"}`;
 }
 
-function getCountStorageKey() {
-    return `counts_${currentProjectId || "default"}`;
+function getMessageCountKey() {
+    return `message_count_${currentProjectId || "default"}`;
 }
 
-function saveToStorage() {
+function saveMessageToStorage(sender, text, messageType = "message") {
     try {
-        localStorage.setItem(getCountStorageKey(), JSON.stringify({
+        const storageKey = getChatStorageKey();
+        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        
+        messages.push({
+            sender: sender,
+            text: text,
+            messageType: messageType,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (messages.length > 500) {
+            messages.splice(0, messages.length - 500);
+        }
+        
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (e) {
+        console.error("Failed to save message to storage:", e);
+    }
+}
+
+function saveMessageCount() {
+    try {
+        const key = getMessageCountKey();
+        localStorage.setItem(key, JSON.stringify({
             totalMessagesUsed: totalMessagesUsed,
             debateMessagesUsed: debateMessagesUsed,
             debateMessageLimit: debateMessageLimit,
             isDebateActive: isDebateActive
         }));
-    } catch (e) {}
+    } catch (e) {
+        console.error("Failed to save message count:", e);
+    }
 }
 
-function loadFromStorage() {
+function loadMessageCount() {
     try {
-        const data = localStorage.getItem(getCountStorageKey());
+        const key = getMessageCountKey();
+        const data = localStorage.getItem(key);
         if (data) {
             const parsed = JSON.parse(data);
             totalMessagesUsed = parsed.totalMessagesUsed || 0;
@@ -139,108 +188,137 @@ function loadFromStorage() {
             isDebateActive = parsed.isDebateActive || false;
             return true;
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Failed to load message count:", e);
+    }
     return false;
 }
 
-function loadMessages() {
+function loadMessagesFromStorage() {
     try {
-        const messages = JSON.parse(localStorage.getItem(getChatStorageKey()) || "[]");
+        const storageKey = getChatStorageKey();
+        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        
+        if (!chatContainer) return false;
+        
         chatContainer.innerHTML = "";
+        
         messages.forEach(msg => {
-            const el = document.createElement("div");
-            const label = document.createElement("span");
-            label.className = "senderLabel";
+            const msg_elem = document.createElement("div");
+            const senderSpan = document.createElement("span");
+            senderSpan.className = "senderLabel";
             
-            let cls = "agentMsg";
-            let name = msg.sender || "Qweet";
-            
+            let senderClass = "botMsg";
+            let senderName = msg.sender;
+
             if (msg.sender === "user") {
-                cls = "userMsg";
-                name = "You";
+                senderClass = "userMsg";
+                senderName = "You";
             } else if (msg.sender === "System") {
-                cls = "systemMsg";
-                name = "System";
+                senderClass = "systemMsg";
+                senderName = "System";
+            } else {
+                senderClass = "agentMsg";
+                senderName = msg.sender || "Qweet";
             }
-            
-            label.innerText = name;
-            el.className = cls;
-            el.innerHTML = formatText(msg.text);
-            el.prepend(label);
-            chatContainer.appendChild(el);
+
+            senderSpan.innerText = senderName;
+            msg_elem.className = senderClass;
+            msg_elem.dataset.messageType = msg.messageType || "message";
+            msg_elem.dataset.speaker = msg.sender;
+            msg_elem.innerHTML = formatGeneratedText(msg.text);
+            msg_elem.prepend(senderSpan);
+            chatContainer.appendChild(msg_elem);
         });
+        
         chatContainer.scrollTop = chatContainer.scrollHeight;
         return messages.length > 0;
-    } catch (e) { return false; }
+    } catch (e) {
+        console.error("Failed to load messages:", e);
+        return false;
+    }
 }
 
-function saveMessage(sender, text) {
+function clearChatHistory() {
     try {
-        const messages = JSON.parse(localStorage.getItem(getChatStorageKey()) || "[]");
-        messages.push({ sender, text, timestamp: new Date().toISOString() });
-        if (messages.length > 500) messages.splice(0, messages.length - 500);
-        localStorage.setItem(getChatStorageKey(), JSON.stringify(messages));
-    } catch (e) {}
+        localStorage.removeItem(getChatStorageKey());
+        localStorage.removeItem(getMessageCountKey());
+        chatContainer.innerHTML = "";
+        totalMessagesUsed = 0;
+        debateMessagesUsed = 0;
+        isDebateActive = false;
+        updateMessageUsage();
+    } catch (e) {
+        console.error("Failed to clear chat:", e);
+    }
 }
 
-function addMessage(sender, text) {
-    // Check main counter for ALL messages
-    if (sender !== "user" && sender !== "System") {
-        if (totalMessagesUsed >= planMessageLimit) {
-            addMessage("System", `Plan limit reached (${planMessageLimit} messages). Upgrade to continue.`);
-            return;
+function getActiveBox() {
+    return loginPageBox.offsetParent !== null ? loginPageBox : mainAppBox;
+}
+
+function getActiveSendBtn() {
+    return loginPageBox.offsetParent !== null ? loginPageBtn : mainAppBtn;
+}
+
+const baseWidth = 420;
+const maxWidth = 900;
+const baseFont = 26;
+const minFont = 16;
+const maxHeight = 250;
+let resizeFrame = 0;
+let chatStarted = false;
+
+function resetBoxSize(box) {
+    box.style.width = baseWidth + "px";
+    box.style.fontSize = baseFont + "px";
+    box.style.height = "60px";
+}
+
+function applyBoxLayout(box) {
+    const value = box.value;
+    if (value.length > 0) {
+        box.classList.add("active");
+    } else {
+        box.classList.remove("active");
+        resetBoxSize(box);
+        return;
+    }
+
+    box.style.height = "auto";
+    box.style.height = Math.min(box.scrollHeight, maxHeight) + "px";
+
+    if (value.length >= 20000) {
+        box.style.width = maxWidth + "px";
+        box.style.fontSize = minFont + "px";
+        return;
+    }
+
+    const estimatedWidth = (value.length * baseFont * 0.58) + 40;
+    const newWidth = Math.min(maxWidth, Math.max(baseWidth, Math.ceil(estimatedWidth / 40) * 40));
+    const newFont = Math.max(minFont, baseFont - Math.floor((newWidth - baseWidth) / 40));
+    
+    box.style.width = newWidth + "px";
+    box.style.fontSize = newFont + "px";
+}
+
+function queueBoxLayout(box) {
+    if (resizeFrame !== 0) return;
+    resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        applyBoxLayout(box);
+    });
+}
+
+[loginPageBox, mainAppBox].forEach(box => {
+    box.addEventListener("input", () => queueBoxLayout(box));
+    box.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendPrompt();
         }
-        totalMessagesUsed++;
-        saveToStorage();
-        updateMessageDisplay();
-    }
-    
-    const el = document.createElement("div");
-    const label = document.createElement("span");
-    label.className = "senderLabel";
-    
-    let cls = "agentMsg";
-    let name = sender || "Qweet";
-    
-    if (sender === "user") {
-        cls = "userMsg";
-        name = "You";
-    } else if (sender === "System") {
-        cls = "systemMsg";
-        name = "System";
-    }
-    
-    label.innerText = name;
-    el.className = cls;
-    el.innerHTML = formatText(text);
-    el.prepend(label);
-    chatContainer.appendChild(el);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    saveMessage(sender, text);
-}
-
-function addDebateMessage(sender, text) {
-    // Check debate counter for debate agent messages
-    if (isDebateActive && sender !== "user" && sender !== "System") {
-        if (debateMessagesUsed >= debateMessageLimit) {
-            addMessage("System", `⚠️ Debate limit reached (${debateMessageLimit} messages).`);
-            isDebateActive = false;
-            return;
-        }
-        debateMessagesUsed++;
-        saveToStorage();
-    }
-    
-    // This also counts towards main counter
-    addMessage(sender, text);
-}
-
-function formatText(text) {
-    const escaped = String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const withStrong = escaped.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
-    return withStrong.replace(/\n/g, '<br>');
-}
+    });
+});
 
 function activateChatUI() {
     if (chatStarted) return;
@@ -248,25 +326,169 @@ function activateChatUI() {
     
     loginPage.classList.add("hidden");
     mainApp.classList.remove("hidden");
-    document.body.classList.add("chat-mode");
-    chatContainer.classList.remove("hidden");
-    chatContainer.style.display = "flex";
     
-    loadFromStorage();
+    const debatePage = document.getElementById("debatePage");
+    if (debatePage) debatePage.classList.add("active");
+    
+    document.body.classList.add("chat-mode");
+    
+    if (chatContainer) {
+        chatContainer.classList.remove("hidden");
+        chatContainer.style.display = "flex";
+    }
+
+    // Load saved state
+    loadMessageCount();
+    const hasMessages = loadMessagesFromStorage();
     planMessageLimit = getPlanLimit();
-    loadMessages();
-    updateMessageDisplay();
+    updateMessageUsage();
+}
+
+function addMessage(sender, text, messageType = "message") {
+    // Check plan limit
+    if (sender !== "user" && sender !== "System") {
+        if (totalMessagesUsed >= planMessageLimit) {
+            addMessage("System", `⚠️ You've reached your plan limit of ${planMessageLimit} messages. Please upgrade to continue.`);
+            return;
+        }
+        totalMessagesUsed++;
+        saveMessageCount();
+        updateMessageUsage();
+    }
+    
+    const msg = document.createElement("div");
+    const senderSpan = document.createElement("span");
+    senderSpan.className = "senderLabel";
+    
+    let senderClass = "botMsg";
+    let senderName = sender;
+
+    if (sender === "user") {
+        senderClass = "userMsg";
+        senderName = "You";
+    } else if (sender === "System") {
+        senderClass = "systemMsg";
+        senderName = "System";
+    } else {
+        senderClass = "agentMsg";
+        senderName = sender || "Qweet";
+    }
+
+    senderSpan.innerText = senderName;
+    msg.className = senderClass;
+    msg.dataset.messageType = messageType;
+    msg.dataset.speaker = sender;
+    msg.innerHTML = formatGeneratedText(text);
+    msg.prepend(senderSpan);
+
+    if (text.match(/^\.+$/)) {
+        msg.classList.add("typing");
+    }
+
+    if (!chatContainer) return;
+    
+    chatContainer.appendChild(msg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    saveMessageToStorage(sender, text, messageType);
+}
+
+function updateMessageElement(element, sender, text, typing = false) {
+    if (!element) return;
+    
+    const senderSpan = element.querySelector('.senderLabel');
+    element.innerHTML = '';
+    if (senderSpan) {
+        element.appendChild(senderSpan);
+    } else {
+        const newSenderSpan = document.createElement('span');
+        newSenderSpan.className = 'senderLabel';
+        newSenderSpan.innerText = sender || 'Qweet';
+        element.appendChild(newSenderSpan);
+    }
+    element.dataset.speaker = sender || 'Qweet';
+    element.insertAdjacentHTML('beforeend', formatGeneratedText(text));
+    element.classList.toggle('typing', typing);
 }
 
 // ============================================
-// WEBSOCKET
+// WEBSOCKET HANDLING
 // ============================================
 
 let socket;
 let socketReady = false;
 let pendingPrompt = null;
 let typingMessages = {};
-let currentStatus = "Idle";
+let currentDebateStatus = "Idle";
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text ?? '');
+    return div.innerHTML;
+}
+
+function formatGeneratedText(text) {
+    const escaped = escapeHtml(text);
+    const doubleTokens = [];
+    const withDoubleTokens = escaped.replace(/\*\*([\s\S]+?)\*\*/g, (_, inner) => {
+        const token = `__DOUBLE_TOKEN_${doubleTokens.length}__`;
+        doubleTokens.push(inner);
+        return token;
+    });
+
+    let formatted = withDoubleTokens.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<strong class="inline-strong">$1</strong>');
+
+    doubleTokens.forEach((inner, index) => {
+        formatted = formatted.replace(`__DOUBLE_TOKEN_${index}__`, `<strong class="double-strong">${inner}</strong>`);
+    });
+
+    return formatted.replace(/\n/g, '<br>');
+}
+
+function syncDebateControls(status) {
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+
+    currentDebateStatus = status;
+    setDebateStatus(status);
+
+    if (status === 'Paused') {
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (resumeBtn) resumeBtn.classList.remove('hidden');
+        return;
+    }
+
+    if (status === 'Completed' || status === 'Idle' || status === 'Disconnected') {
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (resumeBtn) resumeBtn.classList.add('hidden');
+        isDebateActive = false;
+        return;
+    }
+
+    if (pauseBtn) pauseBtn.classList.remove('hidden');
+    if (resumeBtn) resumeBtn.classList.add('hidden');
+}
+
+function setDebateStatus(text) {
+    const statusEl = document.getElementById('debateStatus');
+    const iconEl = document.getElementById('debateStatusIcon');
+    if (statusEl) statusEl.textContent = text;
+    if (iconEl) {
+        const normalized = String(text || '').trim();
+        if (normalized === 'searching' || normalized === 'Searching Web' || normalized === 'Searching') {
+            iconEl.src = 'web.gif';
+            iconEl.style.display = 'inline-block';
+        } else if (normalized === 'thinking' || normalized === 'Thinking') {
+            iconEl.src = 'loading.gif';
+            iconEl.style.display = 'inline-block';
+        } else if (normalized === 'debating' || normalized === 'Debating' || normalized === 'Running') {
+            iconEl.src = 'debate.gif';
+            iconEl.style.display = 'inline-block';
+        } else {
+            iconEl.style.display = 'none';
+        }
+    }
+}
 
 function setupWebSocket() {
     if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) {
@@ -274,6 +496,7 @@ function setupWebSocket() {
     }
 
     if (!currentProjectId) {
+        console.error("No project selected");
         window.location.href = 'projects.html';
         return;
     }
@@ -282,13 +505,15 @@ function setupWebSocket() {
     if (authToken) {
         wsUrl += "?token=" + encodeURIComponent(authToken);
     } else {
-        alert("Please log in");
+        alert("Please log in first");
         return;
     }
 
+    console.log("Connecting to WebSocket:", wsUrl);
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
+        console.log("WebSocket connected");
         socketReady = true;
         if (pendingPrompt) {
             socket.send(pendingPrompt);
@@ -298,131 +523,179 @@ function setupWebSocket() {
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        const type = data.type || "message";
+        const eventType = data.type || "message";
         
-        switch (type) {
+        switch (eventType) {
             case "connected":
-                setStatus("Idle");
+                syncDebateControls("Idle");
+                if (data.has_file) {
+                    addMessage("System", "📁 File data loaded.");
+                }
                 if (data.message_limit) {
                     planMessageLimit = data.message_limit;
-                    updateMessageDisplay();
-                }
-                if (data.has_file) {
-                    addMessage("System", "File loaded");
+                    updateMessageUsage();
                 }
                 break;
 
             case "status":
-                setStatus(data.status || "Running");
+                syncDebateControls(data.status || "Running");
+                break;
+            
+            case "web_results":
+                displayWebResults(data);
+                break;
+            
+            case "tool_executing":
+                addMessage("System", `🔧 ${data.tool || 'tool'}: executing`);
                 break;
             
             case "debate_permission":
-                // Qweet wants to debate - show permission dialog
-                pendingDebateRequest = data.message || "Start debate?";
-                showDebatePermission();
+                // Qweet wants to start a debate - show permission dialog
+                showDebatePermission(data.message || "Start debate?");
+                break;
+            
+            case "typing":
+                if (data.is_typing) {
+                    const speaker = data.speaker || "Qweet";
+                    const dots = data.dots || ".";
+                    if (!typingMessages[speaker]) {
+                        addMessage(speaker, dots, "typing");
+                        typingMessages[speaker] = chatContainer.lastElementChild;
+                    } else {
+                        updateMessageElement(typingMessages[speaker], speaker, dots, true);
+                    }
+                }
                 break;
             
             case "message":
-                const speaker = data.speaker || "Qweet";
-                // If debate is active and this is an agent, count it
-                if (isDebateActive && speaker !== "user" && speaker !== "System") {
-                    addDebateMessage(speaker, data.message);
+                const typingElement = typingMessages[data.speaker];
+                if (typingElement) {
+                    updateMessageElement(typingElement, data.speaker, data.message, false);
+                    delete typingMessages[data.speaker];
                 } else {
-                    addMessage(speaker, data.message);
+                    addMessage(data.speaker || "Qweet", data.message, "message");
+                }
+                break;
+
+            case "reasoning":
+                addMessage("Qweet (thinking)", data.message || "", "reasoning");
+                break;
+            
+            case "file_context":
+                if (data.data && data.data !== "No file data") {
+                    addMessage("System", "📁 File data loaded");
                 }
                 break;
             
             case "discussion_complete":
-                setStatus("Completed");
+                syncDebateControls("Completed");
                 isDebateActive = false;
                 addMessage("System", "✅ Debate complete");
                 break;
             
             case "error":
-                addMessage("System", "❌ " + data.message);
+                console.error('Server error:', data.message);
+                addMessage("System", "❌ Error: " + data.message);
                 break;
             
             default:
                 if (data.message) {
-                    addMessage(data.speaker || "Qweet", data.message);
+                    addMessage(data.speaker || "Qweet", data.message, "message");
                 }
                 break;
         }
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
+        console.log("WebSocket closed:", event.code, event.reason);
         socketReady = false;
-        setStatus("Disconnected");
+        if (currentDebateStatus !== "Completed") {
+            syncDebateControls("Disconnected");
+        }
+    };
+
+    socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        addMessage("System", "Connection error occurred.");
     };
 }
 
-function setStatus(text) {
-    const el = document.getElementById('debateStatus');
-    if (el) el.textContent = text;
-    
-    const icon = document.getElementById('debateStatusIcon');
-    if (icon) {
-        if (text === 'Searching' || text === 'searching') {
-            icon.src = 'web.gif';
-            icon.style.display = 'inline-block';
-        } else if (text === 'Thinking' || text === 'thinking') {
-            icon.src = 'loading.gif';
-            icon.style.display = 'inline-block';
-        } else if (text === 'Running' || text === 'debating') {
-            icon.src = 'debate.gif';
-            icon.style.display = 'inline-block';
+function displayWebResults(data) {
+    if (data.results) {
+        let resultText = "🌐 Web Search Results:\n\n";
+        if (typeof data.results === 'object') {
+            Object.entries(data.results).forEach(([query, content]) => {
+                resultText += `Query: "${query}"\n${content}\n\n`;
+            });
         } else {
-            icon.style.display = 'none';
+            resultText += data.results;
         }
+        addMessage("Qweet", resultText, "web_results");
+    }
+    
+    if (data.sources) {
+        displayWebSources(data.sources);
     }
 }
 
-function syncDebateControls(status) {
-    const pauseBtn = document.getElementById('pauseBtn');
-    const resumeBtn = document.getElementById('resumeBtn');
-    
-    setStatus(status);
-    
-    if (status === 'Paused') {
-        pauseBtn.classList.add('hidden');
-        resumeBtn.classList.remove('hidden');
-    } else if (status === 'Running') {
-        pauseBtn.classList.remove('hidden');
-        resumeBtn.classList.add('hidden');
-    } else {
-        pauseBtn.classList.add('hidden');
-        resumeBtn.classList.add('hidden');
+function displayWebSources(sources) {
+    const list = document.getElementById('webSourcesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!sources || sources.length === 0) {
+        list.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
+        return;
     }
+
+    sources.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'webSourceItem';
+        const title = s.title || s.url || 'Source';
+        const url = s.url || '#';
+        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${escapeHtml(title)}</a>`;
+        list.appendChild(item);
+    });
 }
 
 // ============================================
 // SEND PROMPT
 // ============================================
 
-function sendPrompt() {
-    const box = loginPageBox.offsetParent !== null ? loginPageBox : mainAppBox;
+async function sendPrompt() {
+    const box = getActiveBox();
     const prompt = box.value.trim();
+
     if (!prompt) return;
-    
-    // Check main counter
+
+    // Check plan limit
     if (totalMessagesUsed >= planMessageLimit) {
-        alert(`Plan limit reached (${planMessageLimit} messages). Upgrade to continue.`);
+        alert(`You've reached your plan limit of ${planMessageLimit} messages. Please upgrade to continue.`);
         return;
     }
-    
+
+    if (!authToken) {
+        isGuest = true;
+        activateChatUI();
+        addMessage("System", "Guest Mode: Limited to 25 messages.");
+    }
+
     activateChatUI();
     addMessage("user", prompt);
     box.value = "";
-    box.style.width = "420px";
-    box.style.fontSize = "26px";
-    box.style.height = "60px";
     box.classList.remove("active");
-    
+    resetBoxSize(box);
+
     if (!socketReady) {
-        pendingPrompt = JSON.stringify({ type: "user_message", message: prompt });
+        pendingPrompt = JSON.stringify({
+            type: "user_message",
+            message: prompt
+        });
         setupWebSocket();
     } else {
-        socket.send(JSON.stringify({ type: "user_message", message: prompt }));
+        socket.send(JSON.stringify({
+            type: "user_message",
+            message: prompt
+        }));
     }
 }
 
@@ -431,23 +704,30 @@ function sendPrompt() {
 // ============================================
 
 function setupPauseButton() {
-    document.getElementById('pauseBtn').addEventListener('click', () => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'pause' }));
-            syncDebateControls("Paused");
-        }
-    });
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
     
-    document.getElementById('resumeBtn').addEventListener('click', () => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'resume' }));
-            syncDebateControls("Running");
-        }
-    });
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'pause' }));
+                syncDebateControls("Paused");
+            }
+        });
+    }
+    
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'resume' }));
+                syncDebateControls("Running");
+            }
+        });
+    }
 }
 
 // ============================================
-// PROJECT LOADING
+// PROJECT INITIALIZATION
 // ============================================
 
 function loadProjectFromUrl() {
@@ -467,94 +747,138 @@ function loadProjectFromUrl() {
 
 async function loadProjectDetails(projectId) {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    if (!token) {
-        showAccessDenied("Please sign in.");
+    
+    if (!token || !projectId) {
+        showAccessDenied("You must be signed in to open this project.");
         return;
     }
 
     try {
         const response = await fetch(getApiUrl(`/projects/${projectId}`), {
-            headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            }
         });
 
         if (response.status === 401) {
             clearAuthSession();
-            showAccessDenied("Session expired.");
+            showAccessDenied("Session expired. Please sign in again.");
+            return;
+        }
+
+        if (response.status === 403 || response.status === 404) {
+            showAccessDenied("Project not found or access denied.");
             return;
         }
 
         if (!response.ok) {
-            showAccessDenied("Project not found.");
+            showAccessDenied("Unable to load this project.");
             return;
         }
 
         const data = await response.json();
+        console.log("Project loaded:", data);
         
-        document.getElementById('projectName').textContent = `Project: ${data.name || 'Untitled'}`;
-        
-        // Load files
-        const filesList = document.getElementById('uploadedFilesList');
-        if (data.files && data.files.length > 0) {
-            filesList.innerHTML = data.files.map(f => 
-                `<div class="fileItem"><div class="fileName">📄 ${escapeHtml(f.original_name || f.name)}</div></div>`
-            ).join('');
+        const projectNameEl = document.getElementById('projectName');
+        if (projectNameEl && data.name) {
+            projectNameEl.textContent = `Project: ${data.name}`;
         }
+
+        const filesList = document.getElementById('uploadedFilesList');
+        if (filesList && data.files && Array.isArray(data.files)) {
+            if (data.files.length > 0) {
+                filesList.innerHTML = data.files.map(file => {
+                    const label = file.original_name || file.name || "Unnamed file";
+                    return `<div class="fileItem"><div class="fileName">📄 ${escapeHtml(String(label))}</div></div>`;
+                }).join('');
+            } else {
+                filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
+            }
+        }
+
+        const debatePage = document.getElementById("debatePage");
+        if (debatePage) debatePage.classList.add("active");
         
         loginPage.classList.add("hidden");
         mainApp.classList.remove("hidden");
         
         activateChatUI();
         
-        // Load message count from backend
+        // Load message count from backend too (if available)
         if (data.message_count !== undefined) {
             totalMessagesUsed = data.message_count || 0;
-            updateMessageDisplay();
-            saveToStorage();
+            planMessageLimit = data.plan_limit || getPlanLimit();
+            updateMessageUsage();
+            saveMessageCount();
         }
         
-        setStatus("Idle");
+        syncDebateControls("Idle");
         
     } catch (error) {
-        showAccessDenied("Error loading project.");
+        console.error('Error loading project:', error);
+        showAccessDenied("Unable to load this project.");
     }
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = String(text || '');
-    return div.innerHTML;
-}
-
 // ============================================
-// AUTH
+// AUTHENTICATION FUNCTIONS
 // ============================================
 
 function getStoredUser() {
+    const rawUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
+    if (!rawUser) return null;
     try {
-        const raw = localStorage.getItem("currentUser") || localStorage.getItem("user");
-        return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+        return JSON.parse(rawUser);
+    } catch (e) {
+        return { name: rawUser };
+    }
 }
 
 function initializeAuth() {
     const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
+    const tokenFromUrl = params.get("token") || params.get("access_token");
+    const userFromUrl = params.get("user");
     
-    authToken = tokenFromUrl || localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+    const storedToken = tokenFromUrl || localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+    authToken = storedToken;
     
     if (tokenFromUrl) {
         localStorage.setItem("authToken", tokenFromUrl);
         sessionStorage.setItem("authToken", tokenFromUrl);
-        window.history.replaceState({}, document.title, window.location.pathname);
+        try {
+            const parsedUser = JSON.parse(userFromUrl || '{}');
+            currentUser = parsedUser;
+            if (parsedUser) {
+                localStorage.setItem("currentUser", JSON.stringify(parsedUser));
+                sessionStorage.setItem("currentUser", JSON.stringify(parsedUser));
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+            console.error("Failed to parse user data", e);
+        }
+    } else {
+        currentUser = getStoredUser();
     }
     
     if (authToken) {
-        currentUser = getStoredUser();
-        if (currentUser) {
-            userNameEl.textContent = currentUser.name || "User";
+        if (!currentUser) {
+            const storedUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                } catch (e) {
+                    currentUser = { name: storedUser };
+                }
+            }
         }
         loginPage.classList.add("hidden");
         mainApp.classList.remove("hidden");
+        if (currentUser) {
+            userNameEl.textContent = currentUser.name || "User";
+        }
         planMessageLimit = getPlanLimit();
     } else {
         showLoginPage();
@@ -562,70 +886,67 @@ function initializeAuth() {
 }
 
 function showLoginPage() {
+    hideAccessDenied();
     loginPage.classList.remove("hidden");
     mainApp.classList.add("hidden");
-    document.getElementById("debatePage").classList.remove("active");
+    const debatePage = document.getElementById("debatePage");
+    const historyPage = document.getElementById("historyPage");
+    const detailPage = document.getElementById("debateDetailPage");
+    if (debatePage) debatePage.classList.remove("active");
+    if (historyPage) historyPage.classList.remove("active");
+    if (detailPage) detailPage.classList.remove("active");
 }
 
-function showAccessDenied(msg) {
-    document.getElementById("accessDeniedMessage").textContent = msg;
-    document.getElementById("accessDenied").classList.remove("hidden");
+function showMainApp() {
+    hideAccessDenied();
     loginPage.classList.add("hidden");
-    mainApp.classList.add("hidden");
+    if (mainApp) mainApp.classList.remove("hidden");
+    const debatePage = document.getElementById("debatePage");
+    const historyPage = document.getElementById("historyPage");
+    const detailPage = document.getElementById("debateDetailPage");
+    if (debatePage) debatePage.classList.add("active");
+    if (historyPage) historyPage.classList.remove("active");
+    if (detailPage) detailPage.classList.remove("active");
+    if (currentUser) {
+        userNameEl.textContent = currentUser.name || "User";
+    }
+}
+
+function showAccessDenied(message) {
+    const panel = document.getElementById("accessDenied");
+    const messageEl = document.getElementById("accessDeniedMessage");
+    if (panel) panel.classList.remove("hidden");
+    if (messageEl && message) messageEl.textContent = message;
+    if (loginPage) loginPage.classList.add("hidden");
+    if (mainApp) mainApp.classList.add("hidden");
+}
+
+function hideAccessDenied() {
+    const panel = document.getElementById("accessDenied");
+    if (panel) panel.classList.add("hidden");
 }
 
 function logout() {
     authToken = null;
     currentUser = null;
+    isGuest = false;
     clearAuthSession();
+    showLoginPage();
     location.reload();
 }
 
 logoutBtn.addEventListener("click", logout);
 
 // ============================================
-// TEXTAREA RESIZE
+// INITIALIZATION
 // ============================================
-
-[loginPageBox, mainAppBox].forEach(box => {
-    box.addEventListener("input", () => {
-        if (resizeFrame) return;
-        resizeFrame = requestAnimationFrame(() => {
-            resizeFrame = 0;
-            const val = box.value;
-            if (val.length > 0) {
-                box.classList.add("active");
-                box.style.height = "auto";
-                box.style.height = Math.min(box.scrollHeight, 250) + "px";
-                const width = Math.min(900, Math.max(420, Math.ceil((val.length * 26 * 0.58 + 40) / 40) * 40));
-                box.style.width = width + "px";
-                box.style.fontSize = Math.max(16, 26 - Math.floor((width - 420) / 40)) + "px";
-            } else {
-                box.classList.remove("active");
-                box.style.width = "420px";
-                box.style.fontSize = "26px";
-                box.style.height = "60px";
-            }
-        });
-    });
-    
-    box.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendPrompt();
-        }
-    });
-});
 
 [loginPageBtn, mainAppBtn].forEach(btn => {
     btn.addEventListener("click", sendPrompt);
 });
 
-// ============================================
-// INIT
-// ============================================
-
 document.addEventListener("DOMContentLoaded", function() {
+    console.log("DOM Content Loaded");
     initializeAuth();
     loadProjectFromUrl();
     setupPauseButton();
