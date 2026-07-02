@@ -23,16 +23,18 @@ camera.lookAt(0, 5, 0);
 const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
-renderer.setSize(
-    1400,900
-);
+const canvasContainer = document.getElementById('threeCanvasContainer');
+const initialWidth = Math.max(canvasContainer.clientWidth, 800);
+const initialHeight = Math.max(canvasContainer.clientHeight, 600);
+renderer.setSize(initialWidth, initialHeight);
 renderer.shadowMap.enabled = true;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
-document.body.appendChild(renderer.domElement);
+canvasContainer.appendChild(renderer.domElement);
 
 // Effect Composer with Bloom
 const composer = new EffectComposer(renderer);
+composer.setSize(initialWidth, initialHeight);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
@@ -455,8 +457,12 @@ animate();
 
 // Resize
 window.addEventListener("resize", () => {
-    camera.aspect = (window.innerWidth/2) / (window.innerHeight/2);
+    const width = Math.max(canvasContainer.clientWidth, 800);
+    const height = Math.max(canvasContainer.clientHeight, 600);
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+    composer.setSize(width, height);
 });
 
 // ====================
