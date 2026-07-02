@@ -44,7 +44,6 @@ function initializeAuth() {
                 localStorage.setItem("currentUser", JSON.stringify(parsedUser));
                 sessionStorage.setItem("currentUser", JSON.stringify(parsedUser));
             }
-            // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {
             console.error("Failed to parse user data", e);
@@ -65,7 +64,15 @@ function initializeAuth() {
                 }
             }
         }
-        showMainApp();
+        // FIX: Don't call showMainApp() here - let loadProjectFromUrl handle it
+        // Just ensure loginPage is hidden
+        loginPage.classList.add("hidden");
+        mainApp.classList.remove("hidden");
+        if (currentUser) {
+            userNameEl.textContent = currentUser.name || "User";
+        } else if (isGuest) {
+            userNameEl.textContent = "Guest User";
+        }
     } else {
         showLoginPage();
     }
@@ -75,12 +82,26 @@ function showLoginPage() {
     hideAccessDenied();
     loginPage.classList.remove("hidden");
     mainApp.classList.add("hidden");
+    const debatePage = document.getElementById("debatePage");
+    const historyPage = document.getElementById("historyPage");
+    const detailPage = document.getElementById("debateDetailPage");
+    if (debatePage) debatePage.classList.remove("active");
+    if (historyPage) historyPage.classList.remove("active");
+    if (detailPage) detailPage.classList.remove("active");
 }
 
 function showMainApp() {
     hideAccessDenied();
     loginPage.classList.add("hidden");
-    mainApp.classList.remove("hidden");
+    if (mainApp) {
+        mainApp.classList.remove("hidden");
+    }
+    const debatePage = document.getElementById("debatePage");
+    const historyPage = document.getElementById("historyPage");
+    const detailPage = document.getElementById("debateDetailPage");
+    if (debatePage) debatePage.classList.add("active");
+    if (historyPage) historyPage.classList.remove("active");
+    if (detailPage) detailPage.classList.remove("active");
     if (currentUser) {
         userNameEl.textContent = currentUser.name || "User";
     } else if (isGuest) {
@@ -377,6 +398,8 @@ function activateChatUI() {
     chatStarted = true;
     loginPage.classList.add("hidden");
     mainApp.classList.remove("hidden");
+    const debatePage = document.getElementById("debatePage");
+    if (debatePage) debatePage.classList.add("active");
     document.body.classList.add("chat-mode");
     chatContainer.classList.remove("hidden");
 
@@ -883,7 +906,7 @@ function loadProjectFromUrl() {
 }
 
 async function loadProjectDetails(projectId) {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     
     if (!token || !projectId) {
         console.log("No token or projectId, blocking project load");
@@ -947,6 +970,20 @@ async function loadProjectDetails(projectId) {
             }
         }
 
+        // FIX: Make sure the debate page is active
+        const debatePage = document.getElementById("debatePage");
+        if (debatePage) {
+            debatePage.classList.add("active");
+        }
+        
+        // Make sure login page is hidden
+        loginPage.classList.add("hidden");
+        
+        // Make sure main app is visible
+        mainApp.classList.remove("hidden");
+        
+        // Activate chat UI
+        activateChatUI();
         currentProjectState = { hasPrompt: Boolean(data.has_prompt) };
         if (currentProjectState.hasPrompt) {
             restoreProjectHistory(data);
@@ -1025,7 +1062,9 @@ function destroyPromptSettings() {
 
 document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM Content Loaded");
+    // First authenticate
     initializeAuth();
+    // Then load project (this will also activate the UI)
     loadProjectFromUrl();
     setupAgentToggles();
     setupPauseButton();

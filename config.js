@@ -1,7 +1,11 @@
 // Configuration for API endpoints
 const API_CONFIG = {
-    BASE_URL: "https://paralyzingly-unspoken-dwayne.ngrok-free.dev",
-    WS_URL: "wss://paralyzingly-unspoken-dwayne.ngrok-free.dev"
+    BASE_URL: window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost')
+        ? window.location.origin
+        : "https://paralyzingly-unspoken-dwayne.ngrok-free.dev",
+    WS_URL: window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost')
+        ? `ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}`
+        : "wss://paralyzingly-unspoken-dwayne.ngrok-free.dev"
 };
 
 // Helper function to build API URLs
