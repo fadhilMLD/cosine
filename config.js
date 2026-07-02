@@ -25,6 +25,9 @@ function clearAuthSession() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('currentUser');
     localStorage.removeItem('currentProjectId');
     localStorage.removeItem('registeredEmail');
 }
@@ -53,6 +56,11 @@ function setAuthSession(token, user) {
     clearAuthSession();
     localStorage.setItem('authToken', token);
     localStorage.setItem('user', JSON.stringify(user));
+    sessionStorage.setItem('authToken', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
+    if (user) {
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
 }
 
 console.log('🔧 API Config:', {

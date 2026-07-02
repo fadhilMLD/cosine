@@ -12,7 +12,7 @@ let currentUser = null;
 let isGuest = false;
 
 function getStoredUser() {
-    const rawUser = localStorage.getItem("currentUser") || localStorage.getItem("user");
+    const rawUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
     if (!rawUser) {
         return null;
     }
@@ -21,23 +21,29 @@ function getStoredUser() {
         return JSON.parse(rawUser);
     } catch (e) {
         console.error("Failed to parse stored user", e);
-        return null;
+        return { name: rawUser };
     }
 }
 
 // Check if user is already logged in (from URL params or localStorage)
 function initializeAuth() {
     const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
+    const tokenFromUrl = params.get("token") || params.get("access_token");
     const userFromUrl = params.get("user");
     
-    authToken = tokenFromUrl || localStorage.getItem("authToken");
+    const storedToken = tokenFromUrl || localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+    authToken = storedToken;
     
     if (tokenFromUrl) {
         localStorage.setItem("authToken", tokenFromUrl);
+        sessionStorage.setItem("authToken", tokenFromUrl);
         try {
-            currentUser = JSON.parse(userFromUrl);
-            localStorage.setItem("currentUser", userFromUrl);
+            const parsedUser = JSON.parse(userFromUrl || '{}');
+            currentUser = parsedUser;
+            if (parsedUser) {
+                localStorage.setItem("currentUser", JSON.stringify(parsedUser));
+                sessionStorage.setItem("currentUser", JSON.stringify(parsedUser));
+            }
             // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {
@@ -48,7 +54,17 @@ function initializeAuth() {
     }
     
     // Show main app if authenticated or in test mode, otherwise show login page
-    if (authToken && currentUser) {
+    if (authToken) {
+        if (!currentUser) {
+            const storedUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                } catch (e) {
+                    currentUser = { name: storedUser };
+                }
+            }
+        }
         showMainApp();
     } else {
         showLoginPage();

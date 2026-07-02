@@ -828,8 +828,17 @@
         }
 
         function openProject(projectId) {
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const user = localStorage.getItem('user') || sessionStorage.getItem('user') || localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
             localStorage.setItem('currentProjectId', projectId);
-            window.location.href = `/logged.html#/project/${projectId}`;
+            if (token) {
+                sessionStorage.setItem('authToken', token);
+            }
+            if (user) {
+                sessionStorage.setItem('user', user);
+                sessionStorage.setItem('currentUser', user);
+            }
+            window.location.href = `logged.html#/project/${projectId}`;
         }
 
         async function deleteProject(projectId, projectName) {
