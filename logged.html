@@ -66,11 +66,20 @@
 <div id="permissionModal" class="permission-modal-overlay">
     <div class="permission-modal">
         <div class="permission-header">
-            <h3 id="permissionTitle">Qweet wants to analyze files</h3>
-            <p class="permission-reason" id="permissionReason">This will help provide better insights for your request.</p>
+            <h3 id="permissionTitle">Qweet wants to start a debate</h3>
+            <p class="permission-reason" id="permissionReason">The debate will use multiple agents to analyze your request.</p>
         </div>
-        <div class="permission-details" id="permissionDetails"></div>
-        <div class="permission-options" id="permissionOptions"></div>
+        <div class="permission-details" id="permissionDetails">
+            <div class="form-group">
+                <label for="debateMessageCount">Number of debate messages</label>
+                <input type="number" id="debateMessageCount" value="12" min="3" max="80">
+                <p style="color: var(--text3); font-size: 12px; margin-top: 8px;">Each agent response counts as one message. Plan limit: <span id="planLimitDisplay">25</span> messages total.</p>
+            </div>
+        </div>
+        <div class="permission-options" id="permissionOptions">
+            <button class="permission-btn" onclick="cancelDebate()">Cancel</button>
+            <button class="permission-btn primary" onclick="startDebate()">Start Debate</button>
+        </div>
     </div>
 </div>
 
@@ -99,12 +108,12 @@
 <div id="uploadedFilesList" class="filesList">
 <p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>
 </div>
-	<div class="panelHeader" style="border-top:1px solid var(--border); margin-top:8px;">
-		<h3>Web Sources</h3>
-	</div>
-	<div id="webSourcesList" class="filesList" style="padding:8px 12px 18px;">
-		<p style="color: var(--text3); font-size: 13px;">No web sources yet</p>
-	</div>
+<div class="panelHeader" style="border-top:1px solid var(--border); margin-top:8px;">
+<h3>Web Sources</h3>
+</div>
+<div id="webSourcesList" class="filesList" style="padding:8px 12px 18px;">
+<p style="color: var(--text3); font-size: 13px;">No web sources yet</p>
+</div>
 </div>
 
 <!-- CENTER: MAIN INTERFACE -->
@@ -128,20 +137,6 @@
 <div class="rightPanel">
 <div class="panelCard">
 <div class="panelHeader">
-<h3>Debate Settings</h3>
-</div>
-<div class="statusContent">
-<div class="limitSliderRow">
-<span class="limitSliderLabel">Max debate messages</span>
-<span id="messageCount" class="limitSliderValue">12</span>
-</div>
-<input id="messageSlider" class="messageSlider" type="range" min="3" max="80" step="1" value="12">
-<p class="limitHint">Messages used: <span id="messagesUsed">0</span> / <span id="messagesTotal">12</span></p>
-</div>
-</div>
-
-<div class="panelCard">
-<div class="panelHeader">
 <h3>Debate Status</h3>
 </div>
 <div class="statusContent">
@@ -149,7 +144,7 @@
   <img id="debateStatusIcon" class="statusIcon" src="loading.gif" alt="status icon">
   <div id="debateStatus" class="statusValue">Idle</div>
 </div>
-<div id="messageLimit" class="messageLimit hidden"></div>
+<div id="messageUsage" class="messageLimit">Messages: 0 / 25</div>
 </div>
 </div>
 </div>
