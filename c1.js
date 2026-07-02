@@ -25,7 +25,6 @@ function getStoredUser() {
     }
 }
 
-// Check if user is already logged in (from URL params or localStorage)
 function initializeAuth() {
     const params = new URLSearchParams(window.location.search);
     const tokenFromUrl = params.get("token") || params.get("access_token");
@@ -52,7 +51,6 @@ function initializeAuth() {
         currentUser = getStoredUser();
     }
     
-    // Show main app if authenticated or in test mode, otherwise show login page
     if (authToken) {
         if (!currentUser) {
             const storedUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
@@ -64,8 +62,6 @@ function initializeAuth() {
                 }
             }
         }
-        // FIX: Don't call showMainApp() here - let loadProjectFromUrl handle it
-        // Just ensure loginPage is hidden
         loginPage.classList.add("hidden");
         mainApp.classList.remove("hidden");
         if (currentUser) {
@@ -133,50 +129,6 @@ function hideAccessDenied() {
     }
 }
 
-function handleCredentialResponse(response) {
-    const token = response.credential;
-    
-    if (!token) {
-        console.error("No credential received from Google");
-        alert("Failed to get credentials from Google. Please try again.");
-        return;
-    }
-    
-    console.log("Google token received, sending to server...");
-    
-    fetch(getApiUrl("/auth/google"), {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true"
-        },
-        body: JSON.stringify({ token })
-    })
-    .then(res => {
-        if (!res.ok) {
-            return res.text().then(text => {
-                throw new Error(`HTTP ${res.status}: ${text}`);
-            });
-        }
-        return res.json();
-    })
-    .then(data => {
-        if (data.access_token) {
-            authToken = data.access_token;
-            currentUser = data.user;
-            localStorage.setItem("authToken", authToken);
-            localStorage.setItem("currentUser", JSON.stringify(currentUser));
-            showMainApp();
-        } else {
-            alert("Authentication failed: No token in response");
-        }
-    })
-    .catch(err => {
-        console.error("Auth error:", err);
-        alert("Authentication error: " + err.message);
-    });
-}
-
 function logout() {
     authToken = null;
     currentUser = null;
@@ -197,6 +149,86 @@ const mainAppBox = document.querySelector(".main textarea#promptBox");
 const loginPageBtn = document.querySelector(".loginPage button#sendBtn");
 const mainAppBtn = document.querySelector(".main button#sendBtn");
 const chatContainer = document.getElementById("chatContainer");
+
+// ============================================
+// MESSAGE LIMIT SETUP
+// ============================================
+
+let debateMessageLimit = 12;
+let debateMessagesUsed = 0;
+let planMessageLimit = 25; // Default for Free plan
+let planLimits = {
+    "Free": 25,
+    "Pro": 40,
+    "Master": 80
+};
+
+// Get user's plan
+function getUserPlan() {
+    if (currentUser && currentUser.plan) {
+        return currentUser.plan;
+    }
+    return "Free";
+}
+
+function getPlanLimit() {
+    const plan = getUserPlan();
+    return planLimits[plan] || 25;
+}
+
+function setupMessageSlider() {
+    const slider = document.getElementById('messageSlider');
+    const countDisplay = document.getElementById('messageCount');
+    const messagesUsed = document.getElementById('messagesUsed');
+    const messagesTotal = document.getElementById('messagesTotal');
+    
+    if (!slider) return;
+    
+    // Set max based on plan
+    planMessageLimit = getPlanLimit();
+    slider.max = Math.min(planMessageLimit, 80);
+    
+    // Set default value
+    debateMessageLimit = Math.min(12, planMessageLimit);
+    slider.value = debateMessageLimit;
+    countDisplay.textContent = debateMessageLimit;
+    messagesTotal.textContent = debateMessageLimit;
+    messagesUsed.textContent = 0;
+    
+    slider.addEventListener('input', function() {
+        if (debateMessagesUsed > 0) {
+            // Don't allow changing after debate started
+            this.value = debateMessageLimit;
+            return;
+        }
+        debateMessageLimit = parseInt(this.value);
+        countDisplay.textContent = debateMessageLimit;
+        messagesTotal.textContent = debateMessageLimit;
+        messagesUsed.textContent = 0;
+    });
+}
+
+function updateMessageUsage() {
+    const messagesUsed = document.getElementById('messagesUsed');
+    const messagesTotal = document.getElementById('messagesTotal');
+    if (messagesUsed) messagesUsed.textContent = debateMessagesUsed;
+    if (messagesTotal) messagesTotal.textContent = debateMessageLimit;
+    
+    const limitEl = document.getElementById('messageLimit');
+    if (limitEl) {
+        if (debateMessagesUsed >= debateMessageLimit) {
+            limitEl.textContent = `⚠️ Limit reached (${debateMessagesUsed}/${debateMessageLimit})`;
+            limitEl.classList.add('warning');
+        } else if (debateMessagesUsed >= debateMessageLimit * 0.8) {
+            limitEl.textContent = `⚠️ ${debateMessagesUsed}/${debateMessageLimit} messages used`;
+            limitEl.classList.add('warning');
+        } else {
+            limitEl.textContent = `${debateMessagesUsed}/${debateMessageLimit} messages used`;
+            limitEl.classList.remove('warning');
+        }
+        limitEl.classList.remove('hidden');
+    }
+}
 
 // ============================================
 // MESSAGE PERSISTENCE
@@ -239,7 +271,6 @@ function loadMessagesFromStorage() {
             return false;
         }
         
-        // Clear container but keep it visible
         chatContainer.innerHTML = "";
         
         messages.forEach(msg => {
@@ -278,7 +309,6 @@ function loadMessagesFromStorage() {
             chatContainer.appendChild(msg_elem);
         });
         
-        // Scroll to bottom
         chatContainer.scrollTop = chatContainer.scrollHeight;
         
         return messages.length > 0;
@@ -407,36 +437,42 @@ function activateChatUI() {
     if (chatStarted) return;
     chatStarted = true;
     
-    // Hide login page
     loginPage.classList.add("hidden");
-    
-    // Show main app
     mainApp.classList.remove("hidden");
     
-    // Activate debate page
     const debatePage = document.getElementById("debatePage");
     if (debatePage) {
         debatePage.classList.add("active");
     }
     
-    // Add chat mode class to body
     document.body.classList.add("chat-mode");
     
-    // Make chat container visible
     if (chatContainer) {
         chatContainer.classList.remove("hidden");
-        // Ensure it has proper display
         chatContainer.style.display = "flex";
     }
-    
-    // Load messages from storage
+
     const hasMessages = loadMessagesFromStorage();
     if (hasMessages) {
         console.log("Loaded previous chat history from storage");
     }
+    
+    // Setup message slider
+    setupMessageSlider();
+    updateMessageUsage();
 }
 
 function addMessage(sender, text, messageType = "message") {
+    // Check message limit before adding
+    if (sender !== "user" && sender !== "System") {
+        if (debateMessagesUsed >= debateMessageLimit) {
+            addMessage("System", `⚠️ Debate limit reached (${debateMessageLimit} messages). Please start a new debate.`);
+            return;
+        }
+        debateMessagesUsed++;
+        updateMessageUsage();
+    }
+    
     const msg = document.createElement("div");
     const senderSpan = document.createElement("span");
     senderSpan.className = "senderLabel";
@@ -453,12 +489,9 @@ function addMessage(sender, text, messageType = "message") {
     } else if (sender === "Summary") {
         senderClass = "summaryMsg";
         senderName = "Summary";
-    } else if (sender === "Qweet" || sender === "QWEET") {
-        senderClass = "qweetMsg";
-        senderName = "Qweet";
     } else {
         senderClass = "agentMsg";
-        senderName = sender || "Agent";
+        senderName = sender || "Qweet";
     }
 
     senderSpan.innerText = senderName;
@@ -472,15 +505,12 @@ function addMessage(sender, text, messageType = "message") {
         msg.classList.add("typing");
     }
 
-    // Make sure chat container exists and is visible
     if (!chatContainer) {
         console.error("Chat container not found!");
         return;
     }
     
     chatContainer.appendChild(msg);
-    
-    // Scroll to bottom
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
     saveMessageToStorage(sender, text, messageType);
@@ -517,10 +547,8 @@ let pendingPrompt = null;
 let typingMessages = {};
 let isDebateActive = false;
 let currentMessageCount = 0;
-let messageLimit = 0;
 let isPaused = false;
 let currentProjectState = { hasPrompt: false };
-let promptSettingsLocked = false;
 let currentDebateStatus = "Idle";
 
 function escapeHtml(text) {
@@ -592,17 +620,6 @@ function setDebateStatus(text) {
     }
 }
 
-function getSelectedAgents() {
-    const mapping = {
-        cfo: "CFO Agent",
-        ops: "Operations Agent",
-        mkt: "Market Agent",
-        dev: "Devil's Advocate"
-    };
-
-    return Array.from(activeAgents).map(key => mapping[key]).filter(Boolean);
-}
-
 function setupWebSocket() {
     if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) {
         return;
@@ -640,20 +657,26 @@ function setupWebSocket() {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
-        if (data.message_count !== undefined) {
-            currentMessageCount = data.message_count;
-            messageLimit = data.message_limit || messageLimit;
-            updateMessageLimit();
-        }
-        
         const eventType = data.type || "message";
         
         switch (eventType) {
             case "connected":
-                // Connection established with file info
                 syncDebateControls("Idle");
                 if (data.has_file) {
                     addMessage("System", "📁 File data loaded. You can ask questions about your data.");
+                }
+                if (data.message_limit) {
+                    planMessageLimit = data.message_limit;
+                    const slider = document.getElementById('messageSlider');
+                    if (slider) {
+                        slider.max = Math.min(planMessageLimit, 80);
+                        if (debateMessageLimit > planMessageLimit) {
+                            debateMessageLimit = planMessageLimit;
+                            slider.value = debateMessageLimit;
+                            document.getElementById('messageCount').textContent = debateMessageLimit;
+                            document.getElementById('messagesTotal').textContent = debateMessageLimit;
+                        }
+                    }
                 }
                 break;
 
@@ -662,16 +685,12 @@ function setupWebSocket() {
                 break;
             
             case "web_results":
-                // Display web search results
                 displayWebResults(data);
                 break;
             
             case "tool_executing":
-                // Show tool execution status
                 const toolName = data.tool || "tool";
-                const toolStatus = data.status || "executing";
-                addMessage("System", `🔧 ${toolName}: ${toolStatus}`);
-                syncDebateControls(toolStatus);
+                addMessage("System", `🔧 ${toolName}: executing`);
                 break;
             
             case "typing":
@@ -699,12 +718,10 @@ function setupWebSocket() {
                 break;
 
             case "reasoning":
-                // Show reasoning in a collapsible format
                 addMessage("Qweet (thinking)", data.message || "", "reasoning");
                 break;
             
             case "file_context":
-                // Display file data
                 displayFileContext(data);
                 break;
             
@@ -723,7 +740,6 @@ function setupWebSocket() {
                 break;
             
             default:
-                // Unknown message type - try to display as message
                 if (data.message) {
                     addMessage(data.speaker || "Qweet", data.message, "message");
                 }
@@ -764,7 +780,6 @@ function setupWebSocket() {
 }
 
 function displayWebResults(data) {
-    // Show web results in the chat
     if (data.results) {
         let resultText = "🌐 Web Search Results:\n\n";
         if (typeof data.results === 'object') {
@@ -777,7 +792,6 @@ function displayWebResults(data) {
         addMessage("Qweet", resultText, "web_results");
     }
     
-    // Update web sources panel
     if (data.sources) {
         displayWebSources(data.sources);
     }
@@ -786,7 +800,6 @@ function displayWebResults(data) {
 function displayFileContext(data) {
     if (data.data && data.data !== "No file data") {
         addMessage("System", "📁 File data loaded successfully");
-        // Show a preview of the data
         try {
             const jsonData = JSON.parse(data.data);
             if (jsonData.dataset) {
@@ -794,7 +807,6 @@ function displayFileContext(data) {
                 addMessage("Qweet", preview, "file_preview");
             }
         } catch (e) {
-            // Not JSON, just show raw preview
             const preview = data.data.substring(0, 200) + "...";
             addMessage("Qweet", `📁 File data: ${preview}`, "file_preview");
         }
@@ -803,25 +815,23 @@ function displayFileContext(data) {
     }
 }
 
-function updateMessageLimit() {
-    const limitEl = document.getElementById('messageLimit');
-    if (!limitEl || !isDebateActive) return;
-    
-    if (currentMessageCount >= messageLimit) {
-        limitEl.textContent = ` ⚠️ Limit reached (${currentMessageCount}/${messageLimit})`;
-        limitEl.classList.add('warning');
-    } else if (currentMessageCount >= messageLimit * 0.8) {
-        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit} (Approaching limit)`;
-        limitEl.classList.remove('warning');
-        limitEl.classList.add('warning');
-    } else {
-        limitEl.textContent = `Messages: ${currentMessageCount}/${messageLimit}`;
-        limitEl.classList.remove('warning');
+function displayWebSources(sources) {
+    const list = document.getElementById('webSourcesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!sources || sources.length === 0) {
+        list.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
+        return;
     }
-    
-    if (isDebateActive) {
-        limitEl.classList.remove('hidden');
-    }
+
+    sources.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'webSourceItem';
+        const title = s.title || s.url || 'Source';
+        const url = s.url || '#';
+        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${escapeHtml(title)}</a>`;
+        list.appendChild(item);
+    });
 }
 
 // ============================================
@@ -834,6 +844,16 @@ async function sendPrompt() {
 
     if (!prompt) {
         return;
+    }
+
+    // Reset debate message counter if starting fresh
+    if (debateMessagesUsed >= debateMessageLimit) {
+        if (!confirm("Debate limit reached. Start a new debate? This will clear the chat.")) {
+            return;
+        }
+        clearChatHistory();
+        debateMessagesUsed = 0;
+        updateMessageUsage();
     }
 
     if (!authToken) {
@@ -851,14 +871,16 @@ async function sendPrompt() {
     if (!socketReady) {
         const messageData = JSON.stringify({
             type: "user_message",
-            message: prompt
+            message: prompt,
+            message_limit: debateMessageLimit
         });
         pendingPrompt = messageData;
         setupWebSocket();
     } else {
         socket.send(JSON.stringify({
             type: "user_message",
-            message: prompt
+            message: prompt,
+            message_limit: debateMessageLimit
         }));
     }
 }
@@ -889,29 +911,6 @@ function setupPauseButton() {
                 syncDebateControls("Running");
             }
         });
-    }
-}
-
-function setupAgentToggles() {
-    const agentButtons = document.querySelectorAll('.agent-toggle');
-    agentButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            toggleAgent(this);
-        });
-    });
-}
-
-var activeAgents = new Set(['cfo', 'ops', 'mkt', 'dev']);
-
-function toggleAgent(btn) {
-    const agent = btn.dataset.agent;
-    if (activeAgents.has(agent)) {
-        if (activeAgents.size === 1) return;
-        activeAgents.delete(agent);
-        btn.className = 'agent-toggle';
-    } else {
-        activeAgents.add(agent);
-        btn.className = `agent-toggle active-${agent}`;
     }
 }
 
@@ -988,7 +987,6 @@ async function loadProjectDetails(projectId) {
             projectNameEl.textContent = `Project: ${data.name}`;
         }
 
-        // Populate uploaded files list
         const filesList = document.getElementById('uploadedFilesList');
         if (filesList && data.files && Array.isArray(data.files)) {
             if (data.files.length > 0) {
@@ -1005,19 +1003,14 @@ async function loadProjectDetails(projectId) {
             }
         }
 
-        // FIX: Make sure the debate page is active
         const debatePage = document.getElementById("debatePage");
         if (debatePage) {
             debatePage.classList.add("active");
         }
         
-        // Make sure login page is hidden
         loginPage.classList.add("hidden");
-        
-        // Make sure main app is visible
         mainApp.classList.remove("hidden");
         
-        // Activate chat UI
         activateChatUI();
         currentProjectState = { hasPrompt: Boolean(data.has_prompt) };
         if (currentProjectState.hasPrompt) {
@@ -1052,39 +1045,6 @@ function restoreProjectHistory(projectData) {
     }
 
     syncDebateControls("Completed");
-    destroyPromptSettings();
-}
-
-// ============================================
-// DISPLAY HELPERS
-// ============================================
-
-function displayWebSources(sources) {
-    const list = document.getElementById('webSourcesList');
-    if (!list) return;
-    list.innerHTML = '';
-    if (!sources || sources.length === 0) {
-        list.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No web sources yet</p>';
-        return;
-    }
-
-    sources.forEach(s => {
-        const item = document.createElement('div');
-        item.className = 'webSourceItem';
-        const title = s.title || s.url || 'Source';
-        const url = s.url || '#';
-        item.innerHTML = `<a href="${url}" target="_blank" rel="noreferrer noopener">${escapeHtml(title)}</a>`;
-        list.appendChild(item);
-    });
-}
-
-function destroyPromptSettings() {
-    if (promptSettingsLocked) return;
-    const generationCard = document.getElementById('generationLimitCard');
-    if (generationCard) {
-        generationCard.remove();
-    }
-    promptSettingsLocked = true;
 }
 
 // ============================================
@@ -1097,10 +1057,7 @@ function destroyPromptSettings() {
 
 document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM Content Loaded");
-    // First authenticate
     initializeAuth();
-    // Then load project (this will also activate the UI)
     loadProjectFromUrl();
-    setupAgentToggles();
     setupPauseButton();
 });

@@ -124,46 +124,19 @@
 </div>
 </div>
 
-<!-- RIGHT PANEL: SUMMARY + AGENTS + STATUS -->
+<!-- RIGHT PANEL: DEBATE STATUS ONLY -->
 <div class="rightPanel">
-<div class="panelCard" id="generationLimitCard">
+<div class="panelCard">
 <div class="panelHeader">
-<h3>Generation limit</h3>
+<h3>Debate Settings</h3>
 </div>
 <div class="statusContent">
 <div class="limitSliderRow">
-<span class="limitSliderLabel">Messages before lock</span>
-<span id="messageCount" class="limitSliderValue">5</span>
+<span class="limitSliderLabel">Max debate messages</span>
+<span id="messageCount" class="limitSliderValue">12</span>
 </div>
-<input id="messageSlider" class="messageSlider" type="range" min="3" max="80" step="1" value="5">
-<p class="limitHint">This limit is locked after the first prompt.</p>
-</div>
-</div>
-
-<div class="panelCard">
-<div class="panelHeader">
-<h3>Summary</h3>
-</div>
-<div id="summarySection" class="summarySection hidden">
-<div class="summaryContent">
-<div id="summaryList" class="summaryList"></div>
-</div>
-</div>
-</div>
-
-<div class="panelCard">
-<div class="panelHeader">
-<h3>Active agents</h3>
-</div>
-<div id="agentSelectionPanel" class="agentSelectionPanel">
-<div class="agentPanelContent">
-<div class="agents-select">
-<button class="agent-toggle active-cfo" data-agent="cfo">CFO</button>
-<button class="agent-toggle active-ops" data-agent="ops">Operations</button>
-<button class="agent-toggle active-mkt" data-agent="mkt">Market</button>
-<button class="agent-toggle active-dev" data-agent="dev">Devil's Advocate</button>
-</div>
-</div>
+<input id="messageSlider" class="messageSlider" type="range" min="3" max="80" step="1" value="12">
+<p class="limitHint">Messages used: <span id="messagesUsed">0</span> / <span id="messagesTotal">12</span></p>
 </div>
 </div>
 
