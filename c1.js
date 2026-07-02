@@ -234,6 +234,12 @@ function loadMessagesFromStorage() {
         const storageKey = getChatStorageKey();
         const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
         
+        if (!chatContainer) {
+            console.error("Chat container not found!");
+            return false;
+        }
+        
+        // Clear container but keep it visible
         chatContainer.innerHTML = "";
         
         messages.forEach(msg => {
@@ -250,6 +256,9 @@ function loadMessagesFromStorage() {
             } else if (msg.sender === "System") {
                 senderClass = "systemMsg";
                 senderName = "System";
+            } else if (msg.sender === "Summary") {
+                senderClass = "summaryMsg";
+                senderName = "Summary";
             } else {
                 senderClass = "agentMsg";
                 senderName = msg.sender || "Qweet";
@@ -257,7 +266,7 @@ function loadMessagesFromStorage() {
 
             senderSpan.innerText = senderName;
             msg_elem.className = senderClass;
-            msg_elem.dataset.messageType = msg.messageType;
+            msg_elem.dataset.messageType = msg.messageType || "message";
             msg_elem.dataset.speaker = msg.sender;
             msg_elem.innerHTML = formatGeneratedText(msg.text);
             msg_elem.prepend(senderSpan);
@@ -269,7 +278,8 @@ function loadMessagesFromStorage() {
             chatContainer.appendChild(msg_elem);
         });
         
-        window.scrollTo(0, document.body.scrollHeight);
+        // Scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
         
         return messages.length > 0;
     } catch (e) {
@@ -396,13 +406,30 @@ function queueBoxLayout(box) {
 function activateChatUI() {
     if (chatStarted) return;
     chatStarted = true;
+    
+    // Hide login page
     loginPage.classList.add("hidden");
+    
+    // Show main app
     mainApp.classList.remove("hidden");
+    
+    // Activate debate page
     const debatePage = document.getElementById("debatePage");
-    if (debatePage) debatePage.classList.add("active");
+    if (debatePage) {
+        debatePage.classList.add("active");
+    }
+    
+    // Add chat mode class to body
     document.body.classList.add("chat-mode");
-    chatContainer.classList.remove("hidden");
-
+    
+    // Make chat container visible
+    if (chatContainer) {
+        chatContainer.classList.remove("hidden");
+        // Ensure it has proper display
+        chatContainer.style.display = "flex";
+    }
+    
+    // Load messages from storage
     const hasMessages = loadMessagesFromStorage();
     if (hasMessages) {
         console.log("Loaded previous chat history from storage");
@@ -445,8 +472,16 @@ function addMessage(sender, text, messageType = "message") {
         msg.classList.add("typing");
     }
 
+    // Make sure chat container exists and is visible
+    if (!chatContainer) {
+        console.error("Chat container not found!");
+        return;
+    }
+    
     chatContainer.appendChild(msg);
-    window.scrollTo(0, document.body.scrollHeight);
+    
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
     
     saveMessageToStorage(sender, text, messageType);
 }
