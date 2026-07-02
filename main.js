@@ -24,8 +24,8 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 const canvasContainer = document.getElementById('threeCanvasContainer');
-const initialWidth = Math.max(canvasContainer.clientWidth, 800);
-const initialHeight = Math.max(canvasContainer.clientHeight, 600);
+const initialWidth = Math.max(canvasContainer.clientWidth, 400);
+const initialHeight = Math.max(canvasContainer.clientHeight, 300);
 renderer.setSize(initialWidth, initialHeight);
 renderer.shadowMap.enabled = true;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;

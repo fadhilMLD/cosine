@@ -377,6 +377,25 @@ body.chat-mode .header {
 /* Ensure right column doesn't create an extra scroll — only inner summary list should scroll */
 .rightPanel {
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.threeCanvasContainer {
+    flex: 1 1 auto;
+    min-height: 380px;
+    height: 100%;
+    margin: 16px 0 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #070707;
+    position: relative;
+}
+
+.threeCanvasContainer canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
 }
 
 .panelCard {
