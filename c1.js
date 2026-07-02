@@ -23,6 +23,7 @@ let debateMessageLimit = 12;
 let debateMessagesUsed = 0;
 let isDebateActive = false;
 let pendingDebateRequest = null;
+let contextRestored = false;
 
 const planLimits = {
     "Free": 25,
@@ -140,6 +141,16 @@ function getMessageCountKey() {
     return `message_count_${currentProjectId || "default"}`;
 }
 
+function getStoredMessages() {
+    try {
+        const storageKey = getChatStorageKey();
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch (e) {
+        console.error("Failed to load stored messages:", e);
+        return [];
+    }
+}
+
 function saveMessageToStorage(sender, text, messageType = "message") {
     try {
         const storageKey = getChatStorageKey();
@@ -196,8 +207,7 @@ function loadMessageCount() {
 
 function loadMessagesFromStorage() {
     try {
-        const storageKey = getChatStorageKey();
-        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        const messages = getStoredMessages();
         
         if (!chatContainer) return false;
         
@@ -247,6 +257,7 @@ function clearChatHistory() {
         totalMessagesUsed = 0;
         debateMessagesUsed = 0;
         isDebateActive = false;
+        contextRestored = false;
         updateMessageUsage();
     } catch (e) {
         console.error("Failed to clear chat:", e);
@@ -342,6 +353,11 @@ function activateChatUI() {
     const hasMessages = loadMessagesFromStorage();
     planMessageLimit = getPlanLimit();
     updateMessageUsage();
+    
+    // If there are stored messages, setup WebSocket to restore context
+    if (hasMessages && !socketReady) {
+        setupWebSocket();
+    }
 }
 
 function addMessage(sender, text, messageType = "message") {
@@ -515,6 +531,18 @@ function setupWebSocket() {
     socket.onopen = () => {
         console.log("WebSocket connected");
         socketReady = true;
+        contextRestored = false;
+        
+        // Send chat history to restore context
+        const storedMessages = getStoredMessages();
+        if (storedMessages.length > 0) {
+            socket.send(JSON.stringify({
+                type: "restore_context",
+                messages: storedMessages
+            }));
+            console.log(`[Qweet] Sent ${storedMessages.length} messages to restore context`);
+        }
+        
         if (pendingPrompt) {
             socket.send(pendingPrompt);
             pendingPrompt = null;
@@ -537,6 +565,14 @@ function setupWebSocket() {
                 }
                 break;
 
+            case "context_restored":
+                contextRestored = true;
+                console.log(`[Qweet] Context restored with ${data.message_count || 0} messages`);
+                if (data.message_count > 0) {
+                    addMessage("System", `🔄 Conversation context restored (${data.message_count} messages)`);
+                }
+                break;
+
             case "status":
                 syncDebateControls(data.status || "Running");
                 break;
@@ -550,7 +586,6 @@ function setupWebSocket() {
                 break;
             
             case "debate_permission":
-                // Qweet wants to start a debate - show permission dialog
                 showDebatePermission(data.message || "Start debate?");
                 break;
             
