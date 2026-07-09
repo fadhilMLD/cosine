@@ -151,7 +151,7 @@ function getStoredMessages() {
     }
 }
 
-function saveMessageToStorage(sender, text, messageType = "message") {
+function saveMessageToStorage(sender, text, messageType = "message", animationData = null) {
     try {
         const storageKey = getChatStorageKey();
         const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
@@ -160,6 +160,7 @@ function saveMessageToStorage(sender, text, messageType = "message") {
             sender: sender,
             text: text,
             messageType: messageType,
+            animation: animationData,
             timestamp: new Date().toISOString()
         });
         
@@ -236,7 +237,11 @@ function loadMessagesFromStorage() {
             msg_elem.className = senderClass;
             msg_elem.dataset.messageType = msg.messageType || "message";
             msg_elem.dataset.speaker = msg.sender;
-            msg_elem.innerHTML = formatGeneratedText(msg.text);
+            if (msg.messageType === "animation" && msg.animation) {
+                renderAnimationMessage(msg_elem, msg.animation, msg.text || "");
+            } else {
+                msg_elem.innerHTML = formatGeneratedText(msg.text);
+            }
             msg_elem.prepend(senderSpan);
             chatContainer.appendChild(msg_elem);
         });
@@ -360,7 +365,7 @@ function activateChatUI() {
     }
 }
 
-function addMessage(sender, text, messageType = "message") {
+function addMessage(sender, text, messageType = "message", animationData = null) {
     // Check plan limit
     if (sender !== "user" && sender !== "System") {
         if (totalMessagesUsed >= planMessageLimit) {
@@ -394,10 +399,14 @@ function addMessage(sender, text, messageType = "message") {
     msg.className = senderClass;
     msg.dataset.messageType = messageType;
     msg.dataset.speaker = sender;
-    msg.innerHTML = formatGeneratedText(text);
+    if (messageType === "animation" && animationData) {
+        renderAnimationMessage(msg, animationData, text || "");
+    } else {
+        msg.innerHTML = formatGeneratedText(text);
+    }
     msg.prepend(senderSpan);
 
-    if (text.match(/^\.+$/)) {
+    if (text && text.match(/^\.+$/)) {
         msg.classList.add("typing");
     }
 
@@ -406,7 +415,7 @@ function addMessage(sender, text, messageType = "message") {
     chatContainer.appendChild(msg);
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
-    saveMessageToStorage(sender, text, messageType);
+    saveMessageToStorage(sender, text, messageType, animationData);
 }
 
 function updateMessageElement(element, sender, text, typing = false) {
@@ -459,6 +468,222 @@ function formatGeneratedText(text) {
     });
 
     return formatted.replace(/\n/g, '<br>');
+}
+
+function parseAnimationScript(script) {
+    const commands = [];
+    const lines = String(script || '').split(/\r?\n/);
+    lines.forEach((line) => {
+        const text = line.trim();
+        if (!text) return;
+
+        if (text.startsWith('NEW ')) {
+            const match = text.match(/^NEW\s+(\w+)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\w+)\s*,\s*(.+)\s*\)$/);
+            if (match) {
+                commands.push({ type: 'new', name: match[1], x1: Number(match[2]), y1: Number(match[3]), x2: Number(match[4]), y2: Number(match[5]), color: match[6], text: match[7].replace(/^['"]|['"]$/g, '') });
+            }
+        } else if (text.startsWith('ANIM ')) {
+            const match = text.match(/^ANIM\s+(\w+)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\w+)\s*,\s*(.+)\s*\)$/);
+            if (match) {
+                commands.push({ type: 'anim', name: match[1], x1: Number(match[2]), y1: Number(match[3]), x2: Number(match[4]), y2: Number(match[5]), color: match[6], text: match[7].replace(/^['"]|['"]$/g, '') });
+            }
+        } else if (text.startsWith('DES ')) {
+            const match = text.match(/^DES\s+(\w+)$/);
+            if (match) {
+                commands.push({ type: 'destroy', name: match[1] });
+            }
+        } else if (text.startsWith('SCENE_CHANGE')) {
+            const match = text.match(/^SCENE_CHANGE\s*-\s*(.+)$/);
+            commands.push({ type: 'scene_change', comment: match ? match[1].trim() : 'Scene change' });
+        }
+    });
+    return commands;
+}
+
+function colorToP5(color) {
+    switch (String(color || '').toLowerCase()) {
+        case 'r': return '#ff5f56';
+        case 'b': return '#4da3ff';
+        case 'g': return '#41d36f';
+        case 'v': return '#b983ff';
+        case 'y': return '#ffd166';
+        case 'p': return '#ff7ab6';
+        case 'k': return '#8f9aa7';
+        default: return '#ffffff';
+    }
+}
+
+function renderAnimationMessage(container, animationData, fallbackText = '') {
+    container.classList.add('animation-message');
+    container.innerHTML = '';
+
+    const shell = document.createElement('div');
+    shell.className = 'animation-canvas-shell';
+    const canvasHost = document.createElement('div');
+    canvasHost.className = 'animation-canvas-host';
+    shell.appendChild(canvasHost);
+
+    const replayBtn = document.createElement('button');
+    replayBtn.className = 'animation-replay-btn';
+    replayBtn.textContent = 'Replay';
+
+    container.appendChild(shell);
+    container.appendChild(replayBtn);
+
+    const script = animationData?.script || fallbackText || '';
+    const topic = animationData?.topic || 'Animation';
+    let instance = null;
+    let playbackTimer = null;
+
+    const createSketch = () => {
+        if (instance) {
+            try { instance.remove(); } catch (error) {}
+        }
+        if (playbackTimer) {
+            clearTimeout(playbackTimer);
+            playbackTimer = null;
+        }
+
+        const sketch = (p) => {
+            const objects = new Map();
+            let sceneComment = '';
+            let commands = [];
+            let stepIndex = 0;
+            let running = true;
+
+            const drawGrid = () => {
+                const gridSize = 8;
+                const cell = 40;
+                const offset = 20;
+                p.stroke(255, 255, 255, 24);
+                p.noFill();
+                for (let i = 0; i <= gridSize; i++) {
+                    p.line(offset + i * cell, offset, offset + i * cell, offset + gridSize * cell);
+                    p.line(offset, offset + i * cell, offset + gridSize * cell, offset + i * cell);
+                }
+            };
+
+            const drawScene = () => {
+                p.background(12, 14, 24);
+                p.noStroke();
+                p.fill(255, 255, 255, 22);
+                p.rect(16, 16, 368, 368, 16);
+                drawGrid();
+
+                if (sceneComment) {
+                    p.fill(255, 255, 255, 220);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.textSize(14);
+                    p.text(sceneComment, 26, 24);
+                }
+
+                objects.forEach((obj) => {
+                    const x1 = obj.current.x1;
+                    const y1 = obj.current.y1;
+                    const x2 = obj.current.x2;
+                    const y2 = obj.current.y2;
+                    const block = 40;
+                    const offset = 20;
+                    const px1 = offset + x1 * block;
+                    const py1 = offset + y1 * block;
+                    const px2 = offset + x2 * block;
+                    const py2 = offset + y2 * block;
+                    p.fill(colorToP5(obj.color));
+                    p.stroke(255, 255, 255, 80);
+                    p.strokeWeight(2);
+                    p.rect(px1, py1, Math.max(1, px2 - px1), Math.max(1, py2 - py1), 8);
+                    if (obj.text) {
+                        p.noStroke();
+                        p.fill(255, 255, 255, 230);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        p.textSize(14);
+                        p.text(obj.text, (px1 + px2) / 2, (py1 + py2) / 2);
+                    }
+                });
+            };
+
+            const applyCommand = (command) => {
+                if (command.type === 'new') {
+                    objects.set(command.name, {
+                        name: command.name,
+                        color: command.color,
+                        text: command.text,
+                        current: { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 },
+                        target: { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 },
+                        progress: 1,
+                    });
+                } else if (command.type === 'anim') {
+                    const obj = objects.get(command.name);
+                    if (obj) {
+                        obj.target = { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 };
+                        obj.progress = 0;
+                        obj.current = { ...obj.current };
+                    }
+                } else if (command.type === 'destroy') {
+                    objects.delete(command.name);
+                } else if (command.type === 'scene_change') {
+                    sceneComment = command.comment;
+                }
+            };
+
+            const advance = () => {
+                if (!running) return;
+                if (stepIndex >= commands.length) {
+                    drawScene();
+                    return;
+                }
+
+                const command = commands[stepIndex];
+                stepIndex += 1;
+                applyCommand(command);
+                drawScene();
+
+                if (command.type === 'scene_change') {
+                    playbackTimer = setTimeout(advance, 3000);
+                } else {
+                    playbackTimer = setTimeout(advance, 700);
+                }
+            };
+
+            p.setup = () => {
+                p.createCanvas(400, 400);
+                p.frameRate(30);
+                p.textFont('Inter, Arial, sans-serif');
+                commands = parseAnimationScript(script);
+                advance();
+            };
+
+            p.draw = () => {
+                objects.forEach((obj) => {
+                    if (obj.progress < 1) {
+                        obj.progress = Math.min(1, obj.progress + 0.03);
+                        const eased = 1 - Math.pow(1 - obj.progress, 3);
+                        obj.current.x1 = p.lerp(obj.current.x1, obj.target.x1, eased);
+                        obj.current.y1 = p.lerp(obj.current.y1, obj.target.y1, eased);
+                        obj.current.x2 = p.lerp(obj.current.x2, obj.target.x2, eased);
+                        obj.current.y2 = p.lerp(obj.current.y2, obj.target.y2, eased);
+                    }
+                });
+                drawScene();
+            };
+
+            p.windowResized = () => {
+                p.resizeCanvas(400, 400);
+            };
+        };
+
+        instance = new p5(sketch, canvasHost);
+    };
+
+    replayBtn.addEventListener('click', () => {
+        if (playbackTimer) {
+            clearTimeout(playbackTimer);
+            playbackTimer = null;
+        }
+        createSketch();
+    });
+
+    createSketch();
 }
 
 function syncDebateControls(status) {
@@ -604,6 +829,8 @@ function setupWebSocket() {
                 if (typingElement) {
                     updateMessageElement(typingElement, data.speaker, data.message, false);
                     delete typingMessages[data.speaker];
+                } else if (data.animation) {
+                    addMessage(data.speaker || "Qweet", data.message, "animation", data.animation);
                 } else {
                     addMessage(data.speaker || "Qweet", data.message, "message");
                 }

@@ -24,8 +24,8 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 const canvasContainer = document.getElementById('threeCanvasContainer');
-const initialWidth = Math.max(canvasContainer.clientWidth, 320);
-const initialHeight = Math.max(canvasContainer.clientHeight, 200);
+const initialWidth = Math.max(canvasContainer.clientWidth, 800);
+const initialHeight = Math.max(canvasContainer.clientHeight, 600);
 renderer.setSize(initialWidth, initialHeight);
 renderer.shadowMap.enabled = true;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -457,8 +457,8 @@ animate();
 
 // Resize
 window.addEventListener("resize", () => {
-    const width = Math.max(canvasContainer.clientWidth, 1200);
-    const height = Math.max(canvasContainer.clientHeight, 1200);
+    const width = Math.max(canvasContainer.clientWidth, 800);
+    const height = Math.max(canvasContainer.clientHeight, 600);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);

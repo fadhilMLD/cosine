@@ -382,10 +382,9 @@ body.chat-mode .header {
 }
 
 .threeCanvasContainer {
-    width: 100%;
-    min-height: 220px;
-    max-height: 620px;
-    aspect-ratio: 16 / 9;
+    flex: 1 1 auto;
+    min-height: 380px;
+    height: 100%;
     margin: 16px 0 0;
     border-radius: 14px;
     overflow: hidden;
