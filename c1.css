@@ -381,23 +381,6 @@ body.chat-mode .header {
     flex-direction: column;
 }
 
-.threeCanvasContainer {
-    flex: 1 1 auto;
-    min-height: 380px;
-    height: 100%;
-    margin: 16px 0 0;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #070707;
-    position: relative;
-}
-
-.threeCanvasContainer canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-
 .panelCard {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border2);
