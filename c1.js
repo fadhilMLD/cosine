@@ -551,27 +551,12 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
             let stepIndex = 0;
             let running = true;
 
-            const drawGrid = () => {
-                const gridSize = 8;
-                const cell = 40;
-                const offset = 20;
-                p.stroke(255, 255, 255, 24);
-                p.noFill();
-                for (let i = 0; i <= gridSize; i++) {
-                    p.line(offset + i * cell, offset, offset + i * cell, offset + gridSize * cell);
-                    p.line(offset, offset + i * cell, offset + gridSize * cell, offset + i * cell);
-                }
-            };
-
             const drawScene = () => {
-                p.background(12, 14, 24);
+                p.background(255);
                 p.noStroke();
-                p.fill(255, 255, 255, 22);
-                p.rect(16, 16, 368, 368, 16);
-                drawGrid();
 
                 if (sceneComment) {
-                    p.fill(255, 255, 255, 220);
+                    p.fill(40, 40, 40);
                     p.textAlign(p.LEFT, p.TOP);
                     p.textSize(14);
                     p.text(sceneComment, 26, 24);
@@ -589,7 +574,7 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
                     const px2 = offset + x2 * block;
                     const py2 = offset + y2 * block;
                     p.fill(colorToP5(obj.color));
-                    p.stroke(255, 255, 255, 80);
+                    p.stroke(90, 90, 90, 80);
                     p.strokeWeight(2);
                     p.rect(px1, py1, Math.max(1, px2 - px1), Math.max(1, py2 - py1), 8);
                     if (obj.text) {
