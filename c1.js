@@ -505,6 +505,28 @@ function getAnimationScriptSource(animationData, fallbackText = '') {
     return fallbackText || '';
 }
 
+function normalizeAnimationScriptSource(scriptSource) {
+    let normalized = String(scriptSource || '').trim();
+
+    if (!normalized) {
+        return '';
+    }
+
+    if (!/window\.setup\s*=/.test(normalized)) {
+        normalized = normalized.replace(/\bfunction\s+setup\s*\(/, 'window.setup = function setup(');
+    }
+
+    if (!/window\.draw\s*=/.test(normalized)) {
+        normalized = normalized.replace(/\bfunction\s+draw\s*\(/, 'window.draw = function draw(');
+    }
+
+    if (!/^\(\s*\(\s*\)\s*=>/.test(normalized) && !/^\(\s*function\b/.test(normalized)) {
+        normalized = `(() => {\n${normalized}\n})();`;
+    }
+
+    return normalized;
+}
+
 function normalizeAnimationData(animationData, fallbackText = '') {
     if (typeof animationData === 'string') {
         return {
@@ -647,6 +669,7 @@ function createHiddenAnimationRunner(scriptSource) {
                 createdNodes.forEach(node => {
                     try { node.remove(); } catch (error) {}
                 });
+                try { scriptEl.remove(); } catch (error) {}
                 runnerHost.remove();
             } catch (error) {}
 
@@ -819,7 +842,7 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
     container.appendChild(shell);
     container.appendChild(status);
 
-    const scriptSource = getAnimationScriptSource(payload, fallbackText).trim();
+    const scriptSource = normalizeAnimationScriptSource(getAnimationScriptSource(payload, fallbackText));
 
     if (!scriptSource) {
         status.textContent = 'No animation code provided.';
