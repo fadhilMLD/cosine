@@ -470,47 +470,16 @@ function formatGeneratedText(text) {
     return formatted.replace(/\n/g, '<br>');
 }
 
-function parseAnimationScript(script) {
-    const commands = [];
-    const lines = String(script || '').split(/\r?\n/);
-    lines.forEach((line) => {
-        const text = line.trim();
-        if (!text) return;
-
-        if (text.startsWith('NEW ')) {
-            const match = text.match(/^NEW\s+(\w+)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\w+)\s*,\s*(.+)\s*\)$/);
-            if (match) {
-                commands.push({ type: 'new', name: match[1], x1: Number(match[2]), y1: Number(match[3]), x2: Number(match[4]), y2: Number(match[5]), color: match[6], text: match[7].replace(/^['"]|['"]$/g, '') });
-            }
-        } else if (text.startsWith('ANIM ')) {
-            const match = text.match(/^ANIM\s+(\w+)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\w+)\s*,\s*(.+)\s*\)$/);
-            if (match) {
-                commands.push({ type: 'anim', name: match[1], x1: Number(match[2]), y1: Number(match[3]), x2: Number(match[4]), y2: Number(match[5]), color: match[6], text: match[7].replace(/^['"]|['"]$/g, '') });
-            }
-        } else if (text.startsWith('DES ')) {
-            const match = text.match(/^DES\s+(\w+)$/);
-            if (match) {
-                commands.push({ type: 'destroy', name: match[1] });
-            }
-        } else if (text.startsWith('SCENE_CHANGE')) {
-            const match = text.match(/^SCENE_CHANGE\s*-\s*(.+)$/);
-            commands.push({ type: 'scene_change', comment: match ? match[1].trim() : 'Scene change' });
-        }
-    });
-    return commands;
-}
-
-function colorToP5(color) {
-    switch (String(color || '').toLowerCase()) {
-        case 'r': return '#ff5f56';
-        case 'b': return '#4da3ff';
-        case 'g': return '#41d36f';
-        case 'v': return '#b983ff';
-        case 'y': return '#ffd166';
-        case 'p': return '#ff7ab6';
-        case 'k': return '#8f9aa7';
-        default: return '#ffffff';
+function getAnimationScriptSource(animationData, fallbackText = '') {
+    if (typeof animationData === 'string') {
+        return animationData;
     }
+
+    if (animationData && typeof animationData === 'object') {
+        return animationData.code || animationData.script || animationData.js || '';
+    }
+
+    return fallbackText || '';
 }
 
 function renderAnimationMessage(container, animationData, fallbackText = '') {
@@ -519,156 +488,48 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
 
     const shell = document.createElement('div');
     shell.className = 'animation-canvas-shell';
+
     const canvasHost = document.createElement('div');
     canvasHost.className = 'animation-canvas-host';
     shell.appendChild(canvasHost);
 
-    const replayBtn = document.createElement('button');
-    replayBtn.className = 'animation-replay-btn';
-    replayBtn.textContent = 'Replay';
+    const status = document.createElement('div');
+    status.className = 'animation-status';
+    status.textContent = 'Loading animation...';
 
     container.appendChild(shell);
-    container.appendChild(replayBtn);
+    container.appendChild(status);
 
-    const script = animationData?.script || fallbackText || '';
-    const topic = animationData?.topic || 'Animation';
-    let instance = null;
-    let playbackTimer = null;
+    const scriptSource = getAnimationScriptSource(animationData, fallbackText).trim();
 
-    const createSketch = () => {
-        if (instance) {
-            try { instance.remove(); } catch (error) {}
+    if (!scriptSource) {
+        status.textContent = 'No animation code provided.';
+        return;
+    }
+
+    try {
+        const runner = new Function('container', 'canvasHost', 'p5', 'window', 'document', `
+            "use strict";
+            return Function(
+                "container",
+                "canvasHost",
+                "p5",
+                "window",
+                "document",
+                ${JSON.stringify(scriptSource)}
+            )(container, canvasHost, p5, window, document);
+        `);
+
+        const cleanup = runner(container, canvasHost, window.p5, window, document);
+        if (typeof cleanup === 'function') {
+            container.__animationCleanup = cleanup;
         }
-        if (playbackTimer) {
-            clearTimeout(playbackTimer);
-            playbackTimer = null;
-        }
 
-        const sketch = (p) => {
-            const objects = new Map();
-            let sceneComment = '';
-            let commands = [];
-            let stepIndex = 0;
-            let running = true;
-
-            const drawScene = () => {
-                p.background(255);
-                p.noStroke();
-
-                if (sceneComment) {
-                    p.fill(40, 40, 40);
-                    p.textAlign(p.LEFT, p.TOP);
-                    p.textSize(14);
-                    p.text(sceneComment, 26, 24);
-                }
-
-                objects.forEach((obj) => {
-                    const x1 = obj.current.x1;
-                    const y1 = obj.current.y1;
-                    const x2 = obj.current.x2;
-                    const y2 = obj.current.y2;
-                    const block = 40;
-                    const offset = 20;
-                    const px1 = offset + x1 * block;
-                    const py1 = offset + y1 * block;
-                    const px2 = offset + x2 * block;
-                    const py2 = offset + y2 * block;
-                    p.fill(colorToP5(obj.color));
-                    p.stroke(90, 90, 90, 80);
-                    p.strokeWeight(2);
-                    p.rect(px1, py1, Math.max(1, px2 - px1), Math.max(1, py2 - py1), 8);
-                    if (obj.text) {
-                        p.noStroke();
-                        p.fill(255, 255, 255, 230);
-                        p.textAlign(p.CENTER, p.CENTER);
-                        p.textSize(14);
-                        p.text(obj.text, (px1 + px2) / 2, (py1 + py2) / 2);
-                    }
-                });
-            };
-
-            const applyCommand = (command) => {
-                if (command.type === 'new') {
-                    objects.set(command.name, {
-                        name: command.name,
-                        color: command.color,
-                        text: command.text,
-                        current: { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 },
-                        target: { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 },
-                        progress: 1,
-                    });
-                } else if (command.type === 'anim') {
-                    const obj = objects.get(command.name);
-                    if (obj) {
-                        obj.target = { x1: command.x1, y1: command.y1, x2: command.x2, y2: command.y2 };
-                        obj.progress = 0;
-                        obj.current = { ...obj.current };
-                    }
-                } else if (command.type === 'destroy') {
-                    objects.delete(command.name);
-                } else if (command.type === 'scene_change') {
-                    sceneComment = command.comment;
-                }
-            };
-
-            const advance = () => {
-                if (!running) return;
-                if (stepIndex >= commands.length) {
-                    drawScene();
-                    return;
-                }
-
-                const command = commands[stepIndex];
-                stepIndex += 1;
-                applyCommand(command);
-                drawScene();
-
-                if (command.type === 'scene_change') {
-                    playbackTimer = setTimeout(advance, 3000);
-                } else {
-                    playbackTimer = setTimeout(advance, 700);
-                }
-            };
-
-            p.setup = () => {
-                p.createCanvas(400, 400);
-                p.frameRate(30);
-                p.textFont('Inter, Arial, sans-serif');
-                commands = parseAnimationScript(script);
-                advance();
-            };
-
-            p.draw = () => {
-                objects.forEach((obj) => {
-                    if (obj.progress < 1) {
-                        obj.progress = Math.min(1, obj.progress + 0.03);
-                        const eased = 1 - Math.pow(1 - obj.progress, 3);
-                        obj.current.x1 = p.lerp(obj.current.x1, obj.target.x1, eased);
-                        obj.current.y1 = p.lerp(obj.current.y1, obj.target.y1, eased);
-                        obj.current.x2 = p.lerp(obj.current.x2, obj.target.x2, eased);
-                        obj.current.y2 = p.lerp(obj.current.y2, obj.target.y2, eased);
-                    }
-                });
-                drawScene();
-            };
-
-            p.windowResized = () => {
-                p.resizeCanvas(400, 400);
-            };
-        };
-
-        instance = new p5(sketch, canvasHost);
-    };
-
-    replayBtn.addEventListener('click', () => {
-        if (playbackTimer) {
-            clearTimeout(playbackTimer);
-            playbackTimer = null;
-        }
-        createSketch();
-    });
-
-    createSketch();
+        status.remove();
+    } catch (error) {
+        console.error('Failed to render animation:', error);
+        status.textContent = `Animation error: ${error.message || 'Unknown error'}`;
+    }
 }
 
 function syncDebateControls(status) {
