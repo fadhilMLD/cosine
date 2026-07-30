@@ -506,30 +506,75 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
         status.textContent = 'No animation code provided.';
         return;
     }
-
-    try {
-        const runner = new Function('container', 'canvasHost', 'p5', 'window', 'document', `
-            "use strict";
-            return Function(
-                "container",
-                "canvasHost",
-                "p5",
-                "window",
-                "document",
-                ${JSON.stringify(scriptSource)}
-            )(container, canvasHost, p5, window, document);
-        `);
-
-        const cleanup = runner(container, canvasHost, window.p5, window, document);
-        if (typeof cleanup === 'function') {
-            container.__animationCleanup = cleanup;
-        }
-
-        status.remove();
-    } catch (error) {
-        console.error('Failed to render animation:', error);
-        status.textContent = `Animation error: ${error.message || 'Unknown error'}`;
+    // Cleanup any previous animation mounted on this container
+    if (container.__animationCleanup && typeof container.__animationCleanup === 'function') {
+        try { container.__animationCleanup(); } catch (e) { /* ignore */ }
+        delete container.__animationCleanup;
     }
+
+    // Try to attach p5-created canvas and buttons into our canvasHost by
+    // temporarily wrapping the global helpers that p5 exposes in global mode.
+    const origCreateCanvas = window.createCanvas;
+    const origCreateButton = window.createButton;
+    const createdNodes = [];
+
+    function attachToHost(elem) {
+        try {
+            if (!elem) return;
+            if (elem.elt) { // p5.Element
+                canvasHost.appendChild(elem.elt);
+                createdNodes.push(elem.elt);
+            } else if (elem instanceof Element) {
+                canvasHost.appendChild(elem);
+                createdNodes.push(elem);
+            }
+        } catch (e) {
+            // ignore attach errors
+        }
+    }
+
+    if (typeof origCreateCanvas === 'function') {
+        window.createCanvas = function() {
+            const res = origCreateCanvas.apply(window, arguments);
+            attachToHost(res);
+            return res;
+        };
+    }
+
+    if (typeof origCreateButton === 'function') {
+        window.createButton = function() {
+            const res = origCreateButton.apply(window, arguments);
+            attachToHost(res);
+            return res;
+        };
+    }
+
+    // Inject the animation script into the page so p5 global-mode hooks run
+    const scriptEl = document.createElement('script');
+    scriptEl.type = 'text/javascript';
+    scriptEl.textContent = scriptSource;
+    document.body.appendChild(scriptEl);
+
+    // Cleanup function to remove injected elements and restore globals
+    const cleanup = () => {
+        try {
+            createdNodes.forEach(n => { try { n.remove(); } catch (e) {} });
+            try { scriptEl.remove(); } catch (e) {}
+        } catch (e) {}
+        if (origCreateCanvas) {
+            window.createCanvas = origCreateCanvas;
+        } else {
+            try { delete window.createCanvas; } catch (e) {}
+        }
+        if (origCreateButton) {
+            window.createButton = origCreateButton;
+        } else {
+            try { delete window.createButton; } catch (e) {}
+        }
+    };
+
+    container.__animationCleanup = cleanup;
+    status.remove();
 }
 
 function syncDebateControls(status) {
