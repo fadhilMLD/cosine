@@ -155,8 +155,12 @@ function saveMessageToStorage(sender, text, messageType = "message", animationDa
     try {
         const storageKey = getChatStorageKey();
         const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        const messageId = (window.crypto && typeof window.crypto.randomUUID === 'function')
+            ? window.crypto.randomUUID()
+            : `msg_${Date.now()}_${Math.random().toString(16).slice(2)}`;
         
         messages.push({
+            id: messageId,
             sender: sender,
             text: text,
             messageType: messageType,
@@ -169,8 +173,27 @@ function saveMessageToStorage(sender, text, messageType = "message", animationDa
         }
         
         localStorage.setItem(storageKey, JSON.stringify(messages));
+        return messageId;
     } catch (e) {
         console.error("Failed to save message to storage:", e);
+        return null;
+    }
+}
+
+function updateStoredAnimationById(messageId, animationData) {
+    if (!messageId) return;
+
+    try {
+        const storageKey = getChatStorageKey();
+        const messages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        const targetIndex = messages.findIndex(msg => msg && msg.id === messageId);
+
+        if (targetIndex === -1) return;
+
+        messages[targetIndex].animation = animationData;
+        localStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (e) {
+        console.error("Failed to update stored animation:", e);
     }
 }
 
@@ -238,7 +261,7 @@ function loadMessagesFromStorage() {
             msg_elem.dataset.messageType = msg.messageType || "message";
             msg_elem.dataset.speaker = msg.sender;
             if (msg.messageType === "animation" && msg.animation) {
-                renderAnimationMessage(msg_elem, msg.animation, msg.text || "");
+                renderAnimationMessage(msg_elem, msg.animation, msg.text || "", msg.id || null);
             } else {
                 msg_elem.innerHTML = formatGeneratedText(msg.text);
             }
@@ -399,8 +422,10 @@ function addMessage(sender, text, messageType = "message", animationData = null)
     msg.className = senderClass;
     msg.dataset.messageType = messageType;
     msg.dataset.speaker = sender;
+    const storedMessageId = saveMessageToStorage(sender, text, messageType, animationData);
+    msg.dataset.messageId = storedMessageId || "";
     if (messageType === "animation" && animationData) {
-        renderAnimationMessage(msg, animationData, text || "");
+        renderAnimationMessage(msg, animationData, text || "", storedMessageId);
     } else {
         msg.innerHTML = formatGeneratedText(text);
     }
@@ -414,8 +439,6 @@ function addMessage(sender, text, messageType = "message", animationData = null)
     
     chatContainer.appendChild(msg);
     chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    saveMessageToStorage(sender, text, messageType, animationData);
 }
 
 function updateMessageElement(element, sender, text, typing = false) {
@@ -482,99 +505,368 @@ function getAnimationScriptSource(animationData, fallbackText = '') {
     return fallbackText || '';
 }
 
+function normalizeAnimationData(animationData, fallbackText = '') {
+    if (typeof animationData === 'string') {
+        return {
+            code: animationData,
+            frames: [],
+            frameDelayMs: 125,
+        };
+    }
+
+    if (animationData && typeof animationData === 'object') {
+        return {
+            code: animationData.code || animationData.script || animationData.js || '',
+            frames: Array.isArray(animationData.frames) ? animationData.frames : [],
+            frameDelayMs: Number(animationData.frameDelayMs || animationData.frameDelay || 125),
+            width: Number(animationData.width || 0),
+            height: Number(animationData.height || 0),
+            generatedAt: animationData.generatedAt || null,
+            source: animationData.source || 'p5',
+        };
+    }
+
+    return {
+        code: fallbackText || '',
+        frames: [],
+        frameDelayMs: 125,
+    };
+}
+
+function waitForCanvasElement(host, timeoutMs = 5000) {
+    return new Promise((resolve, reject) => {
+        const startedAt = Date.now();
+
+        const poll = () => {
+            const canvas = host.querySelector('canvas');
+            if (canvas) {
+                resolve(canvas);
+                return;
+            }
+
+            if (Date.now() - startedAt >= timeoutMs) {
+                reject(new Error('Timed out waiting for animation canvas.'));
+                return;
+            }
+
+            requestAnimationFrame(poll);
+        };
+
+        poll();
+    });
+}
+
+function captureCanvasSequence(sourceCanvas, options = {}) {
+    const fps = Math.max(1, Number(options.fps || 8));
+    const maxFrames = Math.max(1, Number(options.maxFrames || 120));
+    const scale = Math.min(1, Math.max(0.2, Number(options.scale || 0.72)));
+    const frameDelayMs = Math.max(16, Math.round(1000 / fps));
+    const captureWidth = Math.max(1, Math.round((sourceCanvas.width || 1) * scale));
+    const captureHeight = Math.max(1, Math.round((sourceCanvas.height || 1) * scale));
+
+    const captureCanvas = document.createElement('canvas');
+    captureCanvas.width = captureWidth;
+    captureCanvas.height = captureHeight;
+    const captureContext = captureCanvas.getContext('2d');
+    if (captureContext) {
+        captureContext.imageSmoothingEnabled = true;
+    }
+
+    return new Promise((resolve) => {
+        const frames = [];
+        let capturedFrames = 0;
+
+        const timer = window.setInterval(() => {
+            try {
+                if (!captureContext) {
+                    throw new Error('Capture context unavailable');
+                }
+
+                captureContext.clearRect(0, 0, captureWidth, captureHeight);
+                captureContext.drawImage(sourceCanvas, 0, 0, captureWidth, captureHeight);
+                const frameData = captureCanvas.toDataURL('image/webp', 0.82);
+                frames.push(frameData);
+            } catch (error) {
+                console.error('Failed to capture animation frame:', error);
+            }
+
+            capturedFrames += 1;
+            if (capturedFrames >= maxFrames) {
+                window.clearInterval(timer);
+                resolve({
+                    frames,
+                    frameDelayMs,
+                    width: captureWidth,
+                    height: captureHeight,
+                });
+            }
+        }, frameDelayMs);
+    });
+}
+
+function createHiddenAnimationRunner(scriptSource) {
+    return new Promise((resolve, reject) => {
+        const runnerHost = document.createElement('div');
+        runnerHost.style.position = 'fixed';
+        runnerHost.style.left = '-10000px';
+        runnerHost.style.top = '0';
+        runnerHost.style.width = '500px';
+        runnerHost.style.height = '500px';
+        runnerHost.style.overflow = 'hidden';
+        runnerHost.style.pointerEvents = 'none';
+        runnerHost.style.opacity = '0';
+
+        const canvasHost = document.createElement('div');
+        canvasHost.style.width = '500px';
+        canvasHost.style.height = '500px';
+        runnerHost.appendChild(canvasHost);
+        document.body.appendChild(runnerHost);
+
+        const origCreateCanvas = window.createCanvas;
+        const origCreateButton = window.createButton;
+        const createdNodes = [];
+        let settled = false;
+
+        function attachToHost(elem) {
+            try {
+                if (!elem) return;
+                if (elem.elt) {
+                    canvasHost.appendChild(elem.elt);
+                    createdNodes.push(elem.elt);
+                } else if (elem instanceof Element) {
+                    canvasHost.appendChild(elem);
+                    createdNodes.push(elem);
+                }
+            } catch (error) {
+                console.error('Failed to attach animation element:', error);
+            }
+        }
+
+        const cleanup = () => {
+            try {
+                createdNodes.forEach(node => {
+                    try { node.remove(); } catch (error) {}
+                });
+                runnerHost.remove();
+            } catch (error) {}
+
+            if (origCreateCanvas) {
+                window.createCanvas = origCreateCanvas;
+            } else {
+                try { delete window.createCanvas; } catch (error) {}
+            }
+
+            if (origCreateButton) {
+                window.createButton = origCreateButton;
+            } else {
+                try { delete window.createButton; } catch (error) {}
+            }
+        };
+
+        if (typeof origCreateCanvas === 'function') {
+            window.createCanvas = function() {
+                const res = origCreateCanvas.apply(window, arguments);
+                attachToHost(res);
+                return res;
+            };
+        }
+
+        if (typeof origCreateButton === 'function') {
+            window.createButton = function() {
+                const res = origCreateButton.apply(window, arguments);
+                attachToHost(res);
+                return res;
+            };
+        }
+
+        const scriptEl = document.createElement('script');
+        scriptEl.type = 'text/javascript';
+        scriptEl.textContent = scriptSource;
+        document.body.appendChild(scriptEl);
+
+        waitForCanvasElement(canvasHost, 5000).then((canvas) => {
+            if (settled) return;
+            settled = true;
+            resolve({
+                canvas,
+                cleanup,
+            });
+        }).catch((error) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(error);
+        });
+    });
+}
+
+function startAnimationPlayback(container, frameData, fallbackText = '') {
+    const payload = normalizeAnimationData(frameData, fallbackText);
+    const frames = Array.isArray(payload.frames) ? payload.frames.filter(Boolean) : [];
+    const preservedSender = container.querySelector('.senderLabel')
+        ? container.querySelector('.senderLabel').cloneNode(true)
+        : null;
+
+    container.classList.add('animation-message');
+    container.innerHTML = '';
+
+    if (preservedSender) {
+        container.appendChild(preservedSender);
+    }
+
+    const shell = document.createElement('div');
+    shell.className = 'animation-canvas-shell';
+    shell.style.display = 'flex';
+    shell.style.flexDirection = 'column';
+    shell.style.gap = '10px';
+    shell.style.width = '100%';
+
+    const frameStage = document.createElement('div');
+    frameStage.className = 'animation-canvas-host';
+    frameStage.style.position = 'relative';
+    frameStage.style.width = '100%';
+    frameStage.style.aspectRatio = '1 / 1';
+    frameStage.style.overflow = 'hidden';
+    frameStage.style.borderRadius = '14px';
+    frameStage.style.background = 'rgba(10, 13, 24, 0.92)';
+    frameStage.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+
+    const image = document.createElement('img');
+    image.alt = 'Rendered animation frames';
+    image.style.width = '100%';
+    image.style.height = '100%';
+    image.style.objectFit = 'contain';
+    image.style.display = 'block';
+    image.style.userSelect = 'none';
+    image.draggable = false;
+    frameStage.appendChild(image);
+
+    const status = document.createElement('div');
+    status.className = 'animation-status';
+    status.style.fontSize = '12px';
+    status.style.lineHeight = '1.4';
+    status.style.opacity = '0.8';
+    status.textContent = frames.length > 0
+        ? `Playing ${frames.length} saved frames locally.`
+        : 'No saved frames available.';
+
+    shell.appendChild(frameStage);
+    container.appendChild(shell);
+    container.appendChild(status);
+
+    if (!frames.length) {
+        return;
+    }
+
+    let frameIndex = 0;
+    const frameDelayMs = Math.max(32, Number(payload.frameDelayMs || 125));
+    image.src = frames[0];
+
+    if (container.__animationPlayerCleanup && typeof container.__animationPlayerCleanup === 'function') {
+        try { container.__animationPlayerCleanup(); } catch (error) {}
+    }
+
+    const timer = window.setInterval(() => {
+        if (!container.isConnected) {
+            window.clearInterval(timer);
+            return;
+        }
+
+        frameIndex = (frameIndex + 1) % frames.length;
+        image.src = frames[frameIndex];
+    }, frameDelayMs);
+
+    container.__animationPlayerCleanup = () => {
+        window.clearInterval(timer);
+    };
+}
+
 function renderAnimationMessage(container, animationData, fallbackText = '') {
+    const payload = normalizeAnimationData(animationData, fallbackText);
+    if (Array.isArray(payload.frames) && payload.frames.length > 0) {
+        startAnimationPlayback(container, payload, fallbackText);
+        return;
+    }
+
     container.classList.add('animation-message');
     container.innerHTML = '';
 
     const shell = document.createElement('div');
     shell.className = 'animation-canvas-shell';
+    shell.style.display = 'flex';
+    shell.style.flexDirection = 'column';
+    shell.style.gap = '10px';
+    shell.style.width = '100%';
 
-    const canvasHost = document.createElement('div');
-    canvasHost.className = 'animation-canvas-host';
-    shell.appendChild(canvasHost);
+    const frameStage = document.createElement('div');
+    frameStage.className = 'animation-canvas-host';
+    frameStage.style.position = 'relative';
+    frameStage.style.width = '100%';
+    frameStage.style.aspectRatio = '1 / 1';
+    frameStage.style.overflow = 'hidden';
+    frameStage.style.borderRadius = '14px';
+    frameStage.style.background = 'rgba(10, 13, 24, 0.92)';
+    frameStage.style.border = '1px solid rgba(255, 255, 255, 0.12)';
 
     const status = document.createElement('div');
     status.className = 'animation-status';
-    status.textContent = 'Loading animation...';
+    status.style.fontSize = '12px';
+    status.style.lineHeight = '1.4';
+    status.style.opacity = '0.8';
+    status.textContent = 'Rendering animation frames...';
 
+    shell.appendChild(frameStage);
     container.appendChild(shell);
     container.appendChild(status);
 
-    const scriptSource = getAnimationScriptSource(animationData, fallbackText).trim();
+    const scriptSource = getAnimationScriptSource(payload, fallbackText).trim();
 
     if (!scriptSource) {
         status.textContent = 'No animation code provided.';
         return;
     }
-    // Cleanup any previous animation mounted on this container
-    if (container.__animationCleanup && typeof container.__animationCleanup === 'function') {
-        try { container.__animationCleanup(); } catch (e) { /* ignore */ }
-        delete container.__animationCleanup;
+
+    if (container.__animationPlayerCleanup && typeof container.__animationPlayerCleanup === 'function') {
+        try { container.__animationPlayerCleanup(); } catch (error) {}
+        delete container.__animationPlayerCleanup;
     }
 
-    // Try to attach p5-created canvas and buttons into our canvasHost by
-    // temporarily wrapping the global helpers that p5 exposes in global mode.
-    const origCreateCanvas = window.createCanvas;
-    const origCreateButton = window.createButton;
-    const createdNodes = [];
+    createHiddenAnimationRunner(scriptSource)
+        .then(async ({ canvas, cleanup }) => {
+            try {
+                const sequence = await captureCanvasSequence(canvas, {
+                    fps: 8,
+                    maxFrames: 120,
+                    scale: 0.72,
+                });
 
-    function attachToHost(elem) {
-        try {
-            if (!elem) return;
-            if (elem.elt) { // p5.Element
-                canvasHost.appendChild(elem.elt);
-                createdNodes.push(elem.elt);
-            } else if (elem instanceof Element) {
-                canvasHost.appendChild(elem);
-                createdNodes.push(elem);
+                cleanup();
+
+                const animatedPayload = {
+                    code: scriptSource,
+                    frames: sequence.frames,
+                    frameDelayMs: sequence.frameDelayMs,
+                    width: sequence.width,
+                    height: sequence.height,
+                    generatedAt: new Date().toISOString(),
+                    source: 'p5',
+                };
+
+                if (container.dataset.messageId) {
+                    updateStoredAnimationById(container.dataset.messageId, animatedPayload);
+                }
+
+                startAnimationPlayback(container, animatedPayload, fallbackText);
+            } catch (error) {
+                cleanup();
+                console.error('Failed to record animation frames:', error);
+                status.textContent = 'Failed to render animation frames.';
             }
-        } catch (e) {
-            // ignore attach errors
-        }
-    }
-
-    if (typeof origCreateCanvas === 'function') {
-        window.createCanvas = function() {
-            const res = origCreateCanvas.apply(window, arguments);
-            attachToHost(res);
-            return res;
-        };
-    }
-
-    if (typeof origCreateButton === 'function') {
-        window.createButton = function() {
-            const res = origCreateButton.apply(window, arguments);
-            attachToHost(res);
-            return res;
-        };
-    }
-
-    // Inject the animation script into the page so p5 global-mode hooks run
-    const scriptEl = document.createElement('script');
-    scriptEl.type = 'text/javascript';
-    scriptEl.textContent = scriptSource;
-    document.body.appendChild(scriptEl);
-
-    // Cleanup function to remove injected elements and restore globals
-    const cleanup = () => {
-        try {
-            createdNodes.forEach(n => { try { n.remove(); } catch (e) {} });
-            try { scriptEl.remove(); } catch (e) {}
-        } catch (e) {}
-        if (origCreateCanvas) {
-            window.createCanvas = origCreateCanvas;
-        } else {
-            try { delete window.createCanvas; } catch (e) {}
-        }
-        if (origCreateButton) {
-            window.createButton = origCreateButton;
-        } else {
-            try { delete window.createButton; } catch (e) {}
-        }
-    };
-
-    container.__animationCleanup = cleanup;
-    status.remove();
+        })
+        .catch((error) => {
+            console.error('Failed to initialize animation runner:', error);
+            status.textContent = 'Failed to initialize animation rendering.';
+        });
 }
 
 function syncDebateControls(status) {
