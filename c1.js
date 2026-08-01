@@ -524,6 +524,10 @@ function normalizeAnimationScriptSource(scriptSource) {
         normalized = `(() => {\n${normalized}\n})();`;
     }
 
+    if (!normalized.includes('window.__anilaAnimationStarted')) {
+        normalized = normalized.replace(/\n\}\)\(\);\s*$/, `\n\nif (!window.__anilaAnimationStarted) {\n  window.__anilaAnimationStarted = true;\n  if (typeof window.setup === 'function') {\n    window.setup();\n  }\n\n  const __anilaTick = () => {\n    if (!window.__anilaAnimationStarted) {\n      return;\n    }\n\n    if (typeof window.draw === 'function') {\n      window.draw();\n    }\n\n    window.__anilaAnimationFrame = requestAnimationFrame(__anilaTick);\n  };\n\n  window.__anilaAnimationFrame = requestAnimationFrame(__anilaTick);\n}\n})();`);
+    }
+
     return normalized;
 }
 
@@ -670,6 +674,15 @@ function createHiddenAnimationRunner(scriptSource) {
                     try { node.remove(); } catch (error) {}
                 });
                 try { scriptEl.remove(); } catch (error) {}
+                try {
+                    if (window.__anilaAnimationFrame) {
+                        window.cancelAnimationFrame(window.__anilaAnimationFrame);
+                    }
+                    window.__anilaAnimationStarted = false;
+                    window.__anilaAnimationFrame = null;
+                    delete window.setup;
+                    delete window.draw;
+                } catch (error) {}
                 runnerHost.remove();
             } catch (error) {}
 
