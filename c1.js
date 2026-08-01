@@ -630,23 +630,26 @@ function captureCanvasSequence(sourceCanvas, options = {}) {
     });
 }
 
-function createHiddenAnimationRunner(scriptSource) {
+function createHiddenAnimationRunner(scriptSource, canvasHostOverride = null) {
     return new Promise((resolve, reject) => {
-        const runnerHost = document.createElement('div');
-        runnerHost.style.position = 'fixed';
-        runnerHost.style.left = '-10000px';
-        runnerHost.style.top = '0';
-        runnerHost.style.width = '500px';
-        runnerHost.style.height = '500px';
-        runnerHost.style.overflow = 'hidden';
-        runnerHost.style.pointerEvents = 'none';
-        runnerHost.style.opacity = '0';
+        const useProvidedHost = Boolean(canvasHostOverride);
+        const runnerHost = useProvidedHost ? null : document.createElement('div');
+        const canvasHost = canvasHostOverride || document.createElement('div');
 
-        const canvasHost = document.createElement('div');
-        canvasHost.style.width = '500px';
-        canvasHost.style.height = '500px';
-        runnerHost.appendChild(canvasHost);
-        document.body.appendChild(runnerHost);
+        if (!useProvidedHost) {
+            runnerHost.style.position = 'fixed';
+            runnerHost.style.left = '-10000px';
+            runnerHost.style.top = '0';
+            runnerHost.style.width = '500px';
+            runnerHost.style.height = '500px';
+            runnerHost.style.overflow = 'hidden';
+            runnerHost.style.pointerEvents = 'none';
+            runnerHost.style.opacity = '0';
+            canvasHost.style.width = '500px';
+            canvasHost.style.height = '500px';
+            runnerHost.appendChild(canvasHost);
+            document.body.appendChild(runnerHost);
+        }
 
         const origCreateCanvas = window.createCanvas;
         const origCreateButton = window.createButton;
@@ -683,7 +686,9 @@ function createHiddenAnimationRunner(scriptSource) {
                     delete window.setup;
                     delete window.draw;
                 } catch (error) {}
-                runnerHost.remove();
+                if (runnerHost) {
+                    runnerHost.remove();
+                }
             } catch (error) {}
 
             if (origCreateCanvas) {
@@ -867,23 +872,19 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
         delete container.__animationPlayerCleanup;
     }
 
-    createHiddenAnimationRunner(scriptSource)
+    createHiddenAnimationRunner(scriptSource, frameStage)
         .then(async ({ canvas, cleanup }) => {
             try {
-                const sequence = await captureCanvasSequence(canvas, {
-                    fps: 8,
-                    maxFrames: 120,
-                    scale: 0.72,
-                });
+                if (canvas && canvas.parentElement !== frameStage) {
+                    frameStage.appendChild(canvas);
+                }
 
-                cleanup();
+                frameStage.style.display = 'block';
+                status.textContent = 'Animation ready.';
 
                 const animatedPayload = {
                     code: scriptSource,
-                    frames: sequence.frames,
-                    frameDelayMs: sequence.frameDelayMs,
-                    width: sequence.width,
-                    height: sequence.height,
+                    frameDelayMs: 125,
                     generatedAt: new Date().toISOString(),
                     source: 'p5',
                 };
@@ -891,8 +892,6 @@ function renderAnimationMessage(container, animationData, fallbackText = '') {
                 if (container.dataset.messageId) {
                     updateStoredAnimationById(container.dataset.messageId, animatedPayload);
                 }
-
-                startAnimationPlayback(container, animatedPayload, fallbackText);
             } catch (error) {
                 cleanup();
                 console.error('Failed to record animation frames:', error);
