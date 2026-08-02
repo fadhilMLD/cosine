@@ -13,6 +13,178 @@
 <!-- Configuration -->
 <script src="config.js"></script>
 <script src="https://unpkg.com/p5@1.9.0/lib/p5.min.js"></script>
+<style>
+    .panelHeaderRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .uploadFilesBtn {
+        border: 1px solid var(--border2);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .uploadFilesBtn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(200, 180, 240, 0.06);
+    }
+
+    .upload-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        background: rgba(0, 0, 0, 0.78);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .upload-modal.show {
+        display: flex;
+    }
+
+    .upload-modal-card {
+        width: 100%;
+        max-width: 520px;
+        background: #0a0a0a;
+        border: 1px solid var(--border2);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    }
+
+    .upload-modal-header h3 {
+        margin: 0 0 6px 0;
+        color: var(--text);
+        font-size: 22px;
+        font-weight: 500;
+    }
+
+    .upload-modal-header p {
+        margin: 0;
+        color: var(--text2);
+        font-size: 13px;
+    }
+
+    .upload-form-group {
+        margin-top: 20px;
+    }
+
+    .upload-form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text);
+    }
+
+    .upload-form-group input[type="file"] {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border2);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+    }
+
+    .upload-form-group input[type="file"]::file-selector-button {
+        margin-right: 12px;
+        border: 1px solid var(--border2);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .upload-file-list {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+    .upload-file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text2);
+        font-size: 13px;
+    }
+
+    .upload-remove-file {
+        border: none;
+        background: transparent;
+        color: var(--accent2);
+        cursor: pointer;
+        font-size: 13px;
+        padding: 0;
+        flex: 0 0 auto;
+    }
+
+    .upload-modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .upload-modal-actions button {
+        flex: 1;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border2);
+    }
+
+    .upload-modal-actions .upload-cancel-btn {
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+    }
+
+    .upload-modal-actions .upload-submit-btn {
+        background: var(--accent);
+        color: #000;
+        border-color: transparent;
+    }
+
+    .upload-modal-actions button:hover {
+        transform: translateY(-1px);
+    }
+
+    .upload-loading {
+        display: none;
+        margin-top: 16px;
+        text-align: center;
+        color: var(--text2);
+        font-size: 13px;
+    }
+
+    .upload-loading.show {
+        display: block;
+    }
+</style>
 </head>
 
 <body>
@@ -104,23 +276,18 @@
 <div class="debateMainContainer">
 <!-- LEFT PANEL: FILES -->
 <div class="leftPanel">
-<div class="panelHeader">
+<div class="panelHeader panelHeaderRow">
 <h3>Files</h3>
+<button id="uploadFilesBtn" class="uploadFilesBtn" type="button">Upload Files</button>
 </div>
 <div id="uploadedFilesList" class="filesList">
 <p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>
-</div>
-<div class="panelHeader" style="border-top:1px solid var(--border); margin-top:8px;">
-<h3>Web Sources</h3>
-</div>
-<div id="webSourcesList" class="filesList" style="padding:8px 12px 18px;">
-<p style="color: var(--text3); font-size: 13px;">No web sources yet</p>
 </div>
 </div>
 
 <!-- CENTER: MAIN INTERFACE -->
 <div class="centerPanel">
-<div class="centerTitle">Agent Debate</div>
+<div class="centerTitle">CHAT</div>
 <div id="chatContainer" class="chatContainer hidden"></div>
 
 <div class="inputRow">
@@ -139,7 +306,7 @@
 <div class="rightPanel">
 <div class="panelCard">
 <div class="panelHeader">
-<h3>Debate Status</h3>
+<h3>QWEET Status</h3>
 </div>
 <div class="statusContent">
 <div class="statusRow">
@@ -174,6 +341,30 @@
 <div class="credit">
 <img src="feaven.png">
 <span>Feaven</span>
+</div>
+
+<div id="uploadFilesModal" class="upload-modal" aria-hidden="true">
+<div class="upload-modal-card">
+    <div class="upload-modal-header">
+        <h3>Upload Files</h3>
+        <p id="uploadProjectName">Current project</p>
+    </div>
+
+    <form id="uploadFilesForm" onsubmit="handleUploadFiles(event)">
+        <div class="upload-form-group">
+            <label for="uploadProjectFiles">Select Files</label>
+            <input type="file" id="uploadProjectFiles" multiple required>
+            <div class="upload-file-list" id="uploadFileList"></div>
+        </div>
+
+        <div class="upload-modal-actions">
+            <button type="button" class="upload-cancel-btn" onclick="closeUploadFilesModal()">Cancel</button>
+            <button type="submit" class="upload-submit-btn">Upload Files</button>
+        </div>
+    </form>
+
+    <div id="uploadModalLoading" class="upload-loading">Uploading files...</div>
+</div>
 </div>
 
 <script src="c1.js"></script>

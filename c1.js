@@ -8,6 +8,8 @@ let currentUser = null;
 let isGuest = false;
 let currentProjectId = null;
 let currentDebateId = null;
+let uploadSelectedFiles = [];
+let uploadFilesInputReady = false;
 
 
 let totalMessagesUsed = 0;
@@ -846,7 +848,7 @@ function startAnimationPlayback(container, frameData, fallbackText = '') {
     const frameDelayMs = Math.max(32, Number(payload.frameDelayMs || 125));
     const updateFrameImage = () => {
         image.src = frames[frameIndex];
-        status.textContent = `Playing ${frames.length} saved frames locally. Frame ${frameIndex + 1}/${frames.length}.`;
+        status.textContent = `Total ${frames.length}. Frame ${frameIndex + 1}/.`;
     };
 
     updateFrameImage();
@@ -1446,5 +1448,189 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM Content Loaded");
     initializeAuth();
     loadProjectFromUrl();
+
+function setupUploadFileInput() {
+    if (uploadFilesInputReady) {
+        return;
+    }
+
+    const input = document.getElementById('uploadProjectFiles');
+    if (!input) {
+        return;
+    }
+
+    input.addEventListener('change', (event) => {
+        uploadSelectedFiles = Array.from(event.target.files || []);
+        updateUploadFileList();
+    });
+
+    uploadFilesInputReady = true;
+}
+
+function openUploadFilesModal() {
+    const modal = document.getElementById('uploadFilesModal');
+    const projectNameEl = document.getElementById('uploadProjectName');
+    const input = document.getElementById('uploadProjectFiles');
+    const fileList = document.getElementById('uploadFileList');
+
+    if (!modal || !input || !fileList) {
+        return;
+    }
+
+    if (!currentProjectId) {
+        alert('No project is currently loaded.');
+        return;
+    }
+
+    uploadSelectedFiles = [];
+    input.value = '';
+    fileList.innerHTML = '';
+    if (projectNameEl) {
+        projectNameEl.textContent = document.getElementById('projectName')?.textContent || 'Current project';
+    }
+
+    setupUploadFileInput();
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeUploadFilesModal() {
+    const modal = document.getElementById('uploadFilesModal');
+    const input = document.getElementById('uploadProjectFiles');
+    const fileList = document.getElementById('uploadFileList');
+
+    if (modal) {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    uploadSelectedFiles = [];
+    if (input) {
+        input.value = '';
+    }
+    if (fileList) {
+        fileList.innerHTML = '';
+    }
+}
+
+function updateUploadFileList() {
+    const fileList = document.getElementById('uploadFileList');
+    if (!fileList) {
+        return;
+    }
+
+    if (!uploadSelectedFiles.length) {
+        fileList.innerHTML = '';
+        return;
+    }
+
+    fileList.innerHTML = uploadSelectedFiles.map((file, index) => `
+        <div class="upload-file-item">
+            <span>${escapeHtml(file.name)}</span>
+            <button type="button" class="upload-remove-file" onclick="removeUploadFile(${index})">✕</button>
+        </div>
+    `).join('');
+}
+
+function removeUploadFile(index) {
+    uploadSelectedFiles.splice(index, 1);
+    updateUploadFileList();
+
+    const input = document.getElementById('uploadProjectFiles');
+    if (input) {
+        const dataTransfer = new DataTransfer();
+        uploadSelectedFiles.forEach(file => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+    }
+}
+
+function showUploadModalLoading(show) {
+    const loading = document.getElementById('uploadModalLoading');
+    if (loading) {
+        loading.classList.toggle('show', Boolean(show));
+    }
+}
+
+async function refreshProjectFiles(projectId) {
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token || !projectId) {
+        return;
+    }
+
+    const response = await fetch(getApiUrl(`/projects/${projectId}`), {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to refresh project files');
+    }
+
+    const data = await response.json();
+    const filesList = document.getElementById('uploadedFilesList');
+    if (filesList && data.files && Array.isArray(data.files)) {
+        if (data.files.length > 0) {
+            filesList.innerHTML = data.files.map(file => {
+                const label = file.original_name || file.name || 'Unnamed file';
+                return `<div class="fileItem"><div class="fileName">📄 ${escapeHtml(String(label))}</div></div>`;
+            }).join('');
+        } else {
+            filesList.innerHTML = '<p style="color: var(--text3); font-size: 13px; padding: 16px;">No files uploaded</p>';
+        }
+    }
+}
+
+async function handleUploadFiles(event) {
+    event.preventDefault();
+
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (!token || !currentProjectId) {
+        alert('Error: Missing authentication or project ID');
+        return;
+    }
+
+    if (uploadSelectedFiles.length === 0) {
+        alert('Please select at least one file');
+        return;
+    }
+
+    showUploadModalLoading(true);
+
+    try {
+        for (const file of uploadSelectedFiles) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(getApiUrl(`/projects/${currentProjectId}/upload`), {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to upload ${file.name}`);
+            }
+        }
+
+        closeUploadFilesModal();
+        await refreshProjectFiles(currentProjectId);
+        alert('Files uploaded successfully!');
+    } catch (error) {
+        alert('Error uploading files: ' + error.message);
+    } finally {
+        showUploadModalLoading(false);
+    }
+}
     setupPauseButton();
+    const uploadBtn = document.getElementById('uploadFilesBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', openUploadFilesModal);
+    }
 });
