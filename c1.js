@@ -804,7 +804,37 @@ function startAnimationPlayback(container, frameData, fallbackText = '') {
         ? `Playing ${frames.length} saved frames locally.`
         : 'No saved frames available.';
 
+    const controls = document.createElement('div');
+    controls.className = 'animation-frame-controls';
+    controls.style.display = 'flex';
+    controls.style.gap = '8px';
+    controls.style.justifyContent = 'center';
+
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.textContent = 'Back 5';
+    backBtn.style.padding = '6px 10px';
+    backBtn.style.borderRadius = '8px';
+    backBtn.style.border = '1px solid rgba(255, 255, 255, 0.22)';
+    backBtn.style.background = 'rgba(255, 255, 255, 0.08)';
+    backBtn.style.color = '#ffffff';
+    backBtn.style.cursor = 'pointer';
+
+    const forwardBtn = document.createElement('button');
+    forwardBtn.type = 'button';
+    forwardBtn.textContent = 'Forward 5';
+    forwardBtn.style.padding = '6px 10px';
+    forwardBtn.style.borderRadius = '8px';
+    forwardBtn.style.border = '1px solid rgba(255, 255, 255, 0.22)';
+    forwardBtn.style.background = 'rgba(255, 255, 255, 0.08)';
+    forwardBtn.style.color = '#ffffff';
+    forwardBtn.style.cursor = 'pointer';
+
+    controls.appendChild(backBtn);
+    controls.appendChild(forwardBtn);
+
     shell.appendChild(frameStage);
+    shell.appendChild(controls);
     container.appendChild(shell);
     container.appendChild(status);
 
@@ -814,7 +844,24 @@ function startAnimationPlayback(container, frameData, fallbackText = '') {
 
     let frameIndex = 0;
     const frameDelayMs = Math.max(32, Number(payload.frameDelayMs || 125));
-    image.src = frames[0];
+    const updateFrameImage = () => {
+        image.src = frames[frameIndex];
+        status.textContent = `Playing ${frames.length} saved frames locally. Frame ${frameIndex + 1}/${frames.length}.`;
+    };
+
+    updateFrameImage();
+
+    const jumpFrameBy = (step) => {
+        if (!frames.length) {
+            return;
+        }
+        const nextIndex = frameIndex + step;
+        frameIndex = ((nextIndex % frames.length) + frames.length) % frames.length;
+        updateFrameImage();
+    };
+
+    backBtn.addEventListener('click', () => jumpFrameBy(-5));
+    forwardBtn.addEventListener('click', () => jumpFrameBy(5));
 
     if (container.__animationPlayerCleanup && typeof container.__animationPlayerCleanup === 'function') {
         try { container.__animationPlayerCleanup(); } catch (error) {}
@@ -827,7 +874,7 @@ function startAnimationPlayback(container, frameData, fallbackText = '') {
         }
 
         frameIndex = (frameIndex + 1) % frames.length;
-        image.src = frames[frameIndex];
+        updateFrameImage();
     }, frameDelayMs);
 
     container.__animationPlayerCleanup = () => {
