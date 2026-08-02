@@ -1,21 +1,14 @@
-// ============================================
-// AUTHENTICATION SETUP
-// ============================================
-
+// AUTHENTICATION
 const loginPage = document.getElementById("loginPage");
 const mainApp = document.querySelector(".main");
 const logoutBtn = document.getElementById("logoutBtn");
 const userNameEl = document.getElementById("userName");
-
 let authToken = null;
 let currentUser = null;
 let isGuest = false;
 let currentProjectId = null;
 let currentDebateId = null;
 
-// ============================================
-// MESSAGE TRACKING
-// ============================================
 
 let totalMessagesUsed = 0;
 let planMessageLimit = 25;
@@ -59,24 +52,14 @@ function updateMessageUsage() {
     }
 }
 
-// ============================================
-// PERMISSION/DEBATE MODAL
-// ============================================
-
 function showDebatePermission(promptText) {
     const modal = document.getElementById('permissionModal');
     const details = document.getElementById('permissionDetails');
     const planLimitDisplay = document.getElementById('planLimitDisplay');
-    
     planLimitDisplay.textContent = planMessageLimit;
-    
-    // Store the prompt for when user confirms
     pendingDebateRequest = promptText;
-    
-    // Show modal
     modal.classList.add('active');
-    
-    // Set default value
+
     const input = document.getElementById('debateMessageCount');
     input.value = Math.min(12, planMessageLimit - totalMessagesUsed);
     input.max = Math.min(80, planMessageLimit - totalMessagesUsed);
@@ -99,7 +82,6 @@ function startDebate() {
     const input = document.getElementById('debateMessageCount');
     debateMessageLimit = parseInt(input.value) || 12;
     
-    // Check against plan limit
     const maxAllowed = planMessageLimit - totalMessagesUsed;
     if (debateMessageLimit > maxAllowed) {
         debateMessageLimit = maxAllowed;
@@ -109,7 +91,6 @@ function startDebate() {
     
     document.getElementById('permissionModal').classList.remove('active');
     
-    // Start the debate
     if (pendingDebateRequest && socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
             type: "start_debate",
@@ -123,9 +104,7 @@ function startDebate() {
     }
 }
 
-// ============================================
-// CHAT APPLICATION
-// ============================================
+
 
 const loginPageBox = document.querySelector(".loginPage textarea#promptBox");
 const mainAppBox = document.querySelector(".main textarea#promptBox");
@@ -289,6 +268,42 @@ function clearChatHistory() {
         updateMessageUsage();
     } catch (e) {
         console.error("Failed to clear chat:", e);
+    }
+}
+
+function hydrateChatHistoryFromProjectMessages(messages) {
+    try {
+        if (!Array.isArray(messages) || messages.length === 0) {
+            return false;
+        }
+
+        const normalizedMessages = messages.map(msg => {
+            let animationData = null;
+            if (msg && msg.animation_data) {
+                try {
+                    animationData = typeof msg.animation_data === "string"
+                        ? JSON.parse(msg.animation_data)
+                        : msg.animation_data;
+                } catch (error) {
+                    console.error("Failed to parse stored animation payload:", error);
+                }
+            }
+
+            return {
+                id: msg.message_id || msg.id || null,
+                sender: msg.speaker || msg.sender || "Qweet",
+                text: msg.message || msg.text || "",
+                messageType: msg.message_type || msg.messageType || "message",
+                animation: animationData,
+                timestamp: msg.timestamp || new Date().toISOString(),
+            };
+        });
+
+        localStorage.setItem(getChatStorageKey(), JSON.stringify(normalizedMessages));
+        return true;
+    } catch (error) {
+        console.error("Failed to hydrate chat history from project messages:", error);
+        return false;
     }
 }
 
@@ -459,10 +474,8 @@ function updateMessageElement(element, sender, text, typing = false) {
     element.classList.toggle('typing', typing);
 }
 
-// ============================================
-// WEBSOCKET HANDLING
-// ============================================
 
+// WEBSOCKET HANDLING
 let socket;
 let socketReady = false;
 let pendingPrompt = null;
@@ -1098,10 +1111,7 @@ function setupWebSocket() {
 }
 
 
-// ============================================
 // SEND PROMPT
-// ============================================
-
 async function sendPrompt() {
     const box = getActiveBox();
     const prompt = box.value.trim();
@@ -1140,10 +1150,8 @@ async function sendPrompt() {
     }
 }
 
-// ============================================
-// UI SETUP
-// ============================================
 
+// UI SETUP
 function setupPauseButton() {
     const pauseBtn = document.getElementById('pauseBtn');
     const resumeBtn = document.getElementById('resumeBtn');
@@ -1167,10 +1175,8 @@ function setupPauseButton() {
     }
 }
 
-// ============================================
-// PROJECT INITIALIZATION
-// ============================================
 
+// PROJECT INITIALIZATION
 function loadProjectFromUrl() {
     const hash = window.location.hash;
     const match = hash.match(/#\/project\/(.+)$/);
@@ -1240,6 +1246,11 @@ async function loadProjectDetails(projectId) {
             }
         }
 
+        const hydratedFromServer = hydrateChatHistoryFromProjectMessages(data.messages || []);
+        if (hydratedFromServer) {
+            loadMessagesFromStorage();
+        }
+
         const debatePage = document.getElementById("debatePage");
         if (debatePage) debatePage.classList.add("active");
         
@@ -1255,6 +1266,10 @@ async function loadProjectDetails(projectId) {
             updateMessageUsage();
             saveMessageCount();
         }
+
+        if (hydratedFromServer && !socketReady) {
+            setupWebSocket();
+        }
         
         syncDebateControls("Idle");
         
@@ -1264,9 +1279,8 @@ async function loadProjectDetails(projectId) {
     }
 }
 
-// ============================================
+
 // AUTHENTICATION FUNCTIONS
-// ============================================
 
 function getStoredUser() {
     const rawUser = localStorage.getItem("currentUser") || localStorage.getItem("user") || sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
@@ -1377,11 +1391,6 @@ function logout() {
 }
 
 logoutBtn.addEventListener("click", logout);
-
-// ============================================
-// INITIALIZATION
-// ============================================
-
 [loginPageBtn, mainAppBtn].forEach(btn => {
     btn.addEventListener("click", sendPrompt);
 });
