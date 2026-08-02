@@ -596,7 +596,7 @@ function waitForCanvasElement(host, timeoutMs = 5000) {
 }
 
 function captureCanvasSequence(sourceCanvas, options = {}) {
-    const fps = Math.max(10, Number(options.fps || 8));
+    const fps = Math.max(10, Number(options.fps || 16));
     const maxFrames = Math.max(1, Number(options.maxFrames || 120));
     const scale = Math.min(1, Math.max(0.2, Number(options.scale || 0.72)));
     const frameDelayMs = Math.max(16, Math.round(1000 / fps));
